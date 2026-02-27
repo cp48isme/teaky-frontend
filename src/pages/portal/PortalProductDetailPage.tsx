@@ -1,18 +1,26 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { getPublicProduct } from '../../api/portals';
+import { checkSafeOrder } from '../../api/orders';
 import { usePortalContext } from '../../contexts/PortalContext';
+import { useCart } from '../../contexts/CartContext';
+import { isAuthenticated } from '../../api/client';
 import type { Product } from '../../types/product';
 import Spinner from '../../components/ui/Spinner';
 
 export default function PortalProductDetailPage() {
   const { slug, productId } = useParams<{ slug: string; productId: string }>();
   const { portal } = usePortalContext();
+  const { addItem } = useCart();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(0);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
+  const [quantity, setQuantity] = useState(1);
+  const [adding, setAdding] = useState(false);
+  const [added, setAdded] = useState(false);
+  const [isSafeOrder, setIsSafeOrder] = useState(false);
 
   useEffect(() => {
     if (!slug || !productId) return;
@@ -25,6 +33,16 @@ export default function PortalProductDetailPage() {
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [slug, productId]);
+
+  useEffect(() => {
+    if (!slug || !product || !product.proof_required || !isAuthenticated()) {
+      setIsSafeOrder(false);
+      return;
+    }
+    checkSafeOrder(slug, product.id, selectedSize || undefined, selectedColor || undefined)
+      .then((res) => setIsSafeOrder(res.is_safe_order))
+      .catch(() => setIsSafeOrder(false));
+  }, [slug, product?.id, product?.proof_required, selectedSize, selectedColor]);
 
   if (loading) {
     return (
@@ -92,7 +110,14 @@ export default function PortalProductDetailPage() {
         <div className="space-y-5">
           <div>
             <p className="text-xs font-medium uppercase text-gray-500">{product.category}</p>
-            <h1 className="mt-1 text-2xl font-bold text-gray-900">{product.name}</h1>
+            <div className="mt-1 flex items-center gap-2">
+              <h1 className="text-2xl font-bold text-gray-900">{product.name}</h1>
+              {isSafeOrder && (
+                <span className="rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+                  Safe Order
+                </span>
+              )}
+            </div>
             {product.sku && (
               <p className="mt-1 text-xs text-gray-400">SKU: {product.sku}</p>
             )}
@@ -193,6 +218,65 @@ export default function PortalProductDetailPage() {
           <p className="text-xs text-gray-500">
             Minimum order quantity: {product.min_order_qty}
           </p>
+
+          {/* Quantity + Add to Cart */}
+          {isAuthenticated() && product.pricing_tiers.length > 0 && (
+            <div className="space-y-3 border-t pt-4">
+              <div className="flex items-center gap-3">
+                <label className="text-sm font-medium text-gray-700">Qty</label>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => setQuantity((q) => Math.max(product.min_order_qty, q - 1))}
+                    className="flex h-8 w-8 items-center justify-center rounded border text-gray-600 hover:bg-gray-50"
+                  >
+                    -
+                  </button>
+                  <input
+                    type="number"
+                    min={product.min_order_qty}
+                    value={quantity}
+                    onChange={(e) => setQuantity(Math.max(product.min_order_qty, parseInt(e.target.value) || 1))}
+                    className="w-16 rounded border border-gray-300 px-2 py-1.5 text-center text-sm"
+                  />
+                  <button
+                    onClick={() => setQuantity((q) => q + 1)}
+                    className="flex h-8 w-8 items-center justify-center rounded border text-gray-600 hover:bg-gray-50"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+
+              <button
+                onClick={async () => {
+                  if (!product) return;
+                  setAdding(true);
+                  setAdded(false);
+                  try {
+                    const unitPrice = product.pricing_tiers[0].unit_price;
+                    await addItem({
+                      product_id: product.id,
+                      quantity,
+                      size: selectedSize || undefined,
+                      color: selectedColor || undefined,
+                      unit_price: unitPrice,
+                    });
+                    setAdded(true);
+                    setTimeout(() => setAdded(false), 2000);
+                  } catch {
+                    // error handled by cart context
+                  } finally {
+                    setAdding(false);
+                  }
+                }}
+                disabled={adding}
+                className="w-full rounded-md px-4 py-2.5 text-sm font-medium text-white transition-colors disabled:opacity-50"
+                style={{ backgroundColor: added ? '#16a34a' : primaryColor }}
+              >
+                {adding ? 'Adding...' : added ? 'Added to Cart!' : 'Add to Cart'}
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

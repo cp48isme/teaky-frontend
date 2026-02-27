@@ -2,10 +2,12 @@ import { useState, useEffect } from 'react';
 import { getCompanyProfileByOrg } from '../api/companyProfiles';
 import { getOrgEquipment } from '../api/equipment';
 import { listPortals } from '../api/portals';
+import { listPrinterOrders } from '../api/orders';
 import { useOrganizationId } from '../hooks/useOrganizationId';
 import type { CompanyProfile } from '../types/companyProfile';
 import type { OrganizationEquipment } from '../types/equipment';
 import type { Portal } from '../types/portal';
+import type { Order } from '../types/order';
 import StatCard from '../components/dashboard/StatCard';
 import CompanyProfileCard from '../components/dashboard/CompanyProfileCard';
 import EquipmentSummary from '../components/dashboard/EquipmentSummary';
@@ -17,6 +19,7 @@ export default function DashboardPage() {
   const [profile, setProfile] = useState<CompanyProfile | null>(null);
   const [equipment, setEquipment] = useState<OrganizationEquipment[]>([]);
   const [portals, setPortals] = useState<Portal[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -29,6 +32,7 @@ export default function DashboardPage() {
       getCompanyProfileByOrg(orgId).then(setProfile),
       getOrgEquipment(orgId).then(setEquipment),
       listPortals().then(setPortals),
+      listPrinterOrders().then(setOrders),
     ]).finally(() => setLoading(false));
   }, [orgId]);
 
@@ -53,9 +57,15 @@ export default function DashboardPage() {
           value={activePortalCount}
           subtitle={activePortalCount === 0 ? 'Create your first' : undefined}
         />
-        <StatCard label="Orders This Week" value={0} />
-        <StatCard label="Revenue This Month" value="$0" />
-        <StatCard label="Pending Proofs" value={0} />
+        <StatCard label="Orders" value={orders.length} />
+        <StatCard
+          label="Revenue"
+          value={`$${orders.reduce((sum, o) => sum + Number(o.total), 0).toFixed(2)}`}
+        />
+        <StatCard
+          label="Pending Proofs"
+          value={orders.filter((o) => o.status === 'pending_approval').length}
+        />
       </div>
 
       {/* Create Portal CTA */}

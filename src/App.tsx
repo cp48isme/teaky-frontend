@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { PortalProvider } from './contexts/PortalContext';
+import { CartProvider } from './contexts/CartContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import AppLayout from './components/layout/AppLayout';
 import PortalLayout from './components/layout/PortalLayout';
@@ -12,9 +13,17 @@ import PortalsListPage from './pages/PortalsListPage';
 import CreatePortalPage from './pages/CreatePortalPage';
 import PortalDetailPage from './pages/PortalDetailPage';
 import ProductManagementPage from './pages/ProductManagementPage';
+import PrinterOrdersPage from './pages/PrinterOrdersPage';
+import PrinterOrderDetailPage from './pages/PrinterOrderDetailPage';
+import StripeOnboardingPage from './pages/StripeOnboardingPage';
 import PortalHomePage from './pages/portal/PortalHomePage';
 import PortalCatalogPage from './pages/portal/PortalCatalogPage';
 import PortalProductDetailPage from './pages/portal/PortalProductDetailPage';
+import CartPage from './pages/portal/CartPage';
+import CheckoutPage from './pages/portal/CheckoutPage';
+import OrderConfirmationPage from './pages/portal/OrderConfirmationPage';
+import MyOrdersPage from './pages/portal/MyOrdersPage';
+import OrderDetailPage from './pages/portal/OrderDetailPage';
 
 function App() {
   return (
@@ -79,18 +88,57 @@ function App() {
               </ProtectedRoute>
             }
           />
-          {/* Public portal routes (no auth) */}
+          {/* Printer admin order routes */}
+          <Route
+            path="/orders"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <PrinterOrdersPage />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/orders/:orderId"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <PrinterOrderDetailPage />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          {/* Stripe Connect */}
+          <Route
+            path="/settings/stripe"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <StripeOnboardingPage />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          {/* Public portal routes */}
           <Route
             path="/p/:slug"
             element={
               <PortalProvider>
-                <PortalLayout />
+                <CartProvider>
+                  <PortalLayout />
+                </CartProvider>
               </PortalProvider>
             }
           >
             <Route index element={<PortalHomePage />} />
             <Route path="products" element={<PortalCatalogPage />} />
             <Route path="products/:productId" element={<PortalProductDetailPage />} />
+            <Route path="cart" element={<CartPage />} />
+            <Route path="checkout" element={<CheckoutPage />} />
+            <Route path="orders/:orderId/confirmation" element={<OrderConfirmationPage />} />
+            <Route path="orders" element={<MyOrdersPage />} />
+            <Route path="orders/:orderId" element={<OrderDetailPage />} />
           </Route>
           <Route path="/" element={<Navigate to="/login" replace />} />
         </Routes>
