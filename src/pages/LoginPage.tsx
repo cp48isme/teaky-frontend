@@ -1,11 +1,12 @@
 import { useState, type FormEvent } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { ApiError } from '../api/client';
+import { usePostLoginRedirect } from '../hooks/usePostLoginRedirect';
 
 export default function LoginPage() {
   const { login } = useAuth();
-  const navigate = useNavigate();
+  const postLoginRedirect = usePostLoginRedirect();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -17,7 +18,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await login({ email, password });
-      navigate('/dashboard');
+      await postLoginRedirect();
     } catch (err) {
       if (err instanceof ApiError) {
         setError(err.message);
