@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { getCompanyProfileByOrg } from '../api/companyProfiles';
 import { getOrgEquipment } from '../api/equipment';
+import { listPortals } from '../api/portals';
 import { useOrganizationId } from '../hooks/useOrganizationId';
 import type { CompanyProfile } from '../types/companyProfile';
 import type { OrganizationEquipment } from '../types/equipment';
+import type { Portal } from '../types/portal';
 import StatCard from '../components/dashboard/StatCard';
 import CompanyProfileCard from '../components/dashboard/CompanyProfileCard';
 import EquipmentSummary from '../components/dashboard/EquipmentSummary';
@@ -14,6 +16,7 @@ export default function DashboardPage() {
   const orgId = useOrganizationId();
   const [profile, setProfile] = useState<CompanyProfile | null>(null);
   const [equipment, setEquipment] = useState<OrganizationEquipment[]>([]);
+  const [portals, setPortals] = useState<Portal[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -25,6 +28,7 @@ export default function DashboardPage() {
     Promise.allSettled([
       getCompanyProfileByOrg(orgId).then(setProfile),
       getOrgEquipment(orgId).then(setEquipment),
+      listPortals().then(setPortals),
     ]).finally(() => setLoading(false));
   }, [orgId]);
 
@@ -36,13 +40,19 @@ export default function DashboardPage() {
     );
   }
 
+  const activePortalCount = portals.filter((p) => p.status === 'active').length;
+
   return (
     <div className="space-y-6">
       <h2 className="text-xl font-bold text-gray-900">Dashboard</h2>
 
       {/* Stat Cards */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatCard label="Active Portals" value={0} subtitle="Create your first" />
+        <StatCard
+          label="Active Portals"
+          value={activePortalCount}
+          subtitle={activePortalCount === 0 ? 'Create your first' : undefined}
+        />
         <StatCard label="Orders This Week" value={0} />
         <StatCard label="Revenue This Month" value="$0" />
         <StatCard label="Pending Proofs" value={0} />

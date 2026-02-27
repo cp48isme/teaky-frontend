@@ -2,7 +2,7 @@ import { NavLink } from 'react-router-dom';
 
 const NAV_ITEMS = [
   { to: '/dashboard', label: 'Dashboard', enabled: true },
-  { to: '#', label: 'Portals', enabled: false },
+  { to: '/portals', label: 'Portals', enabled: true },
   { to: '#', label: 'Orders', enabled: false },
   { to: '#', label: 'Equipment', enabled: false },
   { to: '#', label: 'Settings', enabled: false },
