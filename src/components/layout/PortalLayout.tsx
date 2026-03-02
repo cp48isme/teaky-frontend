@@ -77,6 +77,12 @@ export default function PortalLayout() {
                 My Orders
               </Link>
               <Link
+                to={`/p/${slug}/quotes`}
+                className="text-sm font-medium text-white/80 hover:text-white"
+              >
+                Quotes
+              </Link>
+              <Link
                 to={`/p/${slug}/cart`}
                 className="relative text-sm font-medium text-white/80 hover:text-white"
               >

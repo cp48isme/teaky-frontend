@@ -28,7 +28,9 @@ import CartPage from './pages/portal/CartPage';
 import CheckoutPage from './pages/portal/CheckoutPage';
 import OrderConfirmationPage from './pages/portal/OrderConfirmationPage';
 import MyOrdersPage from './pages/portal/MyOrdersPage';
+import MyQuotesPage from './pages/portal/MyQuotesPage';
 import OrderDetailPage from './pages/portal/OrderDetailPage';
+import QuotesPage from './pages/QuotesPage';
 
 function App() {
   return (
@@ -115,6 +117,17 @@ function App() {
               </ProtectedRoute>
             }
           />
+          {/* Quotes */}
+          <Route
+            path="/quotes"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <QuotesPage />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
           {/* Settings hub */}
           <Route
             path="/settings"
@@ -149,6 +162,7 @@ function App() {
             <Route path="cart" element={<CartPage />} />
             <Route path="checkout" element={<CheckoutPage />} />
             <Route path="orders/:orderId/confirmation" element={<OrderConfirmationPage />} />
+            <Route path="quotes" element={<MyQuotesPage />} />
             <Route path="orders" element={<MyOrdersPage />} />
             <Route path="orders/:orderId" element={<OrderDetailPage />} />
           </Route>

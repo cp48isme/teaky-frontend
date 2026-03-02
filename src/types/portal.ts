@@ -36,6 +36,7 @@ export interface CreatePortalRequest {
 export interface UpdatePortalRequest {
   name?: string;
   slug?: string;
+  custom_domain?: string | null;
   status?: string;
   brand_config?: BrandConfig;
   approval_workflow?: string;
