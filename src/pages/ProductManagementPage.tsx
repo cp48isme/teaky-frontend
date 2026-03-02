@@ -27,6 +27,7 @@ export default function ProductManagementPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [dmExternalId, setDmExternalId] = useState('');
 
   // Form state
   const [formData, setFormData] = useState<CreateProductRequest>({
@@ -64,6 +65,7 @@ export default function ProductManagementPage() {
     });
     setEditingId(null);
     setShowForm(false);
+    setDmExternalId('');
   };
 
   const handleEdit = (product: Product) => {
@@ -79,6 +81,7 @@ export default function ProductManagementPage() {
       min_order_qty: product.min_order_qty,
     });
     setEditingId(product.id);
+    setDmExternalId(product.dm_external_id ?? '');
     setShowForm(true);
   };
 
@@ -90,7 +93,10 @@ export default function ProductManagementPage() {
 
     try {
       if (editingId) {
-        const updated = await updateProduct(portalId, editingId, formData);
+        const updated = await updateProduct(portalId, editingId, {
+          ...formData,
+          dm_external_id: dmExternalId || null,
+        });
         setProducts((prev) => prev.map((p) => (p.id === editingId ? updated : p)));
       } else {
         const created = await createProduct(portalId, formData);
@@ -159,6 +165,8 @@ export default function ProductManagementPage() {
           saving={saving}
           isEditing={!!editingId}
           portalId={portalId!}
+          dmExternalId={dmExternalId}
+          onDmExternalIdChange={setDmExternalId}
         />
       )}
 
@@ -176,6 +184,7 @@ export default function ProductManagementPage() {
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">SKU</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">DM ID</th>
                 <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
               </tr>
             </thead>
@@ -218,6 +227,9 @@ export default function ProductManagementPage() {
                       {product.status}
                     </span>
                   </td>
+                  <td className="px-4 py-3 text-sm text-gray-500 font-mono">
+                    {product.dm_external_id ?? '-'}
+                  </td>
                   <td className="px-4 py-3 text-right">
                     <button
                       onClick={() => handleEdit(product)}
@@ -252,9 +264,11 @@ interface InlineFormProps {
   saving: boolean;
   isEditing: boolean;
   portalId: string;
+  dmExternalId: string;
+  onDmExternalIdChange: (value: string) => void;
 }
 
-function InlineProductForm({ data, onChange, onSave, onCancel, saving, isEditing }: InlineFormProps) {
+function InlineProductForm({ data, onChange, onSave, onCancel, saving, isEditing, dmExternalId, onDmExternalIdChange }: InlineFormProps) {
   const [uploadingMockup, setUploadingMockup] = useState(false);
 
   const handleMockupUpload = async (file: File) => {
@@ -342,6 +356,20 @@ function InlineProductForm({ data, onChange, onSave, onCancel, saving, isEditing
           />
         </div>
       </div>
+
+      {isEditing && (
+        <div>
+          <label className="block text-sm font-medium text-gray-700">DocketManager Product ID</label>
+          <input
+            type="text"
+            value={dmExternalId}
+            onChange={(e) => onDmExternalIdChange(e.target.value)}
+            placeholder="e.g. DM-PROD-001"
+            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500"
+          />
+          <p className="mt-1 text-xs text-gray-500">External product ID used for DocketManager integration</p>
+        </div>
+      )}
 
       {/* Sizes inline */}
       <div>

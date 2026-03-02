@@ -29,6 +29,7 @@ export interface Product {
   min_order_qty: number;
   proof_required: boolean;
   safe_order_eligible: boolean;
+  dm_external_id: string | null;
   status: string;
   sort_order: number;
   created_at: string;
@@ -61,6 +62,7 @@ export interface UpdateProductRequest {
   min_order_qty?: number;
   proof_required?: boolean;
   safe_order_eligible?: boolean;
+  dm_external_id?: string | null;
   status?: string;
   sort_order?: number;
 }
