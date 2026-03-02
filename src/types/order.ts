@@ -48,6 +48,7 @@ export interface Order {
   shipped_at: string | null;
   delivered_at: string | null;
   tracking_number: string | null;
+  dm_order_id: string | null;
   created_at: string;
   updated_at: string;
 }

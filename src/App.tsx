@@ -16,6 +16,11 @@ import ProductManagementPage from './pages/ProductManagementPage';
 import PrinterOrdersPage from './pages/PrinterOrdersPage';
 import PrinterOrderDetailPage from './pages/PrinterOrderDetailPage';
 import StripeOnboardingPage from './pages/StripeOnboardingPage';
+import AcceptInvitationPage from './pages/AcceptInvitationPage';
+import SettingsLayout from './pages/settings/SettingsLayout';
+import TeamPage from './pages/settings/TeamPage';
+import NotificationsPage from './pages/settings/NotificationsPage';
+import IntegrationsPage from './pages/settings/IntegrationsPage';
 import PortalHomePage from './pages/portal/PortalHomePage';
 import PortalCatalogPage from './pages/portal/PortalCatalogPage';
 import PortalProductDetailPage from './pages/portal/PortalProductDetailPage';
@@ -32,6 +37,7 @@ function App() {
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/invite/:token" element={<AcceptInvitationPage />} />
           <Route
             path="/dashboard"
             element={
@@ -109,17 +115,23 @@ function App() {
               </ProtectedRoute>
             }
           />
-          {/* Stripe Connect */}
+          {/* Settings hub */}
           <Route
-            path="/settings/stripe"
+            path="/settings"
             element={
               <ProtectedRoute>
                 <AppLayout>
-                  <StripeOnboardingPage />
+                  <SettingsLayout />
                 </AppLayout>
               </ProtectedRoute>
             }
-          />
+          >
+            <Route index element={<Navigate to="/settings/team" replace />} />
+            <Route path="team" element={<TeamPage />} />
+            <Route path="notifications" element={<NotificationsPage />} />
+            <Route path="integrations" element={<IntegrationsPage />} />
+            <Route path="stripe" element={<StripeOnboardingPage />} />
+          </Route>
           {/* Public portal routes */}
           <Route
             path="/p/:slug"

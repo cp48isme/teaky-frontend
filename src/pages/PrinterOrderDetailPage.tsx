@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { getPrinterOrder, updateOrder, updateOrderStatus } from '../api/orders';
 import { listProofs, submitProof, approveProof, rejectProof } from '../api/proofs';
+import { getOrderSyncStatus, manualPushOrder } from '../api/mis';
 import type { Order } from '../types/order';
 import type { Proof } from '../types/proof';
+import type { OrderSyncStatus } from '../types/mis';
 import Spinner from '../components/ui/Spinner';
 
 const STATUS_COLORS: Record<string, string> = {
@@ -34,6 +36,10 @@ export default function PrinterOrderDetailPage() {
   const [trackingNumber, setTrackingNumber] = useState('');
   const [notes, setNotes] = useState('');
 
+  // MIS sync state
+  const [syncStatus, setSyncStatus] = useState<OrderSyncStatus | null>(null);
+  const [pushing, setPushing] = useState(false);
+
   // Proof submission state
   const [proofFileUrl, setProofFileUrl] = useState('');
   const [selectedLineItem, setSelectedLineItem] = useState('');
@@ -50,6 +56,8 @@ export default function PrinterOrderDetailPage() {
       setProofs(p);
       setTrackingNumber(o.tracking_number || '');
       setNotes(o.notes || '');
+      // Fetch sync status (best-effort, don't block on failure)
+      getOrderSyncStatus(orderId).then(setSyncStatus).catch(() => {});
     } catch {
       // handled by loading state
     } finally {
@@ -81,6 +89,21 @@ export default function PrinterOrderDetailPage() {
       setOrder(updated);
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to save');
+    }
+  };
+
+  const handleManualPush = async () => {
+    if (!orderId) return;
+    setPushing(true);
+    try {
+      await manualPushOrder(orderId);
+      // Refresh sync status
+      const status = await getOrderSyncStatus(orderId);
+      setSyncStatus(status);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to push to DocketManager');
+    } finally {
+      setPushing(false);
     }
   };
 
@@ -259,6 +282,54 @@ export default function PrinterOrderDetailPage() {
           </button>
         </div>
       </div>
+
+      {/* MIS Sync */}
+      {syncStatus && (
+        <div className="rounded-lg border bg-white p-4 space-y-3">
+          <h3 className="font-medium text-gray-900">MIS Sync</h3>
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <span className="text-gray-500">DocketManager ID:</span>{' '}
+              <span className="font-mono">{syncStatus.dm_order_id ?? 'Not synced'}</span>
+            </div>
+            <div>
+              <span className="text-gray-500">Last Sync:</span>{' '}
+              {syncStatus.last_sync_at
+                ? new Date(syncStatus.last_sync_at).toLocaleString()
+                : 'Never'}
+            </div>
+            {syncStatus.last_sync_status && (
+              <div>
+                <span className="text-gray-500">Status:</span>{' '}
+                <span
+                  className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
+                    syncStatus.last_sync_status === 'success'
+                      ? 'bg-green-100 text-green-800'
+                      : syncStatus.last_sync_status === 'failed'
+                        ? 'bg-red-100 text-red-800'
+                        : 'bg-yellow-100 text-yellow-800'
+                  }`}
+                >
+                  {syncStatus.last_sync_status}
+                </span>
+              </div>
+            )}
+            {syncStatus.error_message && (
+              <div className="col-span-2">
+                <span className="text-gray-500">Error:</span>{' '}
+                <span className="text-red-600 text-xs">{syncStatus.error_message}</span>
+              </div>
+            )}
+          </div>
+          <button
+            onClick={handleManualPush}
+            disabled={pushing}
+            className="rounded bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+          >
+            {pushing ? 'Pushing...' : 'Push to DocketManager'}
+          </button>
+        </div>
+      )}
 
       {/* Proofs Section */}
       {order.line_items.some((i) => i.needs_proof) && (
