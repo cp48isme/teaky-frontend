@@ -6,6 +6,7 @@ import type {
   PublicPortalResponse,
 } from '../types/portal';
 import type { Product } from '../types/product';
+import type { Invitation } from '../types/team';
 
 export async function createPortal(
   data: CreatePortalRequest,
@@ -65,4 +66,21 @@ export async function getPublicProduct(
   productId: string,
 ): Promise<Product> {
   return apiRequest<Product>(`/p/${slug}/products/${productId}`);
+}
+
+export async function invitePortalUser(
+  portalId: string,
+  email: string,
+  role = 'end_user',
+): Promise<Invitation> {
+  return apiRequest<Invitation>(`/portals/${portalId}/invitations`, {
+    method: 'POST',
+    body: JSON.stringify({ email, role }),
+  });
+}
+
+export async function listPortalInvitations(
+  portalId: string,
+): Promise<Invitation[]> {
+  return apiRequest<Invitation[]>(`/portals/${portalId}/invitations`);
 }

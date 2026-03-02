@@ -1,7 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { getPortal, publishPortal } from '../api/portals';
+import {
+  getPortal,
+  publishPortal,
+  invitePortalUser,
+  listPortalInvitations,
+} from '../api/portals';
 import type { Portal } from '../types/portal';
+import type { Invitation } from '../types/team';
 import Spinner from '../components/ui/Spinner';
 
 export default function PortalDetailPage() {
@@ -10,6 +16,11 @@ export default function PortalDetailPage() {
   const [loading, setLoading] = useState(true);
   const [publishing, setPublishing] = useState(false);
   const [error, setError] = useState('');
+  const [invitations, setInvitations] = useState<Invitation[]>([]);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteRole, setInviteRole] = useState('end_user');
+  const [inviting, setInviting] = useState(false);
+  const [inviteError, setInviteError] = useState('');
 
   useEffect(() => {
     if (!portalId) return;
@@ -17,6 +28,9 @@ export default function PortalDetailPage() {
       .then(setPortal)
       .catch(() => setError('Portal not found'))
       .finally(() => setLoading(false));
+    listPortalInvitations(portalId)
+      .then(setInvitations)
+      .catch(() => {});
   }, [portalId]);
 
   const handlePublish = async () => {
@@ -182,6 +196,81 @@ export default function PortalDetailPage() {
           >
             View Public Portal &rarr;
           </Link>
+        )}
+      </div>
+
+      {/* Invite Users */}
+      <div className="rounded-lg border border-gray-200 bg-white p-5">
+        <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide">
+          Invite Users
+        </h3>
+        <form
+          className="mt-3 flex gap-2"
+          onSubmit={async (e) => {
+            e.preventDefault();
+            if (!portalId || !inviteEmail.trim()) return;
+            setInviting(true);
+            setInviteError('');
+            try {
+              const inv = await invitePortalUser(portalId, inviteEmail, inviteRole);
+              setInvitations((prev) => [inv, ...prev]);
+              setInviteEmail('');
+            } catch {
+              setInviteError('Failed to send invitation');
+            } finally {
+              setInviting(false);
+            }
+          }}
+        >
+          <input
+            type="email"
+            placeholder="user@example.com"
+            value={inviteEmail}
+            onChange={(e) => setInviteEmail(e.target.value)}
+            className="flex-1 rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            required
+          />
+          <select
+            value={inviteRole}
+            onChange={(e) => setInviteRole(e.target.value)}
+            className="rounded-md border border-gray-300 px-2 py-1.5 text-sm"
+          >
+            <option value="end_user">End User</option>
+            <option value="portal_admin">Portal Admin</option>
+          </select>
+          <button
+            type="submit"
+            disabled={inviting}
+            className="rounded-md bg-indigo-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+          >
+            {inviting ? 'Sending...' : 'Invite'}
+          </button>
+        </form>
+        {inviteError && (
+          <p className="mt-2 text-xs text-red-600">{inviteError}</p>
+        )}
+
+        {invitations.length > 0 && (
+          <div className="mt-4">
+            <h4 className="text-xs font-medium text-gray-500 uppercase">
+              Pending Invitations
+            </h4>
+            <div className="mt-2 space-y-1">
+              {invitations
+                .filter((inv) => !inv.accepted_at && !inv.revoked_at)
+                .map((inv) => (
+                  <div
+                    key={inv.id}
+                    className="flex items-center justify-between rounded border border-gray-100 px-3 py-1.5 text-sm"
+                  >
+                    <span className="text-gray-700">{inv.invited_email}</span>
+                    <span className="text-xs text-gray-400">
+                      {inv.role.replace(/_/g, ' ')}
+                    </span>
+                  </div>
+                ))}
+            </div>
+          </div>
         )}
       </div>
     </div>
