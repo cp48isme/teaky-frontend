@@ -3,9 +3,9 @@ import { NavLink } from 'react-router-dom';
 const NAV_ITEMS = [
   { to: '/dashboard', label: 'Dashboard', enabled: true },
   { to: '/portals', label: 'Portals', enabled: true },
-  { to: '#', label: 'Orders', enabled: false },
+  { to: '/orders', label: 'Orders', enabled: true },
   { to: '#', label: 'Equipment', enabled: false },
-  { to: '#', label: 'Settings', enabled: false },
+  { to: '/settings/stripe', label: 'Settings', enabled: true },
 ];
 
 export default function Sidebar() {

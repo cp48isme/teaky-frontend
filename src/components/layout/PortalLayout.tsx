@@ -1,10 +1,14 @@
 import { Outlet, Link, useParams } from 'react-router-dom';
 import { usePortalContext } from '../../contexts/PortalContext';
+import { useCart } from '../../contexts/CartContext';
+import { isAuthenticated } from '../../api/client';
 import Spinner from '../ui/Spinner';
 
 export default function PortalLayout() {
   const { slug } = useParams<{ slug: string }>();
   const { portal, loading, error } = usePortalContext();
+  const { itemCount } = useCart();
+  const authed = isAuthenticated();
 
   if (loading) {
     return (
@@ -51,7 +55,7 @@ export default function PortalLayout() {
             {portal.name}
           </Link>
         </div>
-        <nav className="flex gap-4">
+        <nav className="flex items-center gap-4">
           <Link
             to={`/p/${slug}`}
             className="text-sm font-medium text-white/80 hover:text-white"
@@ -64,6 +68,30 @@ export default function PortalLayout() {
           >
             Products
           </Link>
+          {authed && (
+            <>
+              <Link
+                to={`/p/${slug}/orders`}
+                className="text-sm font-medium text-white/80 hover:text-white"
+              >
+                My Orders
+              </Link>
+              <Link
+                to={`/p/${slug}/cart`}
+                className="relative text-sm font-medium text-white/80 hover:text-white"
+              >
+                Cart
+                {itemCount > 0 && (
+                  <span
+                    className="absolute -right-3 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-white text-[10px] font-bold"
+                    style={{ color: primaryColor }}
+                  >
+                    {itemCount}
+                  </span>
+                )}
+              </Link>
+            </>
+          )}
         </nav>
       </header>
 
