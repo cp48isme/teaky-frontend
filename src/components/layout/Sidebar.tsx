@@ -1,14 +1,16 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 
 const NAV_ITEMS = [
   { to: '/dashboard', label: 'Dashboard', enabled: true },
   { to: '/portals', label: 'Portals', enabled: true },
   { to: '/orders', label: 'Orders', enabled: true },
   { to: '#', label: 'Equipment', enabled: false },
-  { to: '/settings/stripe', label: 'Settings', enabled: true },
+  { to: '/settings/team', label: 'Settings', enabled: true, matchPrefix: '/settings' },
 ];
 
 export default function Sidebar() {
+  const { pathname } = useLocation();
+
   return (
     <aside className="hidden w-56 shrink-0 border-r border-gray-200 bg-white lg:block">
       <nav className="flex flex-col gap-1 p-4">
@@ -17,13 +19,16 @@ export default function Sidebar() {
             <NavLink
               key={item.label}
               to={item.to}
-              className={({ isActive }) =>
-                `rounded-md px-3 py-2 text-sm font-medium ${
-                  isActive
+              className={() => {
+                const active = item.matchPrefix
+                  ? pathname.startsWith(item.matchPrefix)
+                  : pathname === item.to || pathname.startsWith(item.to + '/');
+                return `rounded-md px-3 py-2 text-sm font-medium ${
+                  active
                     ? 'bg-indigo-50 text-indigo-700'
                     : 'text-gray-700 hover:bg-gray-50'
-                }`
-              }
+                }`;
+              }}
             >
               {item.label}
             </NavLink>
