@@ -15,6 +15,7 @@ import PortalDetailPage from './pages/PortalDetailPage';
 import ProductManagementPage from './pages/ProductManagementPage';
 import PrinterOrdersPage from './pages/PrinterOrdersPage';
 import PrinterOrderDetailPage from './pages/PrinterOrderDetailPage';
+import AnalyticsPage from './pages/AnalyticsPage';
 import StripeOnboardingPage from './pages/StripeOnboardingPage';
 import AcceptInvitationPage from './pages/AcceptInvitationPage';
 import SettingsLayout from './pages/settings/SettingsLayout';
@@ -111,6 +112,17 @@ function App() {
               <ProtectedRoute>
                 <AppLayout>
                   <PrinterOrderDetailPage />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          {/* Analytics */}
+          <Route
+            path="/analytics"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <AnalyticsPage />
                 </AppLayout>
               </ProtectedRoute>
             }
