@@ -15,6 +15,7 @@ import PortalDetailPage from './pages/PortalDetailPage';
 import ProductManagementPage from './pages/ProductManagementPage';
 import PrinterOrdersPage from './pages/PrinterOrdersPage';
 import PrinterOrderDetailPage from './pages/PrinterOrderDetailPage';
+import NewOrderOnBehalfPage from './pages/NewOrderOnBehalfPage';
 import StripeOnboardingPage from './pages/StripeOnboardingPage';
 import AcceptInvitationPage from './pages/AcceptInvitationPage';
 import SettingsLayout from './pages/settings/SettingsLayout';
@@ -101,6 +102,16 @@ function App() {
               <ProtectedRoute>
                 <AppLayout>
                   <PrinterOrdersPage />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/orders/new"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <NewOrderOnBehalfPage />
                 </AppLayout>
               </ProtectedRoute>
             }
