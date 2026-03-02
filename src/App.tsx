@@ -21,6 +21,7 @@ import SettingsLayout from './pages/settings/SettingsLayout';
 import TeamPage from './pages/settings/TeamPage';
 import NotificationsPage from './pages/settings/NotificationsPage';
 import IntegrationsPage from './pages/settings/IntegrationsPage';
+import AuditTrailPage from './pages/settings/AuditTrailPage';
 import PortalHomePage from './pages/portal/PortalHomePage';
 import PortalCatalogPage from './pages/portal/PortalCatalogPage';
 import PortalProductDetailPage from './pages/portal/PortalProductDetailPage';
@@ -131,6 +132,7 @@ function App() {
             <Route path="notifications" element={<NotificationsPage />} />
             <Route path="integrations" element={<IntegrationsPage />} />
             <Route path="stripe" element={<StripeOnboardingPage />} />
+            <Route path="audit-trail" element={<AuditTrailPage />} />
           </Route>
           {/* Public portal routes */}
           <Route

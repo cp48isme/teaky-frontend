@@ -5,6 +5,7 @@ const SETTINGS_TABS = [
   { to: '/settings/notifications', label: 'Notifications' },
   { to: '/settings/integrations', label: 'Integrations' },
   { to: '/settings/stripe', label: 'Stripe' },
+  { to: '/settings/audit-trail', label: 'Audit Trail' },
 ];
 
 export default function SettingsLayout() {
