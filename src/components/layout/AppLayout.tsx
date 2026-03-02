@@ -1,13 +1,14 @@
 import type { ReactNode } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../hooks/useNotifications';
+import NotificationBell from './NotificationBell';
 import Sidebar from './Sidebar';
 
 export default function AppLayout({ children }: { children: ReactNode }) {
   const { logout } = useAuth();
   const navigate = useNavigate();
-  const { unreadCount } = useNotifications();
+  const { unreadCount, refresh } = useNotifications();
 
   const handleLogout = async () => {
     await logout();
@@ -22,20 +23,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           Teaky Print Portal
         </h1>
         <div className="flex items-center gap-4">
-          <Link
-            to="/settings/notifications"
-            className="relative text-gray-500 hover:text-gray-700"
-            title="Notifications"
-          >
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
-            </svg>
-            {unreadCount > 0 && (
-              <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
-                {unreadCount > 99 ? '99+' : unreadCount}
-              </span>
-            )}
-          </Link>
+          <NotificationBell unreadCount={unreadCount} onCountChange={refresh} />
           <button
             onClick={handleLogout}
             className="text-sm text-gray-500 hover:text-gray-700"

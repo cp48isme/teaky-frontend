@@ -1,5 +1,10 @@
 import { apiRequest } from './client';
-import type { Notification, UnreadCountResponse } from '../types/notification';
+import type {
+  Notification,
+  NotificationPreferencesResponse,
+  UnreadCountResponse,
+  UpdateNotificationPreferencesRequest,
+} from '../types/notification';
 
 export async function listNotifications(
   unreadOnly = false,
@@ -28,4 +33,22 @@ export async function markAllRead(): Promise<void> {
   return apiRequest<void>('/notifications/mark-all-read', {
     method: 'POST',
   });
+}
+
+export async function getPreferences(): Promise<NotificationPreferencesResponse> {
+  return apiRequest<NotificationPreferencesResponse>(
+    '/notifications/preferences',
+  );
+}
+
+export async function updatePreferences(
+  request: UpdateNotificationPreferencesRequest,
+): Promise<NotificationPreferencesResponse> {
+  return apiRequest<NotificationPreferencesResponse>(
+    '/notifications/preferences',
+    {
+      method: 'PUT',
+      body: JSON.stringify(request),
+    },
+  );
 }
