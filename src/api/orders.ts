@@ -1,5 +1,11 @@
 import { apiRequest } from './client';
-import type { Order, UpdateOrderRequest, UpdateOrderStatusRequest } from '../types/order';
+import type {
+  Order,
+  UpdateOrderRequest,
+  UpdateOrderStatusRequest,
+  UpdateProductionStatusRequest,
+  InvoiceData,
+} from '../types/order';
 
 // End-user portal orders
 export async function listMyOrders(slug: string): Promise<Order[]> {
@@ -53,4 +59,27 @@ export async function updateOrderStatus(
     method: 'PATCH',
     body: JSON.stringify(data),
   });
+}
+
+export async function updateProductionStatus(
+  orderId: string,
+  data: UpdateProductionStatusRequest,
+): Promise<Order> {
+  return apiRequest<Order>(`/orders/${orderId}/production-status`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function getOrderInvoice(orderId: string): Promise<InvoiceData> {
+  return apiRequest<InvoiceData>(`/orders/${orderId}/invoice`);
+}
+
+export async function downloadOrderInvoicePdf(orderId: string): Promise<Blob> {
+  const token = localStorage.getItem('access_token');
+  const response = await fetch(`/api/orders/${orderId}/invoice/pdf`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!response.ok) throw new Error('Failed to download invoice');
+  return response.blob();
 }

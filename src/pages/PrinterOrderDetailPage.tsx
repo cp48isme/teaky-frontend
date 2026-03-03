@@ -1,11 +1,21 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { getPrinterOrder, updateOrder, updateOrderStatus } from '../api/orders';
+import {
+  getPrinterOrder,
+  updateOrder,
+  updateOrderStatus,
+  updateProductionStatus,
+  downloadOrderInvoicePdf,
+} from '../api/orders';
 import { listProofs, submitProof, approveProof, rejectProof } from '../api/proofs';
 import { getOrderSyncStatus, manualPushOrder } from '../api/mis';
+import { getTrackingInfo } from '../api/shipping';
+import { syncOrderToQuickBooks } from '../api/quickbooks';
 import type { Order } from '../types/order';
+import { PRODUCTION_STATUSES } from '../types/order';
 import type { Proof } from '../types/proof';
 import type { OrderSyncStatus } from '../types/mis';
+import type { TrackingInfo } from '../types/shipping';
 import Spinner from '../components/ui/Spinner';
 
 const STATUS_COLORS: Record<string, string> = {
@@ -17,6 +27,17 @@ const STATUS_COLORS: Record<string, string> = {
   delivered: 'bg-teal-100 text-teal-800',
   completed: 'bg-gray-100 text-gray-800',
   cancelled: 'bg-red-100 text-red-800',
+};
+
+const PRODUCTION_STATUS_COLORS: Record<string, string> = {
+  received: 'bg-blue-50 text-blue-700',
+  in_prepress: 'bg-yellow-50 text-yellow-700',
+  printing: 'bg-purple-50 text-purple-700',
+  finishing: 'bg-orange-50 text-orange-700',
+  quality_check: 'bg-cyan-50 text-cyan-700',
+  ready_to_ship: 'bg-green-50 text-green-700',
+  shipped: 'bg-indigo-50 text-indigo-700',
+  picked_up: 'bg-teal-50 text-teal-700',
 };
 
 const VALID_TRANSITIONS: Record<string, string[]> = {
@@ -40,6 +61,19 @@ export default function PrinterOrderDetailPage() {
   const [syncStatus, setSyncStatus] = useState<OrderSyncStatus | null>(null);
   const [pushing, setPushing] = useState(false);
 
+  // Production status state
+  const [productionNotes, setProductionNotes] = useState('');
+  const [updatingProduction, setUpdatingProduction] = useState(false);
+
+  // Tracking info state
+  const [trackingInfo, setTrackingInfo] = useState<TrackingInfo | null>(null);
+
+  // QuickBooks sync state
+  const [syncingQB, setSyncingQB] = useState(false);
+
+  // Invoice state
+  const [downloadingInvoice, setDownloadingInvoice] = useState(false);
+
   // Proof submission state
   const [proofFileUrl, setProofFileUrl] = useState('');
   const [selectedLineItem, setSelectedLineItem] = useState('');
@@ -56,8 +90,12 @@ export default function PrinterOrderDetailPage() {
       setProofs(p);
       setTrackingNumber(o.tracking_number || '');
       setNotes(o.notes || '');
-      // Fetch sync status (best-effort, don't block on failure)
+      // Fetch sync status (best-effort)
       getOrderSyncStatus(orderId).then(setSyncStatus).catch(() => {});
+      // Fetch tracking info if tracking number exists
+      if (o.tracking_number) {
+        getTrackingInfo(o.tracking_number).then(setTrackingInfo).catch(() => {});
+      }
     } catch {
       // handled by loading state
     } finally {
@@ -79,6 +117,23 @@ export default function PrinterOrderDetailPage() {
     }
   };
 
+  const handleProductionStatusUpdate = async (newStatus: string) => {
+    if (!orderId) return;
+    setUpdatingProduction(true);
+    try {
+      const updated = await updateProductionStatus(orderId, {
+        production_status: newStatus,
+        notes: productionNotes || undefined,
+      });
+      setOrder(updated);
+      setProductionNotes('');
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to update production status');
+    } finally {
+      setUpdatingProduction(false);
+    }
+  };
+
   const handleSaveDetails = async () => {
     if (!orderId) return;
     try {
@@ -97,13 +152,47 @@ export default function PrinterOrderDetailPage() {
     setPushing(true);
     try {
       await manualPushOrder(orderId);
-      // Refresh sync status
       const status = await getOrderSyncStatus(orderId);
       setSyncStatus(status);
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to push to DocketManager');
+      alert(err instanceof Error ? err.message : 'Failed to push to MIS');
     } finally {
       setPushing(false);
+    }
+  };
+
+  const handleSyncToQuickBooks = async () => {
+    if (!orderId) return;
+    setSyncingQB(true);
+    try {
+      const result = await syncOrderToQuickBooks(orderId);
+      if (result.error) {
+        alert(`QuickBooks sync error: ${result.error}`);
+      } else {
+        alert(`Synced to QuickBooks (Invoice: ${result.qbo_invoice_id || 'pending'})`);
+      }
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to sync to QuickBooks');
+    } finally {
+      setSyncingQB(false);
+    }
+  };
+
+  const handleDownloadInvoice = async () => {
+    if (!orderId) return;
+    setDownloadingInvoice(true);
+    try {
+      const blob = await downloadOrderInvoicePdf(orderId);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `invoice-${order?.order_number || orderId}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to download invoice');
+    } finally {
+      setDownloadingInvoice(false);
     }
   };
 
@@ -158,6 +247,7 @@ export default function PrinterOrderDetailPage() {
   }
 
   const nextStatuses = VALID_TRANSITIONS[order.status] || [];
+  const showProductionStatus = ['approved', 'in_production'].includes(order.status);
 
   return (
     <div className="space-y-6">
@@ -167,13 +257,24 @@ export default function PrinterOrderDetailPage() {
 
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold text-gray-900">{order.order_number}</h2>
-        <span
-          className={`rounded-full px-3 py-1 text-xs font-medium ${
-            STATUS_COLORS[order.status] || 'bg-gray-100 text-gray-800'
-          }`}
-        >
-          {order.status.replace(/_/g, ' ')}
-        </span>
+        <div className="flex items-center gap-2">
+          {order.production_status && (
+            <span
+              className={`rounded-full px-3 py-1 text-xs font-medium ${
+                PRODUCTION_STATUS_COLORS[order.production_status] || 'bg-gray-100 text-gray-700'
+              }`}
+            >
+              {order.production_status.replace(/_/g, ' ')}
+            </span>
+          )}
+          <span
+            className={`rounded-full px-3 py-1 text-xs font-medium ${
+              STATUS_COLORS[order.status] || 'bg-gray-100 text-gray-800'
+            }`}
+          >
+            {order.status.replace(/_/g, ' ')}
+          </span>
+        </div>
       </div>
 
       {/* Status Actions */}
@@ -192,6 +293,44 @@ export default function PrinterOrderDetailPage() {
               {status.replace(/_/g, ' ')}
             </button>
           ))}
+        </div>
+      )}
+
+      {/* Production Status Update */}
+      {showProductionStatus && (
+        <div className="rounded-lg border bg-white p-4 space-y-3">
+          <h3 className="font-medium text-gray-900">Production Status</h3>
+          <div className="flex flex-wrap gap-1.5">
+            {PRODUCTION_STATUSES.map((status) => (
+              <button
+                key={status}
+                onClick={() => handleProductionStatusUpdate(status)}
+                disabled={updatingProduction || order.production_status === status}
+                className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors disabled:opacity-50 ${
+                  order.production_status === status
+                    ? 'bg-indigo-600 text-white'
+                    : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                {status.replace(/_/g, ' ')}
+              </button>
+            ))}
+          </div>
+          <div className="flex items-end gap-2">
+            <div className="flex-1">
+              <label className="block text-xs font-medium text-gray-500">Production Notes</label>
+              <input
+                type="text"
+                value={productionNotes}
+                onChange={(e) => setProductionNotes(e.target.value)}
+                placeholder="Optional notes about this status..."
+                className="mt-1 block w-full rounded border border-gray-300 px-2 py-1.5 text-sm"
+              />
+            </div>
+          </div>
+          {order.production_notes && (
+            <p className="text-xs text-gray-500">Last note: {order.production_notes}</p>
+          )}
         </div>
       )}
 
@@ -232,6 +371,12 @@ export default function PrinterOrderDetailPage() {
             <span>Shipping</span>
             <span>${Number(order.shipping_cost).toFixed(2)}</span>
           </div>
+          {Number(order.tax_amount) > 0 && (
+            <div className="flex justify-between text-gray-600">
+              <span>Tax</span>
+              <span>${Number(order.tax_amount).toFixed(2)}</span>
+            </div>
+          )}
           <div className="flex justify-between font-medium">
             <span>Total</span>
             <span>${Number(order.total).toFixed(2)}</span>
@@ -239,7 +384,7 @@ export default function PrinterOrderDetailPage() {
         </div>
       </div>
 
-      {/* Shipping & Tracking */}
+      {/* Shipping, Tracking & Invoice */}
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="rounded-lg border bg-white p-4">
           <h3 className="font-medium text-gray-900">Shipping Address</h3>
@@ -252,6 +397,20 @@ export default function PrinterOrderDetailPage() {
               {order.shipping_address.postal_code}
             </p>
           </div>
+
+          {/* Tracking Info */}
+          {trackingInfo && (
+            <div className="mt-4 border-t pt-3">
+              <h4 className="text-sm font-medium text-gray-900">Tracking</h4>
+              <div className="mt-1 text-xs text-gray-600 space-y-1">
+                <p>Status: <span className="font-medium">{trackingInfo.status}</span></p>
+                {trackingInfo.carrier && <p>Carrier: {trackingInfo.carrier}</p>}
+                {trackingInfo.estimated_delivery && (
+                  <p>Est. Delivery: {new Date(trackingInfo.estimated_delivery).toLocaleDateString()}</p>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="rounded-lg border bg-white p-4 space-y-3">
@@ -274,12 +433,28 @@ export default function PrinterOrderDetailPage() {
               className="mt-1 block w-full rounded border border-gray-300 px-2 py-1.5 text-sm"
             />
           </div>
-          <button
-            onClick={handleSaveDetails}
-            className="rounded bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-indigo-700"
-          >
-            Save
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleSaveDetails}
+              className="rounded bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-indigo-700"
+            >
+              Save
+            </button>
+            <button
+              onClick={handleDownloadInvoice}
+              disabled={downloadingInvoice}
+              className="rounded border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+            >
+              {downloadingInvoice ? 'Downloading...' : 'Download Invoice'}
+            </button>
+            <button
+              onClick={handleSyncToQuickBooks}
+              disabled={syncingQB}
+              className="rounded border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+            >
+              {syncingQB ? 'Syncing...' : 'Sync to QB'}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -289,7 +464,7 @@ export default function PrinterOrderDetailPage() {
           <h3 className="font-medium text-gray-900">MIS Sync</h3>
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <span className="text-gray-500">DocketManager ID:</span>{' '}
+              <span className="text-gray-500">External ID:</span>{' '}
               <span className="font-mono">{syncStatus.dm_order_id ?? 'Not synced'}</span>
             </div>
             <div>
@@ -326,7 +501,7 @@ export default function PrinterOrderDetailPage() {
             disabled={pushing}
             className="rounded bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
           >
-            {pushing ? 'Pushing...' : 'Push to DocketManager'}
+            {pushing ? 'Pushing...' : 'Push to MIS'}
           </button>
         </div>
       )}
