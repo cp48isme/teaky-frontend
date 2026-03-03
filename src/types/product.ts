@@ -22,6 +22,7 @@ export interface Product {
   name: string;
   description: string | null;
   category: string;
+  category_id: string | null;
   sizes: SizeOption[];
   colors: ColorOption[];
   pricing_tiers: PricingTier[];
@@ -55,6 +56,7 @@ export interface UpdateProductRequest {
   sku?: string;
   description?: string;
   category?: string;
+  category_id?: string | null;
   sizes?: SizeOption[];
   colors?: ColorOption[];
   pricing_tiers?: PricingTier[];
