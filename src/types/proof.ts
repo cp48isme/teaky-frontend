@@ -11,6 +11,8 @@ export interface Proof {
   reviewed_by: string | null;
   reviewed_at: string | null;
   rejection_reason: string | null;
+  signature_data: string | null;
+  approved_by_name: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -20,6 +22,11 @@ export interface SubmitProofRequest {
   file_url: string;
   thumbnail_url?: string;
   specs?: Record<string, unknown>;
+}
+
+export interface ApproveProofRequest {
+  signature_data?: string;
+  approved_by_name?: string;
 }
 
 export interface RejectProofRequest {

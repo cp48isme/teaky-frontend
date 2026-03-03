@@ -1,5 +1,5 @@
 import { apiRequest } from './client';
-import type { Proof, SubmitProofRequest, RejectProofRequest } from '../types/proof';
+import type { Proof, SubmitProofRequest, ApproveProofRequest, RejectProofRequest } from '../types/proof';
 
 export async function listProofs(orderId: string): Promise<Proof[]> {
   return apiRequest<Proof[]>(`/orders/${orderId}/proofs`);
@@ -19,8 +19,14 @@ export async function getProof(proofId: string): Promise<Proof> {
   return apiRequest<Proof>(`/proofs/${proofId}`);
 }
 
-export async function approveProof(proofId: string): Promise<Proof> {
-  return apiRequest<Proof>(`/proofs/${proofId}/approve`, { method: 'POST' });
+export async function approveProof(
+  proofId: string,
+  data?: ApproveProofRequest,
+): Promise<Proof> {
+  return apiRequest<Proof>(`/proofs/${proofId}/approve`, {
+    method: 'POST',
+    body: data ? JSON.stringify(data) : undefined,
+  });
 }
 
 export async function rejectProof(

@@ -275,9 +275,14 @@ export default function PrinterOrderDetailPage() {
     }
   };
 
-  const handleApproveProof = async (proofId: string, _signatureData?: string) => {
+  const handleApproveProof = async (proofId: string, signatureData?: string) => {
     try {
-      await approveProof(proofId);
+      await approveProof(
+        proofId,
+        signatureData
+          ? { signature_data: signatureData }
+          : undefined,
+      );
       setSigningProofId(null);
       await fetchData();
     } catch (err) {

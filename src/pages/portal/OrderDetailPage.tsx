@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { getMyOrder } from '../../api/orders';
+import { useCart } from '../../contexts/CartContext';
 import type { Order } from '../../types/order';
 import Spinner from '../../components/ui/Spinner';
 
@@ -25,10 +26,15 @@ const STATUS_COLORS: Record<string, string> = {
   cancelled: 'bg-red-100 text-red-800',
 };
 
+const REORDERABLE = new Set(['completed', 'delivered']);
+
 export default function OrderDetailPage() {
   const { slug, orderId } = useParams<{ slug: string; orderId: string }>();
+  const { addItem } = useCart();
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
+  const [reordering, setReordering] = useState(false);
+  const [reordered, setReordered] = useState(false);
 
   useEffect(() => {
     if (!slug || !orderId) return;
@@ -81,6 +87,50 @@ export default function OrderDetailPage() {
           </span>
         </div>
       </div>
+
+      {/* Reorder Button */}
+      {REORDERABLE.has(order.status) && (
+        <div className="mt-4">
+          {reordered ? (
+            <div className="flex items-center gap-3 rounded-md border border-green-200 bg-green-50 px-4 py-3">
+              <span className="text-sm text-green-700">Items added to your cart!</span>
+              <Link
+                to={`/p/${slug}/cart`}
+                className="text-sm font-medium text-indigo-600 hover:text-indigo-800"
+              >
+                View Cart
+              </Link>
+            </div>
+          ) : (
+            <button
+              onClick={async () => {
+                if (!order) return;
+                setReordering(true);
+                try {
+                  for (const item of order.line_items) {
+                    await addItem({
+                      product_id: item.product_id,
+                      quantity: item.quantity,
+                      size: item.size || undefined,
+                      color: item.color || undefined,
+                      unit_price: Number(item.unit_price),
+                    });
+                  }
+                  setReordered(true);
+                } catch {
+                  alert('Failed to add items to cart');
+                } finally {
+                  setReordering(false);
+                }
+              }}
+              disabled={reordering}
+              className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+            >
+              {reordering ? 'Adding to Cart...' : 'Reorder'}
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Status Timeline */}
       {order.status !== 'cancelled' && (
