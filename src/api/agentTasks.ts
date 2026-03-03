@@ -1,5 +1,5 @@
 import { apiRequest } from './client';
-import type { AgentTask, CreateAgentTaskRequest, EscalateAgentTaskRequest } from '../types/agent';
+import type { AgentTask, AgentControlMetrics, CreateAgentTaskRequest, EscalateAgentTaskRequest } from '../types/agent';
 import type { Message } from '../types/message';
 
 export async function listAgentTasks(
@@ -62,6 +62,26 @@ export async function getTaskMessages(
   offset = 0,
 ): Promise<Message[]> {
   return apiRequest<Message[]>(`/agent-tasks/${taskId}/messages?limit=${limit}&offset=${offset}`);
+}
+
+export async function getAgentMetrics(): Promise<AgentControlMetrics> {
+  return apiRequest<AgentControlMetrics>('/agent-control/metrics');
+}
+
+export async function sendTaskMessage(
+  taskId: string,
+  body: string,
+  channel: string,
+  recipientPhone?: string,
+): Promise<Message> {
+  return apiRequest<Message>(`/agent-tasks/${taskId}/messages`, {
+    method: 'POST',
+    body: JSON.stringify({
+      channel,
+      body,
+      recipient_phone: recipientPhone || undefined,
+    }),
+  });
 }
 
 export async function listMessages(

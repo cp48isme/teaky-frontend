@@ -7,6 +7,7 @@ import {
   resumeAgentTask,
   completeAgentTask,
   escalateAgentTask,
+  sendTaskMessage,
 } from '../api/agentTasks';
 import type { AgentTask } from '../types/agent';
 import type { Message } from '../types/message';
@@ -29,6 +30,8 @@ export default function AgentTaskDetailPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
   const [acting, setActing] = useState(false);
+  const [newMessage, setNewMessage] = useState('');
+  const [sending, setSending] = useState(false);
 
   const loadData = async () => {
     if (!taskId) return;
@@ -96,6 +99,28 @@ export default function AgentTaskDetailPage() {
       setTask(updated);
     } finally {
       setActing(false);
+    }
+  };
+
+  const handleSendMessage = async () => {
+    if (!taskId || !newMessage.trim() || !task) return;
+    setSending(true);
+    try {
+      const channel = task.channel || 'sms';
+      await sendTaskMessage(
+        taskId,
+        newMessage.trim(),
+        channel,
+        task.external_ref || undefined,
+      );
+      setNewMessage('');
+      // Refresh messages
+      const msgs = await getTaskMessages(taskId);
+      setMessages(msgs);
+    } catch {
+      alert('Failed to send message');
+    } finally {
+      setSending(false);
     }
   };
 
@@ -298,6 +323,33 @@ export default function AgentTaskDetailPage() {
             ))
           )}
         </div>
+        {/* Message compose */}
+        {['in_progress', 'awaiting_human', 'escalated'].includes(task.status) && (
+          <div className="border-t border-gray-200 px-4 py-3">
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSendMessage();
+                  }
+                }}
+                placeholder="Type a message..."
+                className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              />
+              <button
+                onClick={handleSendMessage}
+                disabled={sending || !newMessage.trim()}
+                className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+              >
+                {sending ? 'Sending...' : 'Send'}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
