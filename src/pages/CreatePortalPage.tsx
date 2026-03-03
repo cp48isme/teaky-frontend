@@ -54,6 +54,7 @@ export default function CreatePortalPage() {
     approvalWorkflow: 'none',
     selfRegistration: false,
     requirePo: false,
+    customDomain: '',
   });
 
   const handleBrandConfigUpdate = (config: BrandConfig) => {
@@ -93,7 +94,7 @@ export default function CreatePortalPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      <div className="max-w-3xl mx-auto w-full px-4 py-8 flex-1">
+      <div className={`${currentStep === 4 ? 'max-w-5xl' : 'max-w-3xl'} mx-auto w-full px-4 py-8 flex-1 transition-all`}>
         <h1 className="text-2xl font-bold text-gray-900 mb-8">Create Portal</h1>
 
         {/* Step indicator */}

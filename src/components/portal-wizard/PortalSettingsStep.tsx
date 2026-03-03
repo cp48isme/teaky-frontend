@@ -4,6 +4,7 @@ export interface PortalSettingsData {
   approvalWorkflow: string;
   selfRegistration: boolean;
   requirePo: boolean;
+  customDomain: string;
 }
 
 interface Props {
@@ -38,6 +39,29 @@ export default function PortalSettingsStep({ slug, data, onUpdate, onNext, onBac
             (also accessible at teaky.com/p/{slug})
           </span>
         </p>
+      </div>
+
+      {/* Custom Domain */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700">Custom Domain</label>
+        <p className="mt-0.5 text-xs text-gray-500">
+          Use your own domain (e.g. orders.acme.com). You'll need to add a CNAME record pointing to teaky.com.
+        </p>
+        <input
+          type="text"
+          value={data.customDomain}
+          onChange={(e) => onUpdate({ customDomain: e.target.value })}
+          placeholder="orders.acme.com"
+          className="mt-2 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm font-mono focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+        />
+        {data.customDomain && (
+          <div className="mt-2 rounded-md border border-amber-200 bg-amber-50 p-3">
+            <p className="text-xs font-medium text-amber-800">DNS Configuration Required</p>
+            <p className="mt-1 text-xs text-amber-700">
+              Add a CNAME record for <span className="font-mono">{data.customDomain}</span> pointing to <span className="font-mono">teaky.com</span>
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Approval Workflow */}

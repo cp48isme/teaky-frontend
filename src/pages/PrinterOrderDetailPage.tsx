@@ -20,7 +20,9 @@ import { PRODUCTION_STATUSES } from '../types/order';
 import type { Proof } from '../types/proof';
 import type { OrderSyncStatus } from '../types/mis';
 import type { TrackingInfo } from '../types/shipping';
+import SignatureCapture from '../components/proofs/SignatureCapture';
 import Spinner from '../components/ui/Spinner';
+import OrderFilesSection from '../components/orders/OrderFilesSection';
 
 const STATUS_COLORS: Record<string, string> = {
   submitted: 'bg-blue-100 text-blue-800',
@@ -86,6 +88,7 @@ export default function PrinterOrderDetailPage() {
   const [proofFileUrl, setProofFileUrl] = useState('');
   const [selectedLineItem, setSelectedLineItem] = useState('');
   const [rejectReason, setRejectReason] = useState('');
+  const [signingProofId, setSigningProofId] = useState<string | null>(null);
 
   // Order files state
   const [orderFiles, setOrderFiles] = useState<OrderFile[]>([]);
@@ -272,9 +275,10 @@ export default function PrinterOrderDetailPage() {
     }
   };
 
-  const handleApproveProof = async (proofId: string) => {
+  const handleApproveProof = async (proofId: string, _signatureData?: string) => {
     try {
       await approveProof(proofId);
+      setSigningProofId(null);
       await fetchData();
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to approve');
@@ -747,10 +751,10 @@ export default function PrinterOrderDetailPage() {
                     {proof.status === 'pending' && (
                       <div className="flex items-center gap-2">
                         <button
-                          onClick={() => handleApproveProof(proof.id)}
+                          onClick={() => setSigningProofId(signingProofId === proof.id ? null : proof.id)}
                           className="rounded bg-green-600 px-2 py-1 text-xs text-white hover:bg-green-700"
                         >
-                          Approve
+                          {signingProofId === proof.id ? 'Cancel Approve' : 'Approve with Signature'}
                         </button>
                         <div className="flex gap-1">
                           <input
@@ -770,12 +774,23 @@ export default function PrinterOrderDetailPage() {
                       </div>
                     )}
                   </div>
+                  {/* Signature Capture for Approval */}
+                  {proof.status === 'pending' && signingProofId === proof.id && (
+                    <div className="mt-3 border-t pt-3">
+                      <SignatureCapture
+                        onSubmit={(signatureData) => handleApproveProof(proof.id, signatureData)}
+                      />
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
           )}
         </div>
       )}
+
+      {/* Order Files */}
+      <OrderFilesSection orderId={orderId!} />
     </div>
   );
 }

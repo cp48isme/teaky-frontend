@@ -48,7 +48,7 @@ export default function PrinterOrdersPage() {
         <h2 className="text-xl font-bold text-gray-900">Orders</h2>
         <Link
           to="/orders/new"
-          className="rounded bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-700"
+          className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
         >
           New Order
         </Link>

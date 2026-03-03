@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { uploadFile } from '../../api/uploads';
+import SpreadsheetImport from './SpreadsheetImport';
 import type {
   CreateProductRequest,
   SizeOption,
@@ -43,6 +44,7 @@ function emptyProduct(): WizardProduct {
 export default function ProductAddStep({ products, onUpdate, onNext, onBack }: Props) {
   const [editing, setEditing] = useState<WizardProduct | null>(null);
   const [showForm, setShowForm] = useState(products.length === 0);
+  const [showImport, setShowImport] = useState(false);
 
   const handleAddNew = () => {
     setEditing(emptyProduct());
@@ -73,6 +75,11 @@ export default function ProductAddStep({ products, onUpdate, onNext, onBack }: P
   const handleCancel = () => {
     setEditing(null);
     setShowForm(false);
+  };
+
+  const handleCsvImport = (imported: WizardProduct[]) => {
+    onUpdate([...products, ...imported]);
+    setShowImport(false);
   };
 
   const handleSubmit = (e: FormEvent) => {
@@ -136,16 +143,33 @@ export default function ProductAddStep({ products, onUpdate, onNext, onBack }: P
         />
       )}
 
+      {/* CSV Import Modal */}
+      {showImport && (
+        <SpreadsheetImport
+          onImport={handleCsvImport}
+          onCancel={() => setShowImport(false)}
+        />
+      )}
+
       {/* Actions */}
       {!showForm && (
         <div className="space-y-4">
-          <button
-            type="button"
-            onClick={handleAddNew}
-            className="inline-flex items-center gap-1 rounded-md border border-dashed border-indigo-300 bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-700 hover:bg-indigo-100"
-          >
-            + Add Product
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={handleAddNew}
+              className="inline-flex items-center gap-1 rounded-md border border-dashed border-indigo-300 bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-700 hover:bg-indigo-100"
+            >
+              + Add Product
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowImport(true)}
+              className="inline-flex items-center gap-1 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              Import from CSV
+            </button>
+          </div>
 
           <form onSubmit={handleSubmit}>
             <div className="flex justify-between">

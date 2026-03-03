@@ -36,6 +36,7 @@ import MyOrdersPage from './pages/portal/MyOrdersPage';
 import MyQuotesPage from './pages/portal/MyQuotesPage';
 import OrderDetailPage from './pages/portal/OrderDetailPage';
 import QuotesPage from './pages/QuotesPage';
+import MessageCenterPage from './pages/MessageCenterPage';
 
 function App() {
   return (
@@ -128,6 +129,17 @@ function App() {
               <ProtectedRoute>
                 <AppLayout>
                   <PrinterOrderDetailPage />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          {/* Messages */}
+          <Route
+            path="/messages"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <MessageCenterPage />
                 </AppLayout>
               </ProtectedRoute>
             }
