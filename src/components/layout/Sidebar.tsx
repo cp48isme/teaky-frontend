@@ -7,6 +7,7 @@ const NAV_ITEMS = [
   { to: '/quotes', label: 'Quotes', enabled: true },
   { to: '/analytics', label: 'Analytics', enabled: true },
   { to: '/agents', label: 'Agents', enabled: true },
+  { to: '/messages', label: 'Messages', enabled: true },
   { to: '#', label: 'Equipment', enabled: false },
   { to: '/settings/team', label: 'Settings', enabled: true, matchPrefix: '/settings' },
 ];

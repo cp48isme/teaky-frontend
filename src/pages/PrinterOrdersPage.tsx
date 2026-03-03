@@ -42,7 +42,15 @@ export default function PrinterOrdersPage() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-bold text-gray-900">Orders</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-bold text-gray-900">Orders</h2>
+        <Link
+          to="/orders/create-on-behalf"
+          className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+        >
+          Create Order
+        </Link>
+      </div>
 
       {/* Status Filter */}
       <div className="flex flex-wrap gap-2">

@@ -35,6 +35,8 @@ import MyOrdersPage from './pages/portal/MyOrdersPage';
 import MyQuotesPage from './pages/portal/MyQuotesPage';
 import OrderDetailPage from './pages/portal/OrderDetailPage';
 import QuotesPage from './pages/QuotesPage';
+import StaffOrderPage from './pages/StaffOrderPage';
+import MessageCenterPage from './pages/MessageCenterPage';
 
 function App() {
   return (
@@ -112,11 +114,32 @@ function App() {
             }
           />
           <Route
+            path="/orders/create-on-behalf"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <StaffOrderPage />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/orders/:orderId"
             element={
               <ProtectedRoute>
                 <AppLayout>
                   <PrinterOrderDetailPage />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          {/* Messages */}
+          <Route
+            path="/messages"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <MessageCenterPage />
                 </AppLayout>
               </ProtectedRoute>
             }
