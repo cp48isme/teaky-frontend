@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { listAgentTasks } from '../api/agentTasks';
-import type { AgentTask } from '../types/agent';
+import { listAgentTasks, getAgentMetrics } from '../api/agentTasks';
+import type { AgentTask, AgentControlMetrics } from '../types/agent';
 import Spinner from '../components/ui/Spinner';
 
 const STATUS_COLORS: Record<string, string> = {
@@ -27,8 +27,14 @@ const STATUS_OPTIONS = [
 export default function AgentControlCenterPage() {
   const navigate = useNavigate();
   const [tasks, setTasks] = useState<AgentTask[]>([]);
+  const [metrics, setMetrics] = useState<AgentControlMetrics | null>(null);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('');
+
+  useEffect(() => {
+    // Fetch metrics once on mount
+    getAgentMetrics().then(setMetrics).catch(() => {});
+  }, []);
 
   useEffect(() => {
     const load = async () => {
@@ -53,9 +59,12 @@ export default function AgentControlCenterPage() {
     );
   }
 
-  const escalatedCount = tasks.filter(
-    (t) => t.status === 'escalated' || t.status === 'awaiting_human'
-  ).length;
+  const escalatedCount = metrics
+    ? metrics.escalation_count
+    : tasks.filter((t) => t.status === 'escalated' || t.status === 'awaiting_human').length;
+
+  const statusCount = (s: string) =>
+    metrics?.tasks_by_status.find((x) => x.status === s)?.count ?? 0;
 
   return (
     <div className="space-y-6">
@@ -74,27 +83,43 @@ export default function AgentControlCenterPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
         <div className="rounded-lg border border-gray-200 bg-white p-4">
           <p className="text-sm text-gray-500">Total Tasks</p>
-          <p className="mt-1 text-2xl font-bold text-gray-900">{tasks.length}</p>
+          <p className="mt-1 text-2xl font-bold text-gray-900">
+            {metrics?.total_tasks ?? tasks.length}
+          </p>
         </div>
         <div className="rounded-lg border border-gray-200 bg-white p-4">
           <p className="text-sm text-gray-500">Active</p>
           <p className="mt-1 text-2xl font-bold text-blue-600">
-            {tasks.filter((t) => t.status === 'in_progress').length}
+            {statusCount('in_progress')}
           </p>
         </div>
         <div className="rounded-lg border border-gray-200 bg-white p-4">
           <p className="text-sm text-gray-500">Escalated</p>
           <p className="mt-1 text-2xl font-bold text-red-600">
-            {tasks.filter((t) => t.status === 'escalated').length}
+            {statusCount('escalated')}
           </p>
         </div>
         <div className="rounded-lg border border-gray-200 bg-white p-4">
           <p className="text-sm text-gray-500">Completed</p>
           <p className="mt-1 text-2xl font-bold text-green-600">
-            {tasks.filter((t) => t.status === 'completed').length}
+            {statusCount('completed')}
+          </p>
+        </div>
+        <div className="rounded-lg border border-gray-200 bg-white p-4">
+          <p className="text-sm text-gray-500">Escalation Rate</p>
+          <p className="mt-1 text-2xl font-bold text-orange-600">
+            {metrics ? `${(metrics.escalation_rate * 100).toFixed(0)}%` : '—'}
+          </p>
+        </div>
+        <div className="rounded-lg border border-gray-200 bg-white p-4">
+          <p className="text-sm text-gray-500">Avg Resolution</p>
+          <p className="mt-1 text-2xl font-bold text-gray-700">
+            {metrics?.avg_resolution_hours != null
+              ? `${metrics.avg_resolution_hours.toFixed(1)}h`
+              : '—'}
           </p>
         </div>
       </div>

@@ -41,3 +41,16 @@ export interface EscalateAgentTaskRequest {
 export interface TakeoverAgentTaskRequest {
   notes?: string;
 }
+
+export interface AgentStatusCount {
+  status: string;
+  count: number;
+}
+
+export interface AgentControlMetrics {
+  total_tasks: number;
+  tasks_by_status: AgentStatusCount[];
+  escalation_count: number;
+  escalation_rate: number;
+  avg_resolution_hours: number | null;
+}

@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { getMyOrder } from '../../api/orders';
+import { getTrackingInfo } from '../../api/shipping';
 import { useCart } from '../../contexts/CartContext';
 import type { Order } from '../../types/order';
+import type { TrackingInfo } from '../../types/shipping';
 import Spinner from '../../components/ui/Spinner';
 
 const STATUS_STEPS = [
@@ -35,11 +37,17 @@ export default function OrderDetailPage() {
   const [loading, setLoading] = useState(true);
   const [reordering, setReordering] = useState(false);
   const [reordered, setReordered] = useState(false);
+  const [trackingData, setTrackingData] = useState<TrackingInfo | null>(null);
 
   useEffect(() => {
     if (!slug || !orderId) return;
     getMyOrder(slug, orderId)
-      .then(setOrder)
+      .then((o) => {
+        setOrder(o);
+        if (o.tracking_number) {
+          getTrackingInfo(o.tracking_number).then(setTrackingData).catch(() => {});
+        }
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [slug, orderId]);
@@ -217,9 +225,21 @@ export default function OrderDetailPage() {
             </div>
           </div>
           {order.tracking_number && (
-            <p className="mt-3 text-xs text-gray-500">
-              Tracking: {order.tracking_number}
-            </p>
+            <div className="mt-3 border-t pt-3">
+              <h4 className="text-sm font-medium text-gray-900">Tracking</h4>
+              <p className="mt-1 text-xs text-gray-500">
+                {order.tracking_number}
+              </p>
+              {trackingData && (
+                <div className="mt-1 text-xs text-gray-600 space-y-1">
+                  <p>Status: <span className="font-medium">{trackingData.status}</span></p>
+                  {trackingData.carrier && <p>Carrier: {trackingData.carrier}</p>}
+                  {trackingData.estimated_delivery && (
+                    <p>Est. Delivery: {new Date(trackingData.estimated_delivery).toLocaleDateString()}</p>
+                  )}
+                </div>
+              )}
+            </div>
           )}
         </div>
       </div>
