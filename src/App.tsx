@@ -15,6 +15,8 @@ import PortalDetailPage from './pages/PortalDetailPage';
 import ProductManagementPage from './pages/ProductManagementPage';
 import PrinterOrdersPage from './pages/PrinterOrdersPage';
 import PrinterOrderDetailPage from './pages/PrinterOrderDetailPage';
+import AgentControlCenterPage from './pages/AgentControlCenterPage';
+import AgentTaskDetailPage from './pages/AgentTaskDetailPage';
 import StripeOnboardingPage from './pages/StripeOnboardingPage';
 import AcceptInvitationPage from './pages/AcceptInvitationPage';
 import SettingsLayout from './pages/settings/SettingsLayout';
@@ -111,6 +113,27 @@ function App() {
               <ProtectedRoute>
                 <AppLayout>
                   <PrinterOrderDetailPage />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          {/* Agent Control Center */}
+          <Route
+            path="/agents"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <AgentControlCenterPage />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/agents/:taskId"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <AgentTaskDetailPage />
                 </AppLayout>
               </ProtectedRoute>
             }
