@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { getPublicProduct } from '../../api/portals';
 import { checkSafeOrder } from '../../api/orders';
+import { createPortalQuote } from '../../api/quotes';
 import { usePortalContext } from '../../contexts/PortalContext';
 import { useCart } from '../../contexts/CartContext';
 import { isAuthenticated } from '../../api/client';
@@ -21,6 +22,11 @@ export default function PortalProductDetailPage() {
   const [adding, setAdding] = useState(false);
   const [added, setAdded] = useState(false);
   const [isSafeOrder, setIsSafeOrder] = useState(false);
+  const [showQuoteModal, setShowQuoteModal] = useState(false);
+  const [quoteDescription, setQuoteDescription] = useState('');
+  const [quoteDesiredDate, setQuoteDesiredDate] = useState('');
+  const [quoteSubmitting, setQuoteSubmitting] = useState(false);
+  const [quoteSubmitted, setQuoteSubmitted] = useState(false);
 
   useEffect(() => {
     if (!slug || !productId) return;
@@ -275,6 +281,119 @@ export default function PortalProductDetailPage() {
               >
                 {adding ? 'Adding...' : added ? 'Added to Cart!' : 'Add to Cart'}
               </button>
+
+              <button
+                onClick={() => setShowQuoteModal(true)}
+                className="w-full rounded-md border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+              >
+                Request a Quote
+              </button>
+            </div>
+          )}
+
+          {/* Request a Quote — available even without pricing tiers */}
+          {isAuthenticated() && product.pricing_tiers.length === 0 && (
+            <div className="border-t pt-4">
+              <button
+                onClick={() => setShowQuoteModal(true)}
+                className="w-full rounded-md px-4 py-2.5 text-sm font-medium text-white transition-colors"
+                style={{ backgroundColor: primaryColor }}
+              >
+                Request a Quote
+              </button>
+            </div>
+          )}
+
+          {/* Quote Request Modal */}
+          {showQuoteModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+              <div className="mx-4 w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
+                <h3 className="text-lg font-bold text-gray-900">Request a Quote</h3>
+                <p className="mt-1 text-sm text-gray-500">
+                  for {product.name} — Qty: {quantity}
+                  {selectedSize ? `, Size: ${selectedSize}` : ''}
+                  {selectedColor ? `, Color: ${selectedColor}` : ''}
+                </p>
+
+                {quoteSubmitted ? (
+                  <div className="mt-4 space-y-3">
+                    <p className="text-sm text-green-700">
+                      Quote request submitted! We&apos;ll get back to you soon.
+                    </p>
+                    <button
+                      onClick={() => { setShowQuoteModal(false); setQuoteSubmitted(false); }}
+                      className="w-full rounded-md bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200"
+                    >
+                      Close
+                    </button>
+                  </div>
+                ) : (
+                  <form
+                    onSubmit={async (e) => {
+                      e.preventDefault();
+                      if (!slug) return;
+                      setQuoteSubmitting(true);
+                      try {
+                        await createPortalQuote(slug, {
+                          description: quoteDescription || `Quote for ${product.name}`,
+                          product_id: product.id,
+                          quantity,
+                          desired_date: quoteDesiredDate || undefined,
+                        });
+                        setQuoteSubmitted(true);
+                        setQuoteDescription('');
+                        setQuoteDesiredDate('');
+                      } catch {
+                        // best-effort
+                      } finally {
+                        setQuoteSubmitting(false);
+                      }
+                    }}
+                    className="mt-4 space-y-3"
+                  >
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Additional details
+                      </label>
+                      <textarea
+                        value={quoteDescription}
+                        onChange={(e) => setQuoteDescription(e.target.value)}
+                        rows={3}
+                        placeholder="Any special requirements..."
+                        className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Desired delivery date
+                      </label>
+                      <input
+                        type="date"
+                        value={quoteDesiredDate}
+                        onChange={(e) => setQuoteDesiredDate(e.target.value)}
+                        className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+                      />
+                    </div>
+                    <div className="flex gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setShowQuoteModal(false)}
+                        className="flex-1 rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={quoteSubmitting}
+                        className="flex-1 rounded-md px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+                        style={{ backgroundColor: primaryColor }}
+                      >
+                        {quoteSubmitting ? 'Submitting...' : 'Submit Quote Request'}
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </div>
             </div>
           )}
         </div>

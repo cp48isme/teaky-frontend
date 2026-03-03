@@ -1,13 +1,15 @@
-import { useState, useEffect, type FormEvent } from 'react';
+import { Fragment, useState, useEffect, type FormEvent } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { getPortal } from '../api/portals';
 import { listProducts, createProduct, updateProduct, deleteProduct } from '../api/products';
+import { listVariants, createVariant, deleteVariant } from '../api/product-variants';
 import { uploadFile } from '../api/uploads';
 import type { Portal } from '../types/portal';
 import type {
   Product,
   CreateProductRequest,
 } from '../types/product';
+import type { ProductVariant, CreateVariantRequest } from '../types/product-variant';
 import Spinner from '../components/ui/Spinner';
 
 const CATEGORIES = [
@@ -28,6 +30,39 @@ export default function ProductManagementPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [dmExternalId, setDmExternalId] = useState('');
+  const [expandedVariantId, setExpandedVariantId] = useState<string | null>(null);
+  const [variants, setVariants] = useState<ProductVariant[]>([]);
+  const [variantLoading, setVariantLoading] = useState(false);
+
+  const toggleVariants = async (productId: string) => {
+    if (expandedVariantId === productId) {
+      setExpandedVariantId(null);
+      return;
+    }
+    if (!portalId) return;
+    setVariantLoading(true);
+    setExpandedVariantId(productId);
+    try {
+      const v = await listVariants(portalId, productId);
+      setVariants(v);
+    } catch {
+      setVariants([]);
+    } finally {
+      setVariantLoading(false);
+    }
+  };
+
+  const handleAddVariant = async (productId: string, data: CreateVariantRequest) => {
+    if (!portalId) return;
+    const v = await createVariant(portalId, productId, data);
+    setVariants((prev) => [...prev, v]);
+  };
+
+  const handleDeleteVariant = async (productId: string, variantId: string) => {
+    if (!portalId) return;
+    await deleteVariant(portalId, productId, variantId);
+    setVariants((prev) => prev.filter((v) => v.id !== variantId));
+  };
 
   // Form state
   const [formData, setFormData] = useState<CreateProductRequest>({
@@ -190,61 +225,81 @@ export default function ProductManagementPage() {
             </thead>
             <tbody className="divide-y divide-gray-200 bg-white">
               {products.map((product) => (
-                <tr key={product.id}>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-3">
-                      {product.mockup_urls.length > 0 ? (
-                        <img
-                          src={product.mockup_urls[0]}
-                          alt=""
-                          className="h-10 w-10 rounded border object-cover"
-                        />
-                      ) : (
-                        <div className="h-10 w-10 rounded border bg-gray-100" />
-                      )}
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">{product.name}</p>
-                        {product.sizes.length > 0 && (
-                          <p className="text-xs text-gray-500">
-                            {product.sizes.map((s) => s.label).join(', ')}
-                          </p>
+                <Fragment key={product.id}>
+                  <tr>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        {product.mockup_urls.length > 0 ? (
+                          <img
+                            src={product.mockup_urls[0]}
+                            alt=""
+                            className="h-10 w-10 rounded border object-cover"
+                          />
+                        ) : (
+                          <div className="h-10 w-10 rounded border bg-gray-100" />
                         )}
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">{product.name}</p>
+                          {product.sizes.length > 0 && (
+                            <p className="text-xs text-gray-500">
+                              {product.sizes.map((s) => s.label).join(', ')}
+                            </p>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-sm text-gray-500 font-mono">{product.sku ?? '-'}</td>
-                  <td className="px-4 py-3 text-sm text-gray-500">
-                    {CATEGORIES.find((c) => c.value === product.category)?.label ?? product.category}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span
-                      className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
-                        product.status === 'active'
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-gray-100 text-gray-800'
-                      }`}
-                    >
-                      {product.status}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-sm text-gray-500 font-mono">
-                    {product.dm_external_id ?? '-'}
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <button
-                      onClick={() => handleEdit(product)}
-                      className="text-sm text-indigo-600 hover:text-indigo-800 mr-3"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDelete(product.id)}
-                      className="text-sm text-red-600 hover:text-red-800"
-                    >
-                      Delete
-                    </button>
-                  </td>
-                </tr>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-500 font-mono">{product.sku ?? '-'}</td>
+                    <td className="px-4 py-3 text-sm text-gray-500">
+                      {CATEGORIES.find((c) => c.value === product.category)?.label ?? product.category}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span
+                        className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
+                          product.status === 'active'
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-gray-100 text-gray-800'
+                        }`}
+                      >
+                        {product.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-500 font-mono">
+                      {product.dm_external_id ?? '-'}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <button
+                        onClick={() => toggleVariants(product.id)}
+                        className="text-sm text-purple-600 hover:text-purple-800 mr-3"
+                      >
+                        Variants
+                      </button>
+                      <button
+                        onClick={() => handleEdit(product)}
+                        className="text-sm text-indigo-600 hover:text-indigo-800 mr-3"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDelete(product.id)}
+                        className="text-sm text-red-600 hover:text-red-800"
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                  {expandedVariantId === product.id && (
+                    <tr>
+                      <td colSpan={6} className="bg-gray-50 px-4 py-4">
+                        <VariantManager
+                          variants={variants}
+                          loading={variantLoading}
+                          onAdd={(data) => handleAddVariant(product.id, data)}
+                          onDelete={(variantId) => handleDeleteVariant(product.id, variantId)}
+                        />
+                      </td>
+                    </tr>
+                  )}
+                </Fragment>
               ))}
             </tbody>
           </table>
@@ -507,5 +562,130 @@ function InlineProductForm({ data, onChange, onSave, onCancel, saving, isEditing
         </button>
       </div>
     </form>
+  );
+}
+
+/* ---- Variant Manager ---- */
+
+interface VariantManagerProps {
+  variants: ProductVariant[];
+  loading: boolean;
+  onAdd: (data: CreateVariantRequest) => Promise<void>;
+  onDelete: (variantId: string) => Promise<void>;
+}
+
+function VariantManager({ variants, loading, onAdd, onDelete }: VariantManagerProps) {
+  const [adding, setAdding] = useState(false);
+  const [newSize, setNewSize] = useState('');
+  const [newColor, setNewColor] = useState('');
+  const [newSku, setNewSku] = useState('');
+  const [newPrice, setNewPrice] = useState('');
+  const [newStock, setNewStock] = useState('');
+
+  const handleAdd = async () => {
+    if (!newSize && !newColor) return;
+    setAdding(true);
+    try {
+      await onAdd({
+        size: newSize || undefined,
+        color: newColor || undefined,
+        sku: newSku || undefined,
+        price_override: newPrice ? parseFloat(newPrice) : undefined,
+        stock_quantity: newStock ? parseInt(newStock) : undefined,
+      });
+      setNewSize('');
+      setNewColor('');
+      setNewSku('');
+      setNewPrice('');
+      setNewStock('');
+    } finally {
+      setAdding(false);
+    }
+  };
+
+  if (loading) {
+    return <p className="text-sm text-gray-500">Loading variants...</p>;
+  }
+
+  return (
+    <div className="space-y-3">
+      <h4 className="text-sm font-semibold text-gray-700">Variants</h4>
+      {variants.length > 0 && (
+        <table className="min-w-full divide-y divide-gray-200 text-sm">
+          <thead>
+            <tr>
+              <th className="px-2 py-1 text-left text-xs font-medium text-gray-500">SKU</th>
+              <th className="px-2 py-1 text-left text-xs font-medium text-gray-500">Size</th>
+              <th className="px-2 py-1 text-left text-xs font-medium text-gray-500">Color</th>
+              <th className="px-2 py-1 text-left text-xs font-medium text-gray-500">Price Override</th>
+              <th className="px-2 py-1 text-left text-xs font-medium text-gray-500">Stock</th>
+              <th className="px-2 py-1 text-left text-xs font-medium text-gray-500">Active</th>
+              <th className="px-2 py-1" />
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+            {variants.map((v) => (
+              <tr key={v.id}>
+                <td className="px-2 py-1 font-mono text-gray-500">{v.sku ?? '-'}</td>
+                <td className="px-2 py-1">{v.size ?? '-'}</td>
+                <td className="px-2 py-1">{v.color ?? '-'}</td>
+                <td className="px-2 py-1">{v.price_override != null ? `$${v.price_override.toFixed(2)}` : '-'}</td>
+                <td className="px-2 py-1">{v.stock_quantity ?? '-'}</td>
+                <td className="px-2 py-1">{v.is_active ? 'Yes' : 'No'}</td>
+                <td className="px-2 py-1 text-right">
+                  <button onClick={() => onDelete(v.id)} className="text-xs text-red-600 hover:text-red-800">
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+      <div className="flex flex-wrap gap-2 items-end">
+        <input
+          type="text"
+          value={newSize}
+          onChange={(e) => setNewSize(e.target.value)}
+          placeholder="Size"
+          className="w-20 rounded border border-gray-300 px-2 py-1 text-sm"
+        />
+        <input
+          type="text"
+          value={newColor}
+          onChange={(e) => setNewColor(e.target.value)}
+          placeholder="Color"
+          className="w-20 rounded border border-gray-300 px-2 py-1 text-sm"
+        />
+        <input
+          type="text"
+          value={newSku}
+          onChange={(e) => setNewSku(e.target.value)}
+          placeholder="SKU"
+          className="w-24 rounded border border-gray-300 px-2 py-1 text-sm"
+        />
+        <input
+          type="text"
+          value={newPrice}
+          onChange={(e) => setNewPrice(e.target.value)}
+          placeholder="Price"
+          className="w-20 rounded border border-gray-300 px-2 py-1 text-sm"
+        />
+        <input
+          type="text"
+          value={newStock}
+          onChange={(e) => setNewStock(e.target.value)}
+          placeholder="Stock"
+          className="w-20 rounded border border-gray-300 px-2 py-1 text-sm"
+        />
+        <button
+          onClick={handleAdd}
+          disabled={adding || (!newSize && !newColor)}
+          className="rounded bg-purple-600 px-3 py-1 text-sm text-white hover:bg-purple-700 disabled:opacity-50"
+        >
+          {adding ? 'Adding...' : '+ Add Variant'}
+        </button>
+      </div>
+    </div>
   );
 }
