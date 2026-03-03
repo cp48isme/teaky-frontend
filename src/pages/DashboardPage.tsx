@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { getCompanyProfileByOrg } from '../api/companyProfiles';
 import { getOrgEquipment } from '../api/equipment';
 import { listPortals } from '../api/portals';
-import { listPrinterOrders } from '../api/orders';
+import { getSummaryMetrics } from '../api/analytics';
 import { useOrganizationId } from '../hooks/useOrganizationId';
 import type { CompanyProfile } from '../types/companyProfile';
 import type { OrganizationEquipment } from '../types/equipment';
 import type { Portal } from '../types/portal';
-import type { Order } from '../types/order';
+import type { SummaryMetrics } from '../types/analytics';
 import StatCard from '../components/dashboard/StatCard';
 import CompanyProfileCard from '../components/dashboard/CompanyProfileCard';
 import EquipmentSummary from '../components/dashboard/EquipmentSummary';
@@ -19,7 +20,7 @@ export default function DashboardPage() {
   const [profile, setProfile] = useState<CompanyProfile | null>(null);
   const [equipment, setEquipment] = useState<OrganizationEquipment[]>([]);
   const [portals, setPortals] = useState<Portal[]>([]);
-  const [orders, setOrders] = useState<Order[]>([]);
+  const [summary, setSummary] = useState<SummaryMetrics | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -32,7 +33,7 @@ export default function DashboardPage() {
       getCompanyProfileByOrg(orgId).then(setProfile),
       getOrgEquipment(orgId).then(setEquipment),
       listPortals().then(setPortals),
-      listPrinterOrders().then(setOrders),
+      getSummaryMetrics().then(setSummary),
     ]).finally(() => setLoading(false));
   }, [orgId]);
 
@@ -44,7 +45,7 @@ export default function DashboardPage() {
     );
   }
 
-  const activePortalCount = portals.filter((p) => p.status === 'active').length;
+  const activePortalCount = summary?.active_portal_count ?? portals.filter((p) => p.status === 'active').length;
 
   return (
     <div className="space-y-6">
@@ -57,16 +58,24 @@ export default function DashboardPage() {
           value={activePortalCount}
           subtitle={activePortalCount === 0 ? 'Create your first' : undefined}
         />
-        <StatCard label="Orders" value={orders.length} />
+        <StatCard label="Orders" value={summary?.order_count ?? 0} />
         <StatCard
           label="Revenue"
-          value={`$${orders.reduce((sum, o) => sum + Number(o.total), 0).toFixed(2)}`}
+          value={`$${(summary?.total_revenue ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}`}
         />
         <StatCard
           label="Pending Proofs"
-          value={orders.filter((o) => o.status === 'pending_approval').length}
+          value={summary?.pending_proof_count ?? 0}
         />
       </div>
+
+      {/* Analytics link */}
+      <Link
+        to="/analytics"
+        className="inline-block text-sm font-medium text-indigo-600 hover:text-indigo-500"
+      >
+        View detailed analytics &rarr;
+      </Link>
 
       {/* Create Portal CTA */}
       <CreatePortalCTA />
