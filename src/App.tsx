@@ -15,6 +15,7 @@ import PortalDetailPage from './pages/PortalDetailPage';
 import ProductManagementPage from './pages/ProductManagementPage';
 import PrinterOrdersPage from './pages/PrinterOrdersPage';
 import PrinterOrderDetailPage from './pages/PrinterOrderDetailPage';
+import NewOrderOnBehalfPage from './pages/NewOrderOnBehalfPage';
 import AnalyticsPage from './pages/AnalyticsPage';
 import AgentControlCenterPage from './pages/AgentControlCenterPage';
 import AgentTaskDetailPage from './pages/AgentTaskDetailPage';
@@ -107,6 +108,16 @@ function App() {
               <ProtectedRoute>
                 <AppLayout>
                   <PrinterOrdersPage />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/orders/new"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <NewOrderOnBehalfPage />
                 </AppLayout>
               </ProtectedRoute>
             }

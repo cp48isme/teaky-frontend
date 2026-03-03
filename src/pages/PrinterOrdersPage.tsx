@@ -10,6 +10,7 @@ const STATUS_FILTERS = [
   { label: 'Pending Approval', value: 'pending_approval' },
   { label: 'Approved', value: 'approved' },
   { label: 'In Production', value: 'in_production' },
+  { label: 'Quality Check', value: 'quality_check' },
   { label: 'Shipped', value: 'shipped' },
   { label: 'Delivered', value: 'delivered' },
   { label: 'Completed', value: 'completed' },
@@ -21,6 +22,7 @@ const STATUS_COLORS: Record<string, string> = {
   pending_approval: 'bg-yellow-100 text-yellow-800',
   approved: 'bg-green-100 text-green-800',
   in_production: 'bg-purple-100 text-purple-800',
+  quality_check: 'bg-orange-100 text-orange-800',
   shipped: 'bg-indigo-100 text-indigo-800',
   delivered: 'bg-teal-100 text-teal-800',
   completed: 'bg-gray-100 text-gray-800',
@@ -42,7 +44,15 @@ export default function PrinterOrdersPage() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-bold text-gray-900">Orders</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-bold text-gray-900">Orders</h2>
+        <Link
+          to="/orders/new"
+          className="rounded bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-700"
+        >
+          New Order
+        </Link>
+      </div>
 
       {/* Status Filter */}
       <div className="flex flex-wrap gap-2">
