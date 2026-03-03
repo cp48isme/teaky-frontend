@@ -66,13 +66,20 @@ export default function OrderDetailPage() {
 
       <div className="mt-4 flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">{order.order_number}</h1>
-        <span
-          className={`rounded-full px-3 py-1 text-xs font-medium ${
-            STATUS_COLORS[order.status] || 'bg-gray-100 text-gray-800'
-          }`}
-        >
-          {order.status.replace(/_/g, ' ')}
-        </span>
+        <div className="flex items-center gap-2">
+          {order.production_status && (
+            <span className="rounded-full bg-purple-50 px-3 py-1 text-xs font-medium text-purple-700">
+              {order.production_status.replace(/_/g, ' ')}
+            </span>
+          )}
+          <span
+            className={`rounded-full px-3 py-1 text-xs font-medium ${
+              STATUS_COLORS[order.status] || 'bg-gray-100 text-gray-800'
+            }`}
+          >
+            {order.status.replace(/_/g, ' ')}
+          </span>
+        </div>
       </div>
 
       {/* Status Timeline */}
@@ -148,6 +155,12 @@ export default function OrderDetailPage() {
               <span>Shipping</span>
               <span>${Number(order.shipping_cost).toFixed(2)}</span>
             </div>
+            {Number(order.tax_amount) > 0 && (
+              <div className="flex justify-between text-gray-600">
+                <span>Tax</span>
+                <span>${Number(order.tax_amount).toFixed(2)}</span>
+              </div>
+            )}
             <div className="flex justify-between font-medium text-gray-900 border-t pt-1">
               <span>Total</span>
               <span>${Number(order.total).toFixed(2)}</span>

@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useCart } from '../../contexts/CartContext';
 import { usePortalContext } from '../../contexts/PortalContext';
 import { confirmCheckout } from '../../api/checkout';
+import { getShippingRates } from '../../api/shipping';
 import type { ShippingAddress } from '../../types/order';
+import type { ShippingRate } from '../../types/shipping';
 import Spinner from '../../components/ui/Spinner';
 
 export default function CheckoutPage() {
@@ -26,7 +28,53 @@ export default function CheckoutPage() {
   const [poNumber, setPoNumber] = useState('');
   const [notes, setNotes] = useState('');
 
+  // Shipping rates state
+  const [shippingRates, setShippingRates] = useState<ShippingRate[]>([]);
+  const [selectedRate, setSelectedRate] = useState<ShippingRate | null>(null);
+  const [loadingRates, setLoadingRates] = useState(false);
+
   const primaryColor = portal?.brand_config?.primary_color || '#4F46E5';
+
+  // Fetch shipping rates when address is sufficiently filled
+  useEffect(() => {
+    if (!address.city || !address.state || !address.postal_code) {
+      return;
+    }
+
+    const fetchRates = async () => {
+      setLoadingRates(true);
+      try {
+        const rates = await getShippingRates({
+          from_address: {
+            street1: '123 Print Shop Ave',
+            city: 'Springfield',
+            state: 'IL',
+            zip: '62701',
+            country: 'US',
+          },
+          to_address: {
+            street1: address.line1 || '123 Main St',
+            city: address.city,
+            state: address.state,
+            zip: address.postal_code,
+            country: address.country || 'US',
+          },
+        });
+        setShippingRates(rates);
+        if (rates.length > 0 && !selectedRate) {
+          setSelectedRate(rates[0]);
+        }
+      } catch {
+        // Fall back to showing no rates (flat rate will apply)
+        setShippingRates([]);
+      } finally {
+        setLoadingRates(false);
+      }
+    };
+
+    const debounce = setTimeout(fetchRates, 500);
+    return () => clearTimeout(debounce);
+  }, [address.city, address.state, address.postal_code, address.line1, address.country]);
 
   if (!cart || cart.items.length === 0) {
     return (
@@ -36,8 +84,9 @@ export default function CheckoutPage() {
     );
   }
 
-  const shippingCost = 9.99;
-  const total = cart.subtotal + shippingCost;
+  const shippingCost = selectedRate ? parseFloat(selectedRate.cost) : 9.99;
+  const taxAmount = cart.subtotal * 0.0; // Tax calculated server-side on order creation
+  const total = cart.subtotal + shippingCost + taxAmount;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,11 +96,9 @@ export default function CheckoutPage() {
     setError(null);
 
     try {
-      // For now, skip Stripe payment flow and confirm directly
-      // In production, you'd create a PaymentIntent first
       const order = await confirmCheckout(slug, {
         cart_id: cart.id,
-        payment_intent_id: 'pi_placeholder', // Would come from Stripe Elements
+        payment_intent_id: 'pi_placeholder',
         shipping_address: address,
         payment_method: 'stripe',
         po_number: poNumber || undefined,
@@ -151,6 +198,55 @@ export default function CheckoutPage() {
             </div>
           </div>
 
+          {/* Shipping Method Selection */}
+          <div className="mt-6">
+            <h2 className="text-lg font-semibold text-gray-900">Shipping Method</h2>
+            {loadingRates ? (
+              <div className="mt-2 flex items-center gap-2 text-sm text-gray-500">
+                <Spinner className="h-4 w-4 text-indigo-600" /> Fetching shipping rates...
+              </div>
+            ) : shippingRates.length > 0 ? (
+              <div className="mt-2 space-y-2">
+                {shippingRates.map((rate) => (
+                  <label
+                    key={rate.rate_id}
+                    className={`flex cursor-pointer items-center justify-between rounded-md border p-3 text-sm ${
+                      selectedRate?.rate_id === rate.rate_id
+                        ? 'border-indigo-500 bg-indigo-50'
+                        : 'border-gray-200 hover:bg-gray-50'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="radio"
+                        name="shipping_rate"
+                        checked={selectedRate?.rate_id === rate.rate_id}
+                        onChange={() => setSelectedRate(rate)}
+                        className="h-4 w-4 text-indigo-600"
+                      />
+                      <div>
+                        <span className="font-medium text-gray-900">
+                          {rate.carrier} - {rate.service}
+                        </span>
+                        {rate.estimated_days && (
+                          <span className="ml-2 text-gray-500">
+                            ({rate.estimated_days} day{rate.estimated_days !== 1 ? 's' : ''})
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <span className="font-medium text-gray-900">${parseFloat(rate.cost).toFixed(2)}</span>
+                  </label>
+                ))}
+              </div>
+            ) : (
+              <p className="mt-2 text-sm text-gray-500">
+                Standard shipping: $9.99
+                {address.city && ' (enter full address for live rates)'}
+              </p>
+            )}
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-700">PO Number (optional)</label>
             <input
@@ -196,9 +292,22 @@ export default function CheckoutPage() {
                 <span>${cart.subtotal.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-sm text-gray-600">
-                <span>Shipping</span>
+                <span>
+                  Shipping
+                  {selectedRate && (
+                    <span className="text-xs text-gray-400 ml-1">
+                      ({selectedRate.carrier} {selectedRate.service})
+                    </span>
+                  )}
+                </span>
                 <span>${shippingCost.toFixed(2)}</span>
               </div>
+              {taxAmount > 0 && (
+                <div className="flex justify-between text-sm text-gray-600">
+                  <span>Tax</span>
+                  <span>${taxAmount.toFixed(2)}</span>
+                </div>
+              )}
               <div className="flex justify-between font-medium text-gray-900 pt-1 border-t">
                 <span>Total</span>
                 <span>${total.toFixed(2)}</span>

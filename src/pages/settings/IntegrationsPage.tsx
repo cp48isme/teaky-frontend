@@ -7,15 +7,21 @@ import {
   updateQueueMappings,
   getSyncLog,
 } from '../../api/mis';
+import {
+  getQuickBooksStatus,
+  getQuickBooksConnectUrl,
+} from '../../api/quickbooks';
 import type { MISSettings, MISSyncLogEntry } from '../../types/mis';
+import type { QuickBooksStatus } from '../../types/quickbooks';
 import Spinner from '../../components/ui/Spinner';
 
 const MIS_PROVIDERS = [
   { value: '', label: 'None' },
   { value: 'docketmanager', label: 'DocketManager' },
-  { value: 'printavo', label: 'Printavo (Coming Soon)' },
-  { value: 'shopvox', label: 'shopVOX (Coming Soon)' },
-  { value: 'ordant', label: 'Ordant (Coming Soon)' },
+  { value: 'printavo', label: 'Printavo' },
+  { value: 'shopvox', label: 'shopVOX' },
+  { value: 'generic_csv', label: 'Manual / CSV Export' },
+  { value: 'generic_webhook', label: 'Webhook Integration' },
 ];
 
 const TEAKY_STATUSES = [
@@ -36,11 +42,29 @@ export default function IntegrationsPage() {
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<{ connected: boolean; message: string } | null>(null);
   const [provider, setProvider] = useState('');
+  const [error, setError] = useState('');
+
+  // DocketManager config
   const [accountUrl, setAccountUrl] = useState('');
   const [apiKey, setApiKey] = useState('');
   const [autoPush, setAutoPush] = useState(true);
   const [webhookSecret, setWebhookSecret] = useState('');
-  const [error, setError] = useState('');
+
+  // Printavo config
+  const [printavoApiToken, setPrintavoApiToken] = useState('');
+  const [printavoShopEmail, setPrintavoShopEmail] = useState('');
+
+  // shopVOX config
+  const [shopvoxApiUrl, setShopvoxApiUrl] = useState('');
+  const [shopvoxApiKey, setShopvoxApiKey] = useState('');
+  const [shopvoxAppId, setShopvoxAppId] = useState('');
+
+  // Generic CSV config
+  const [csvNotificationEmail, setCsvNotificationEmail] = useState('');
+
+  // Generic Webhook config
+  const [webhookUrl, setWebhookUrl] = useState('');
+  const [webhookSecretHeader, setWebhookSecretHeader] = useState('');
 
   // Queue mapping state
   const [queueMapping, setQueueMapping] = useState<Record<string, string>>({});
@@ -52,19 +76,41 @@ export default function IntegrationsPage() {
   const [syncLog, setSyncLog] = useState<MISSyncLogEntry[]>([]);
   const [showSyncLog, setShowSyncLog] = useState(false);
 
+  // QuickBooks state
+  const [qbStatus, setQbStatus] = useState<QuickBooksStatus | null>(null);
+  const [qbLoading, setQbLoading] = useState(false);
+
   useEffect(() => {
-    getMISSettings()
-      .then((s) => {
+    const loadData = async () => {
+      try {
+        const s = await getMISSettings();
         setSettings(s);
         setProvider(s.mis_provider || '');
         const config = (s.mis_config as Record<string, unknown>) || {};
+
+        // Load provider-specific config
         setAccountUrl((config.account_url as string) || '');
         setApiKey((config.api_key as string) || '');
         setAutoPush(config.auto_push_on_approval !== false);
         setWebhookSecret((config.webhook_secret as string) || '');
-      })
-      .catch(() => setError('Failed to load MIS settings'))
-      .finally(() => setLoading(false));
+        setPrintavoApiToken((config.api_token as string) || '');
+        setPrintavoShopEmail((config.shop_email as string) || '');
+        setShopvoxApiUrl((config.api_url as string) || '');
+        setShopvoxApiKey((config.api_key as string) || '');
+        setShopvoxAppId((config.app_id as string) || '');
+        setCsvNotificationEmail((config.notification_email as string) || '');
+        setWebhookUrl((config.webhook_url as string) || '');
+        setWebhookSecretHeader((config.secret as string) || '');
+      } catch {
+        setError('Failed to load MIS settings');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+    // Load QuickBooks status
+    getQuickBooksStatus().then(setQbStatus).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -75,23 +121,49 @@ export default function IntegrationsPage() {
     }
   }, [provider]);
 
+  const buildConfig = () => {
+    switch (provider) {
+      case 'docketmanager':
+        return {
+          account_url: accountUrl,
+          api_key: apiKey || null,
+          auto_push_on_approval: autoPush,
+          webhook_secret: webhookSecret || null,
+          queue_mapping: queueMapping,
+        };
+      case 'printavo':
+        return {
+          api_token: printavoApiToken,
+          shop_email: printavoShopEmail,
+        };
+      case 'shopvox':
+        return {
+          api_url: shopvoxApiUrl,
+          api_key: shopvoxApiKey,
+          app_id: shopvoxAppId,
+        };
+      case 'generic_csv':
+        return {
+          notification_email: csvNotificationEmail,
+        };
+      case 'generic_webhook':
+        return {
+          webhook_url: webhookUrl,
+          secret: webhookSecretHeader || null,
+        };
+      default:
+        return null;
+    }
+  };
+
   const handleSave = async () => {
     setSaving(true);
     setError('');
     setTestResult(null);
     try {
-      const config = provider
-        ? {
-            account_url: accountUrl,
-            api_key: apiKey || null,
-            auto_push_on_approval: autoPush,
-            webhook_secret: webhookSecret || null,
-            queue_mapping: queueMapping,
-          }
-        : null;
       const updated = await updateMISSettings({
         mis_provider: provider || null,
-        mis_config: config,
+        mis_config: buildConfig(),
       });
       setSettings(updated);
     } catch {
@@ -152,6 +224,17 @@ export default function IntegrationsPage() {
     }
   };
 
+  const handleConnectQuickBooks = async () => {
+    setQbLoading(true);
+    try {
+      const result = await getQuickBooksConnectUrl();
+      window.location.href = result.authorization_url;
+    } catch {
+      setError('Failed to get QuickBooks connect URL');
+      setQbLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -160,7 +243,7 @@ export default function IntegrationsPage() {
     );
   }
 
-  const webhookUrl = accountUrl
+  const dmWebhookUrl = accountUrl
     ? `${window.location.origin}/webhooks/docketmanager/{organization_id}`
     : '';
 
@@ -172,7 +255,7 @@ export default function IntegrationsPage() {
         </div>
       )}
 
-      {/* Provider Selection & Connection */}
+      {/* MIS Integration */}
       <div className="rounded-lg border border-gray-200 bg-white p-6">
         <h2 className="text-lg font-semibold text-gray-900">MIS Integration</h2>
         <p className="mt-1 text-sm text-gray-500">
@@ -188,13 +271,14 @@ export default function IntegrationsPage() {
               className="mt-1 w-full max-w-xs rounded-md border border-gray-300 px-3 py-2 text-sm"
             >
               {MIS_PROVIDERS.map((p) => (
-                <option key={p.value} value={p.value} disabled={p.label.includes('Coming Soon')}>
+                <option key={p.value} value={p.value}>
                   {p.label}
                 </option>
               ))}
             </select>
           </div>
 
+          {/* DocketManager Config */}
           {provider === 'docketmanager' && (
             <>
               <div>
@@ -207,7 +291,6 @@ export default function IntegrationsPage() {
                   className="mt-1 w-full max-w-md rounded-md border border-gray-300 px-3 py-2 text-sm"
                 />
               </div>
-
               <div>
                 <label className="block text-sm font-medium text-gray-700">API Key</label>
                 <input
@@ -218,7 +301,6 @@ export default function IntegrationsPage() {
                   className="mt-1 w-full max-w-md rounded-md border border-gray-300 px-3 py-2 text-sm"
                 />
               </div>
-
               <div className="flex items-center gap-2">
                 <input
                   type="checkbox"
@@ -228,8 +310,116 @@ export default function IntegrationsPage() {
                   className="h-4 w-4 rounded border-gray-300 text-indigo-600"
                 />
                 <label htmlFor="auto-push" className="text-sm text-gray-700">
-                  Auto-push orders to DocketManager on approval
+                  Auto-push orders on approval
                 </label>
+              </div>
+            </>
+          )}
+
+          {/* Printavo Config */}
+          {provider === 'printavo' && (
+            <>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">API Token</label>
+                <input
+                  type="password"
+                  value={printavoApiToken}
+                  onChange={(e) => setPrintavoApiToken(e.target.value)}
+                  placeholder="Enter your Printavo API token"
+                  className="mt-1 w-full max-w-md rounded-md border border-gray-300 px-3 py-2 text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Shop Email</label>
+                <input
+                  type="email"
+                  value={printavoShopEmail}
+                  onChange={(e) => setPrintavoShopEmail(e.target.value)}
+                  placeholder="shop@example.com"
+                  className="mt-1 w-full max-w-md rounded-md border border-gray-300 px-3 py-2 text-sm"
+                />
+              </div>
+            </>
+          )}
+
+          {/* shopVOX Config */}
+          {provider === 'shopvox' && (
+            <>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">API URL</label>
+                <input
+                  type="url"
+                  value={shopvoxApiUrl}
+                  onChange={(e) => setShopvoxApiUrl(e.target.value)}
+                  placeholder="https://api.shopvox.com"
+                  className="mt-1 w-full max-w-md rounded-md border border-gray-300 px-3 py-2 text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">API Key</label>
+                <input
+                  type="password"
+                  value={shopvoxApiKey}
+                  onChange={(e) => setShopvoxApiKey(e.target.value)}
+                  placeholder="Enter your shopVOX API key"
+                  className="mt-1 w-full max-w-md rounded-md border border-gray-300 px-3 py-2 text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">App ID</label>
+                <input
+                  type="text"
+                  value={shopvoxAppId}
+                  onChange={(e) => setShopvoxAppId(e.target.value)}
+                  placeholder="Your shopVOX App ID"
+                  className="mt-1 w-full max-w-md rounded-md border border-gray-300 px-3 py-2 text-sm"
+                />
+              </div>
+            </>
+          )}
+
+          {/* Generic CSV Config */}
+          {provider === 'generic_csv' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Notification Email</label>
+              <p className="text-xs text-gray-500 mt-0.5">
+                Job tickets will be generated as CSV and sent to this email address.
+              </p>
+              <input
+                type="email"
+                value={csvNotificationEmail}
+                onChange={(e) => setCsvNotificationEmail(e.target.value)}
+                placeholder="production@yourshop.com"
+                className="mt-1 w-full max-w-md rounded-md border border-gray-300 px-3 py-2 text-sm"
+              />
+            </div>
+          )}
+
+          {/* Generic Webhook Config */}
+          {provider === 'generic_webhook' && (
+            <>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Webhook URL</label>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  Orders will be posted as JSON to this endpoint.
+                </p>
+                <input
+                  type="url"
+                  value={webhookUrl}
+                  onChange={(e) => setWebhookUrl(e.target.value)}
+                  placeholder="https://your-system.com/api/orders"
+                  className="mt-1 w-full max-w-md rounded-md border border-gray-300 px-3 py-2 text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Webhook Secret (optional)</label>
+                <input
+                  type="text"
+                  value={webhookSecretHeader}
+                  onChange={(e) => setWebhookSecretHeader(e.target.value)}
+                  placeholder="Shared secret for X-Webhook-Secret header"
+                  className="mt-1 w-full max-w-md rounded-md border border-gray-300 px-3 py-2 text-sm"
+                />
               </div>
             </>
           )}
@@ -246,7 +436,7 @@ export default function IntegrationsPage() {
             {provider && (
               <button
                 onClick={handleTest}
-                disabled={testing || !accountUrl}
+                disabled={testing}
                 className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
               >
                 {testing ? 'Testing...' : 'Test Connection'}
@@ -280,7 +470,7 @@ export default function IntegrationsPage() {
               <input
                 type="text"
                 readOnly
-                value={webhookUrl}
+                value={dmWebhookUrl}
                 className="mt-1 w-full max-w-lg rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-600"
               />
             </div>
@@ -401,81 +591,117 @@ export default function IntegrationsPage() {
               </div>
             </div>
           </div>
-
-          {/* Sync Log */}
-          <div className="rounded-lg border border-gray-200 bg-white p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-md font-semibold text-gray-900">Recent Sync Log</h3>
-                <p className="mt-1 text-sm text-gray-500">Recent MIS sync operations.</p>
-              </div>
-              <button
-                onClick={handleLoadSyncLog}
-                className="rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
-              >
-                {showSyncLog ? 'Refresh' : 'Load'}
-              </button>
-            </div>
-
-            {showSyncLog && (
-              <div className="mt-4 overflow-x-auto">
-                {syncLog.length === 0 ? (
-                  <p className="text-sm text-gray-500">No sync operations recorded.</p>
-                ) : (
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                          Time
-                        </th>
-                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                          Action
-                        </th>
-                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                          Entity
-                        </th>
-                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                          Status
-                        </th>
-                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                          Error
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-200 bg-white">
-                      {syncLog.map((entry) => (
-                        <tr key={entry.id}>
-                          <td className="px-3 py-2 text-xs text-gray-500 whitespace-nowrap">
-                            {new Date(entry.created_at).toLocaleString()}
-                          </td>
-                          <td className="px-3 py-2 text-xs text-gray-900">{entry.action}</td>
-                          <td className="px-3 py-2 text-xs text-gray-500">
-                            {entry.entity_type}
-                          </td>
-                          <td className="px-3 py-2">
-                            <span
-                              className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                                entry.status === 'success'
-                                  ? 'bg-green-100 text-green-800'
-                                  : 'bg-red-100 text-red-800'
-                              }`}
-                            >
-                              {entry.status}
-                            </span>
-                          </td>
-                          <td className="px-3 py-2 text-xs text-red-600 max-w-xs truncate">
-                            {entry.error_message || '-'}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
-              </div>
-            )}
-          </div>
         </>
       )}
+
+      {/* Sync Log */}
+      {provider && (
+        <div className="rounded-lg border border-gray-200 bg-white p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-md font-semibold text-gray-900">Recent Sync Log</h3>
+              <p className="mt-1 text-sm text-gray-500">Recent MIS sync operations.</p>
+            </div>
+            <button
+              onClick={handleLoadSyncLog}
+              className="rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
+            >
+              {showSyncLog ? 'Refresh' : 'Load'}
+            </button>
+          </div>
+
+          {showSyncLog && (
+            <div className="mt-4 overflow-x-auto">
+              {syncLog.length === 0 ? (
+                <p className="text-sm text-gray-500">No sync operations recorded.</p>
+              ) : (
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Time</th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Action</th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Entity</th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Error</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200 bg-white">
+                    {syncLog.map((entry) => (
+                      <tr key={entry.id}>
+                        <td className="px-3 py-2 text-xs text-gray-500 whitespace-nowrap">
+                          {new Date(entry.created_at).toLocaleString()}
+                        </td>
+                        <td className="px-3 py-2 text-xs text-gray-900">{entry.action}</td>
+                        <td className="px-3 py-2 text-xs text-gray-500">{entry.entity_type}</td>
+                        <td className="px-3 py-2">
+                          <span
+                            className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                              entry.status === 'success'
+                                ? 'bg-green-100 text-green-800'
+                                : 'bg-red-100 text-red-800'
+                            }`}
+                          >
+                            {entry.status}
+                          </span>
+                        </td>
+                        <td className="px-3 py-2 text-xs text-red-600 max-w-xs truncate">
+                          {entry.error_message || '-'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* QuickBooks Integration */}
+      <div className="rounded-lg border border-gray-200 bg-white p-6">
+        <h2 className="text-lg font-semibold text-gray-900">QuickBooks Online</h2>
+        <p className="mt-1 text-sm text-gray-500">
+          Connect QuickBooks Online to automatically sync invoices and payments.
+        </p>
+
+        <div className="mt-4 space-y-3">
+          <div className="flex items-center gap-3">
+            <div
+              className={`h-3 w-3 rounded-full ${
+                qbStatus?.connected ? 'bg-green-500' : 'bg-gray-300'
+              }`}
+            />
+            <span className="text-sm text-gray-700">
+              {qbStatus?.connected
+                ? `Connected (Realm: ${qbStatus.realm_id})`
+                : 'Not connected'}
+            </span>
+          </div>
+
+          {qbStatus?.connected && qbStatus.connected_at && (
+            <p className="text-xs text-gray-500">
+              Connected since: {new Date(qbStatus.connected_at).toLocaleDateString()}
+            </p>
+          )}
+
+          {!qbStatus?.connected && (
+            <button
+              onClick={handleConnectQuickBooks}
+              disabled={qbLoading}
+              className="rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50"
+            >
+              {qbLoading ? 'Connecting...' : 'Connect QuickBooks'}
+            </button>
+          )}
+
+          {qbStatus?.connected && (
+            <p className="text-xs text-gray-500">
+              Invoices are automatically created in QuickBooks when orders are placed.
+              Use the "Sync to QB" button on individual orders to manually sync.
+            </p>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

@@ -15,3 +15,17 @@ export interface Notification {
 export interface UnreadCountResponse {
   count: number;
 }
+
+export interface NotificationPreference {
+  event_type: string;
+  email_enabled: boolean;
+  in_app_enabled: boolean;
+}
+
+export interface NotificationPreferencesResponse {
+  preferences: NotificationPreference[];
+}
+
+export interface UpdateNotificationPreferencesRequest {
+  preferences: NotificationPreference[];
+}
