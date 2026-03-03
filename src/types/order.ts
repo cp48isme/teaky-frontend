@@ -52,6 +52,8 @@ export interface Order {
   cancellation_reason: string | null;
   tracking_number: string | null;
   dm_order_id: string | null;
+  production_status: string | null;
+  production_notes: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -110,3 +112,46 @@ export interface OrderFile {
   download_url: string | null;
   created_at: string;
 }
+
+export interface UpdateProductionStatusRequest {
+  production_status: string;
+  notes?: string;
+}
+
+export interface InvoiceLineItem {
+  product_name: string;
+  product_sku: string | null;
+  quantity: number;
+  unit_price: number;
+  line_total: number;
+}
+
+export interface InvoiceData {
+  invoice_number: string;
+  order_id: string;
+  order_number: string;
+  organization_name: string;
+  customer_name: string;
+  customer_email: string;
+  shipping_address: ShippingAddress;
+  line_items: InvoiceLineItem[];
+  subtotal: number;
+  shipping_cost: number;
+  tax_amount: number;
+  total: number;
+  payment_status: string;
+  issued_at: string;
+}
+
+export const PRODUCTION_STATUSES = [
+  'received',
+  'in_prepress',
+  'printing',
+  'finishing',
+  'quality_check',
+  'ready_to_ship',
+  'shipped',
+  'picked_up',
+] as const;
+
+export type ProductionStatus = (typeof PRODUCTION_STATUSES)[number];

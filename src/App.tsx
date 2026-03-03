@@ -16,12 +16,16 @@ import ProductManagementPage from './pages/ProductManagementPage';
 import PrinterOrdersPage from './pages/PrinterOrdersPage';
 import PrinterOrderDetailPage from './pages/PrinterOrderDetailPage';
 import NewOrderOnBehalfPage from './pages/NewOrderOnBehalfPage';
+import AnalyticsPage from './pages/AnalyticsPage';
+import AgentControlCenterPage from './pages/AgentControlCenterPage';
+import AgentTaskDetailPage from './pages/AgentTaskDetailPage';
 import StripeOnboardingPage from './pages/StripeOnboardingPage';
 import AcceptInvitationPage from './pages/AcceptInvitationPage';
 import SettingsLayout from './pages/settings/SettingsLayout';
 import TeamPage from './pages/settings/TeamPage';
 import NotificationsPage from './pages/settings/NotificationsPage';
 import IntegrationsPage from './pages/settings/IntegrationsPage';
+import AuditTrailPage from './pages/settings/AuditTrailPage';
 import PortalHomePage from './pages/portal/PortalHomePage';
 import PortalCatalogPage from './pages/portal/PortalCatalogPage';
 import PortalProductDetailPage from './pages/portal/PortalProductDetailPage';
@@ -29,7 +33,9 @@ import CartPage from './pages/portal/CartPage';
 import CheckoutPage from './pages/portal/CheckoutPage';
 import OrderConfirmationPage from './pages/portal/OrderConfirmationPage';
 import MyOrdersPage from './pages/portal/MyOrdersPage';
+import MyQuotesPage from './pages/portal/MyQuotesPage';
 import OrderDetailPage from './pages/portal/OrderDetailPage';
+import QuotesPage from './pages/QuotesPage';
 
 function App() {
   return (
@@ -126,6 +132,49 @@ function App() {
               </ProtectedRoute>
             }
           />
+          {/* Quotes */}
+          <Route
+            path="/quotes"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <QuotesPage />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          {/* Analytics */}
+          <Route
+            path="/analytics"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <AnalyticsPage />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          {/* Agent Control Center */}
+          <Route
+            path="/agents"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <AgentControlCenterPage />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/agents/:taskId"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <AgentTaskDetailPage />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
           {/* Settings hub */}
           <Route
             path="/settings"
@@ -142,6 +191,7 @@ function App() {
             <Route path="notifications" element={<NotificationsPage />} />
             <Route path="integrations" element={<IntegrationsPage />} />
             <Route path="stripe" element={<StripeOnboardingPage />} />
+            <Route path="audit-trail" element={<AuditTrailPage />} />
           </Route>
           {/* Public portal routes */}
           <Route
@@ -160,6 +210,7 @@ function App() {
             <Route path="cart" element={<CartPage />} />
             <Route path="checkout" element={<CheckoutPage />} />
             <Route path="orders/:orderId/confirmation" element={<OrderConfirmationPage />} />
+            <Route path="quotes" element={<MyQuotesPage />} />
             <Route path="orders" element={<MyOrdersPage />} />
             <Route path="orders/:orderId" element={<OrderDetailPage />} />
           </Route>
