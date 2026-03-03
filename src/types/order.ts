@@ -43,10 +43,13 @@ export interface Order {
   notes: string | null;
   tags: string[];
   line_items: LineItem[];
+  placed_by_id: string | null;
   placed_at: string;
   approved_at: string | null;
   shipped_at: string | null;
   delivered_at: string | null;
+  cancelled_at: string | null;
+  cancellation_reason: string | null;
   tracking_number: string | null;
   dm_order_id: string | null;
   production_status: string | null;
@@ -71,6 +74,43 @@ export interface UpdateOrderRequest {
 
 export interface UpdateOrderStatusRequest {
   status: string;
+}
+
+export interface OnBehalfLineItem {
+  product_id: string;
+  quantity: number;
+  size?: string;
+  color?: string;
+}
+
+export interface CreateOrderOnBehalfRequest {
+  portal_id: string;
+  customer_id?: string;
+  customer_email?: string;
+  customer_name?: string;
+  items: OnBehalfLineItem[];
+  shipping_address: ShippingAddress;
+  payment_method: 'invoice_later' | 'stripe';
+  po_number?: string;
+  notes?: string;
+}
+
+export interface CancelOrderRequest {
+  reason: string;
+  refund?: boolean;
+}
+
+export interface OrderFile {
+  id: string;
+  order_id: string;
+  uploaded_by_id: string;
+  filename: string;
+  s3_key: string;
+  file_size_bytes: number;
+  mime_type: string;
+  file_category: string;
+  download_url: string | null;
+  created_at: string;
 }
 
 export interface UpdateProductionStatusRequest {
