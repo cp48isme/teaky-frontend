@@ -31,61 +31,93 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow">
-        <div>
-          <h2 className="text-center text-3xl font-bold text-gray-900">
-            Sign in to Teaky
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Or{' '}
-            <Link to="/register" className="font-medium text-indigo-600 hover:text-indigo-500">
-              create an account
-            </Link>
-          </p>
+    <div className="flex min-h-screen items-center justify-center bg-brand-light">
+      {/* Soft background washes */}
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute top-1/4 left-1/3 h-[400px] w-[400px] rounded-full bg-teak/8 blur-[120px]" />
+        <div className="absolute bottom-1/4 right-1/3 h-[300px] w-[300px] rounded-full bg-teak-light/6 blur-[120px]" />
+      </div>
+
+      <div className="relative w-full max-w-md px-6">
+        {/* Logo */}
+        <div className="mb-8 flex justify-center">
+          <Link to="/" className="flex items-center gap-3">
+            <img src="/teaky-logo.svg" alt="Teaky" className="h-10 w-10" />
+            <span className="font-heading text-xl font-bold text-brand-dark">teaky</span>
+          </Link>
         </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {error && (
-            <div className="rounded-md bg-red-50 p-4 text-sm text-red-700">
-              {error}
-            </div>
-          )}
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Email address
-              </label>
-              <input
-                id="email"
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
-              />
-            </div>
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                Password
-              </label>
-              <input
-                id="password"
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
-              />
-            </div>
+
+        {/* Card */}
+        <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-xl shadow-black/5">
+          <div className="h-1 bg-gradient-to-r from-teak-dark via-teak to-teak-light" />
+          <div className="p-8">
+            <h2 className="font-heading text-2xl font-bold text-brand-dark">Welcome back</h2>
+            <p className="mt-1 text-sm text-wood">Sign in to your Teaky dashboard</p>
+
+            <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
+              {error && (
+                <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                  {error}
+                </div>
+              )}
+
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium text-brand-dark">
+                  Email
+                </label>
+                <input
+                  id="email"
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="mt-1.5 block w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-brand-dark placeholder-gray-400 transition focus:border-teak focus:outline-none focus:ring-1 focus:ring-teak"
+                  placeholder="you@yourshop.com"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="password" className="block text-sm font-medium text-brand-dark">
+                  Password
+                </label>
+                <input
+                  id="password"
+                  type="password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="mt-1.5 block w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-brand-dark placeholder-gray-400 transition focus:border-teak focus:outline-none focus:ring-1 focus:ring-teak"
+                  placeholder="Min 8 characters"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full rounded-lg bg-teak-dark py-2.5 text-sm font-semibold text-white shadow transition hover:bg-teak disabled:opacity-50"
+              >
+                {loading ? (
+                  <span className="inline-flex items-center gap-2">
+                    <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    Signing in...
+                  </span>
+                ) : (
+                  'Sign in'
+                )}
+              </button>
+            </form>
+
+            <p className="mt-6 text-center text-sm text-wood">
+              Don&apos;t have an account?{' '}
+              <Link to="/register" className="font-medium text-teak-dark transition hover:text-teak">
+                Create one free
+              </Link>
+            </p>
           </div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
-          >
-            {loading ? 'Signing in...' : 'Sign in'}
-          </button>
-        </form>
+        </div>
       </div>
     </div>
   );

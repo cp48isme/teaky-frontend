@@ -1,1 +1,18 @@
 @import "tailwindcss";
+
+@theme {
+  /* Brand Colors — Teaky Brand Guidelines */
+  --color-teak: #7CB342;
+  --color-teak-dark: #558B2F;
+  --color-teak-light: #8BC34A;
+  --color-bark: #5D4037;
+  --color-wood: #8D6E63;
+  --color-coral: #FF7043;
+  --color-gold: #FFD54F;
+  --color-brand-dark: #1C1917;
+  --color-brand-light: #FAFAF9;
+
+  /* Typography */
+  --font-family-sans: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-family-heading: 'Outfit', ui-sans-serif, system-ui, sans-serif;
+}

@@ -5,6 +5,7 @@ import { CartProvider } from './contexts/CartContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import AppLayout from './components/layout/AppLayout';
 import PortalLayout from './components/layout/PortalLayout';
+import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
@@ -37,6 +38,7 @@ import MyQuotesPage from './pages/portal/MyQuotesPage';
 import OrderDetailPage from './pages/portal/OrderDetailPage';
 import QuotesPage from './pages/QuotesPage';
 import MessageCenterPage from './pages/MessageCenterPage';
+import EquipmentPage from './pages/EquipmentPage';
 
 function App() {
   return (
@@ -187,6 +189,17 @@ function App() {
               </ProtectedRoute>
             }
           />
+          {/* Equipment */}
+          <Route
+            path="/equipment"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <EquipmentPage />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
           {/* Settings hub */}
           <Route
             path="/settings"
@@ -226,7 +239,7 @@ function App() {
             <Route path="orders" element={<MyOrdersPage />} />
             <Route path="orders/:orderId" element={<OrderDetailPage />} />
           </Route>
-          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route path="/" element={<LandingPage />} />
         </Routes>
       </AuthProvider>
     </BrowserRouter>

@@ -29,12 +29,14 @@ export default function CompanyProfileStep({ data, onUpdate, onNext }: Props) {
     null,
   );
   const [showManualFields, setShowManualFields] = useState(false);
+  const [scanAttempted, setScanAttempted] = useState(false);
 
   const handleScan = async () => {
     if (!data.websiteUrl.trim()) return;
     setScanning(true);
     setScanError('');
     setScanResult(null);
+    setScanAttempted(false);
 
     try {
       const result = await scrapeWebsite(data.websiteUrl);
@@ -55,6 +57,7 @@ export default function CompanyProfileStep({ data, onUpdate, onNext }: Props) {
       setShowManualFields(true);
     } finally {
       setScanning(false);
+      setScanAttempted(true);
     }
   };
 
@@ -224,6 +227,16 @@ export default function CompanyProfileStep({ data, onUpdate, onNext }: Props) {
           >
             Confirm
           </button>
+        </div>
+      )}
+
+      {/* Scan completed but found nothing */}
+      {scanAttempted && !hasResults && !scanError && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+          <p className="text-sm text-amber-800">
+            We scanned your site but couldn't auto-detect branding details. No
+            worries — fill in the fields below manually.
+          </p>
         </div>
       )}
 

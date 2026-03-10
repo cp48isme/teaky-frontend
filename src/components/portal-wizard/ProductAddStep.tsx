@@ -43,7 +43,7 @@ function emptyProduct(): WizardProduct {
 
 export default function ProductAddStep({ products, onUpdate, onNext, onBack }: Props) {
   const [editing, setEditing] = useState<WizardProduct | null>(null);
-  const [showForm, setShowForm] = useState(products.length === 0);
+  const [showForm, setShowForm] = useState(false);
   const [showImport, setShowImport] = useState(false);
 
   const handleAddNew = () => {
@@ -182,10 +182,9 @@ export default function ProductAddStep({ products, onUpdate, onNext, onBack }: P
               </button>
               <button
                 type="submit"
-                disabled={products.length === 0}
-                className="rounded-md bg-indigo-600 px-6 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+                className="rounded-md bg-indigo-600 px-6 py-2 text-sm font-medium text-white hover:bg-indigo-700"
               >
-                Next
+                {products.length === 0 ? 'Skip for now' : 'Next'}
               </button>
             </div>
           </form>
