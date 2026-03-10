@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import {
   getPrinterOrder,
   updateOrder,
@@ -23,6 +23,7 @@ import type { TrackingInfo } from '../types/shipping';
 import SignatureCapture from '../components/proofs/SignatureCapture';
 import Spinner from '../components/ui/Spinner';
 import OrderFilesSection from '../components/orders/OrderFilesSection';
+import Breadcrumbs from '../components/ui/Breadcrumbs';
 
 const STATUS_COLORS: Record<string, string> = {
   submitted: 'bg-blue-100 text-blue-800',
@@ -321,9 +322,11 @@ export default function PrinterOrderDetailPage() {
 
   return (
     <div className="space-y-6">
-      <Link to="/orders" className="text-sm text-indigo-600 hover:text-indigo-800">
-        &larr; Back to orders
-      </Link>
+      <Breadcrumbs items={[
+        { label: 'Dashboard', to: '/dashboard' },
+        { label: 'Orders', to: '/orders' },
+        { label: order.order_number },
+      ]} />
 
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold text-gray-900">{order.order_number}</h2>

@@ -18,7 +18,7 @@ const FEATURES = [
   {
     title: 'Agents that work alongside you',
     description:
-      'Ten specialized agents handle quoting, design review, and quality assurance around the clock — so your team can focus on production.',
+      'An ensemble of dedicated AI agents handles quoting, design review, and quality assurance around the clock — so your team can focus on production.',
     icon: (
       <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 0 0-2.455 2.456ZM16.894 20.567 16.5 21.75l-.394-1.183a2.25 2.25 0 0 0-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 0 0 1.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 0 0 1.423 1.423l1.183.394-1.183.394a2.25 2.25 0 0 0-1.423 1.423Z" />
@@ -28,7 +28,7 @@ const FEATURES = [
   {
     title: 'Orders & proofs, streamlined',
     description:
-      'From cart to production-ready files. Digital proofing, approval tracking, and file management all in one place.',
+      'From cart to production-ready files. Agent-assisted digital proofing, approval tracking, and file management all in one place.',
     icon: (
       <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15a2.25 2.25 0 0 1 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25ZM6.75 12h.008v.008H6.75V12Zm0 3h.008v.008H6.75V15Zm0 3h.008v.008H6.75V18Z" />
@@ -48,7 +48,7 @@ const FEATURES = [
   {
     title: 'Connects to what you use',
     description:
-      'Sync with Printavo, shopVOX, QuickBooks, and more. Orders and invoices flow automatically.',
+      'Sync with Printavo, shopVOX, DocketManager, QuickBooks, and more. Orders and invoices flow automatically.',
     icon: (
       <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244" />
@@ -157,8 +157,10 @@ export default function LandingPage() {
               </h1>
 
               <p className="mt-6 max-w-xl text-lg leading-relaxed text-bark">
-                Teaky is the AI-powered operating system for commercial print sales. Branded
-                portals, smart agents, and streamlined orders — all working alongside your team.
+                Teaky is the AI-powered operating system for branded merchandise and print
+                commerce. Portals, smart agents, and streamlined orders for print shops, event
+                planners, marketing firms, and anyone who needs custom products — all working
+                alongside your team.
               </p>
 
               <div className="mt-10 flex flex-wrap gap-4">
@@ -182,8 +184,8 @@ export default function LandingPage() {
               <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-xl shadow-black/5">
                 <div className="h-1 bg-gradient-to-r from-teak-dark via-teak to-teak-light" />
                 <div className="p-8">
-                  <h2 className="font-heading text-2xl font-bold text-brand-dark">Welcome back</h2>
-                  <p className="mt-1 text-sm text-wood">Sign in to your Teaky dashboard</p>
+                  <h2 className="font-heading text-2xl font-bold text-brand-dark">Sign in to Teaky</h2>
+                  <p className="mt-1 text-sm text-wood">Access your portals, orders, and AI agents</p>
 
                   <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
                     {error && (
@@ -263,12 +265,12 @@ export default function LandingPage() {
                   </form>
 
                   <p className="mt-6 text-center text-sm text-wood">
-                    Don&apos;t have an account?{' '}
+                    New to Teaky?{' '}
                     <Link
                       to="/register"
                       className="font-medium text-teak-dark transition hover:text-teak"
                     >
-                      Create one free
+                      Create a free account
                     </Link>
                   </p>
                 </div>
@@ -287,14 +289,14 @@ export default function LandingPage() {
         <div className="mx-auto max-w-7xl px-6">
           <div className="text-center">
             <p className="text-sm font-bold uppercase tracking-[0.15em] text-teak">
-              Built for your print shop
+              Built for your business
             </p>
             <h2 className="mt-3 font-heading text-3xl font-bold text-brand-dark sm:text-4xl">
               Everything you need, nothing you don&apos;t
             </h2>
             <p className="mx-auto mt-4 max-w-2xl text-bark">
               From customer-facing portals to back-office agents, Teaky handles the entire workflow
-              so you can focus on what you do best: printing.
+              so you can focus on what you do best.
             </p>
           </div>
 
@@ -321,10 +323,10 @@ export default function LandingPage() {
       <section className="bg-gradient-to-br from-teak-dark to-teak py-20">
         <div className="mx-auto max-w-3xl px-6 text-center">
           <h2 className="font-heading text-3xl font-bold text-white sm:text-4xl">
-            Ready to grow your print shop?
+            Ready to grow your business?
           </h2>
           <p className="mt-4 text-lg text-white/80">
-            Join print shops already using Teaky to streamline their workflow and delight their
+            Join businesses already using Teaky to streamline their workflow and delight their
             customers.
           </p>
           <div className="mt-10 flex flex-wrap justify-center gap-4">
@@ -347,15 +349,26 @@ export default function LandingPage() {
       </section>
 
       {/* ───── FOOTER ───── */}
-      <footer className="bg-brand-dark py-10">
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-6 sm:flex-row">
-          <div className="flex items-center gap-2">
-            <img src="/teaky-logo.svg" alt="Teaky" className="h-7 w-7" />
-            <span className="font-heading text-sm font-semibold text-white">teaky</span>
+      <footer className="bg-brand-dark py-12">
+        <div className="mx-auto max-w-7xl px-6">
+          <div className="flex flex-col items-center justify-between gap-8 sm:flex-row sm:items-start">
+            <div className="flex items-center gap-2">
+              <img src="/teaky-logo.svg" alt="Teaky" className="h-7 w-7" />
+              <span className="font-heading text-sm font-semibold text-white">teaky</span>
+            </div>
+            <nav className="flex flex-wrap justify-center gap-x-8 gap-y-2">
+              <Link to="/about" className="text-sm text-gray-400 transition hover:text-white">About</Link>
+              <Link to="/privacy" className="text-sm text-gray-400 transition hover:text-white">Privacy Policy</Link>
+              <Link to="/terms" className="text-sm text-gray-400 transition hover:text-white">Terms of Service</Link>
+              <Link to="/security" className="text-sm text-gray-400 transition hover:text-white">Security</Link>
+              <Link to="/contact" className="text-sm text-gray-400 transition hover:text-white">Contact</Link>
+            </nav>
           </div>
-          <p className="text-sm text-gray-500">
-            &copy; {new Date().getFullYear()} Teaky. All rights reserved.
-          </p>
+          <div className="mt-8 border-t border-gray-700 pt-6 text-center">
+            <p className="text-sm text-gray-500">
+              &copy; {new Date().getFullYear()} Teaky. All rights reserved.
+            </p>
+          </div>
         </div>
       </footer>
     </div>

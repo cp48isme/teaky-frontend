@@ -9,6 +9,7 @@ import {
 import type { Portal } from '../types/portal';
 import type { Invitation } from '../types/team';
 import Spinner from '../components/ui/Spinner';
+import Breadcrumbs from '../components/ui/Breadcrumbs';
 
 export default function PortalDetailPage() {
   const { portalId } = useParams<{ portalId: string }>();
@@ -74,13 +75,15 @@ export default function PortalDetailPage() {
 
   return (
     <div className="space-y-6">
+      <Breadcrumbs items={[
+        { label: 'Dashboard', to: '/dashboard' },
+        { label: 'Portals', to: '/portals' },
+        { label: portal.name },
+      ]} />
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <Link to="/portals" className="text-sm text-indigo-600 hover:text-indigo-800">
-            &larr; Back to portals
-          </Link>
-          <h2 className="mt-1 text-xl font-bold text-gray-900">{portal.name}</h2>
+          <h2 className="text-xl font-bold text-gray-900">{portal.name}</h2>
         </div>
         <div className="flex items-center gap-3">
           {portal.status === 'draft' && (

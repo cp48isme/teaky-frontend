@@ -51,8 +51,8 @@ export default function LoginPage() {
         <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-xl shadow-black/5">
           <div className="h-1 bg-gradient-to-r from-teak-dark via-teak to-teak-light" />
           <div className="p-8">
-            <h2 className="font-heading text-2xl font-bold text-brand-dark">Welcome back</h2>
-            <p className="mt-1 text-sm text-wood">Sign in to your Teaky dashboard</p>
+            <h2 className="font-heading text-2xl font-bold text-brand-dark">Sign in to Teaky</h2>
+            <p className="mt-1 text-sm text-wood">Access your portals, orders, and AI agents</p>
 
             <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
               {error && (
@@ -111,9 +111,9 @@ export default function LoginPage() {
             </form>
 
             <p className="mt-6 text-center text-sm text-wood">
-              Don&apos;t have an account?{' '}
+              New to Teaky?{' '}
               <Link to="/register" className="font-medium text-teak-dark transition hover:text-teak">
-                Create one free
+                Create a free account
               </Link>
             </p>
           </div>

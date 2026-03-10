@@ -59,7 +59,7 @@ export default function RegisterPage() {
               Create your account
             </h2>
             <p className="mt-1 text-sm text-wood">
-              Start your free trial — no credit card required
+              Create your free Teaky account to set up branded portals for your clients
             </p>
 
             <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
@@ -111,8 +111,30 @@ export default function RegisterPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="mt-1.5 block w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-brand-dark placeholder-gray-400 transition focus:border-teak focus:outline-none focus:ring-1 focus:ring-teak"
-                  placeholder="Min 8 characters"
+                  placeholder="Create a password"
                 />
+                {password.length > 0 && (
+                  <ul className="mt-2 space-y-1">
+                    {[
+                      { met: password.length >= 8, label: 'Min 8 characters' },
+                      { met: /[A-Z]/.test(password), label: '1 uppercase letter' },
+                      { met: /[0-9]/.test(password), label: '1 number' },
+                    ].map((rule) => (
+                      <li key={rule.label} className="flex items-center gap-1.5 text-xs">
+                        {rule.met ? (
+                          <svg className="h-3.5 w-3.5 text-teak" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                          </svg>
+                        ) : (
+                          <svg className="h-3.5 w-3.5 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <circle cx="12" cy="12" r="9" />
+                          </svg>
+                        )}
+                        <span className={rule.met ? 'text-teak-dark' : 'text-gray-400'}>{rule.label}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
 
               <button
@@ -135,9 +157,9 @@ export default function RegisterPage() {
             </form>
 
             <p className="mt-6 text-center text-sm text-wood">
-              Already have an account?{' '}
+              Already have a Teaky account?{' '}
               <Link to="/login" className="font-medium text-teak-dark transition hover:text-teak">
-                Sign in
+                Sign in instead
               </Link>
             </p>
           </div>

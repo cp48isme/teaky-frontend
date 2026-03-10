@@ -1,5 +1,5 @@
 import { Fragment, useState, useEffect, type FormEvent } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { getPortal } from '../api/portals';
 import { listProducts, createProduct, updateProduct, deleteProduct } from '../api/products';
 import { listVariants, createVariant, deleteVariant } from '../api/product-variants';
@@ -11,6 +11,7 @@ import type {
 } from '../types/product';
 import type { ProductVariant, CreateVariantRequest } from '../types/product-variant';
 import Spinner from '../components/ui/Spinner';
+import Breadcrumbs from '../components/ui/Breadcrumbs';
 
 const CATEGORIES = [
   { value: 'apparel', label: 'Apparel' },
@@ -165,12 +166,15 @@ export default function ProductManagementPage() {
 
   return (
     <div className="space-y-6">
+      <Breadcrumbs items={[
+        { label: 'Dashboard', to: '/dashboard' },
+        { label: 'Portals', to: '/portals' },
+        { label: portal?.name ?? 'Portal', to: `/portals/${portalId}` },
+        { label: 'Products' },
+      ]} />
       {/* Header */}
       <div>
-        <Link to={`/portals/${portalId}`} className="text-sm text-indigo-600 hover:text-indigo-800">
-          &larr; Back to {portal?.name ?? 'portal'}
-        </Link>
-        <div className="mt-1 flex items-center justify-between">
+        <div className="flex items-center justify-between">
           <h2 className="text-xl font-bold text-gray-900">Products</h2>
           {!showForm && (
             <button

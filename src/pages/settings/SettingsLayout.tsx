@@ -1,4 +1,5 @@
 import { NavLink, Outlet } from 'react-router-dom';
+import Breadcrumbs from '../../components/ui/Breadcrumbs';
 
 const SETTINGS_TABS = [
   { to: '/settings/team', label: 'Team' },
@@ -11,6 +12,10 @@ const SETTINGS_TABS = [
 export default function SettingsLayout() {
   return (
     <div className="mx-auto max-w-5xl">
+      <Breadcrumbs items={[
+        { label: 'Dashboard', to: '/dashboard' },
+        { label: 'Settings' },
+      ]} />
       <h1 className="text-xl font-bold text-gray-900">Settings</h1>
 
       <div className="mt-4 border-b border-gray-200">

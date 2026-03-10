@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import {
   getAgentTask,
   getTaskMessages,
@@ -12,6 +12,7 @@ import {
 import type { AgentTask } from '../types/agent';
 import type { Message } from '../types/message';
 import Spinner from '../components/ui/Spinner';
+import Breadcrumbs from '../components/ui/Breadcrumbs';
 
 const STATUS_COLORS: Record<string, string> = {
   pending: 'bg-yellow-100 text-yellow-800',
@@ -25,7 +26,6 @@ const STATUS_COLORS: Record<string, string> = {
 
 export default function AgentTaskDetailPage() {
   const { taskId } = useParams<{ taskId: string }>();
-  const navigate = useNavigate();
   const [task, setTask] = useState<AgentTask | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
@@ -140,15 +140,14 @@ export default function AgentTaskDetailPage() {
 
   return (
     <div className="space-y-6">
+      <Breadcrumbs items={[
+        { label: 'Dashboard', to: '/dashboard' },
+        { label: 'Agents', to: '/agents' },
+        { label: `${task.agent_type} Task` },
+      ]} />
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <button
-            onClick={() => navigate('/agents')}
-            className="mb-2 text-sm text-indigo-600 hover:text-indigo-800"
-          >
-            &larr; Back to Control Center
-          </button>
           <h2 className="text-lg font-semibold text-gray-900">
             {task.agent_type} Task
           </h2>
