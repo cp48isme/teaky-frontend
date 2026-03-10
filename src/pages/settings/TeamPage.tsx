@@ -94,7 +94,7 @@ export default function TeamPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Spinner className="h-8 w-8 text-indigo-600" />
+        <Spinner className="h-8 w-8 text-teak-dark" />
       </div>
     );
   }
@@ -139,7 +139,7 @@ export default function TeamPage() {
           <button
             type="submit"
             disabled={inviting}
-            className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+            className="rounded-md bg-teak-dark px-4 py-2 text-sm font-medium text-white hover:bg-teak disabled:opacity-50"
           >
             {inviting ? 'Sending...' : 'Send Invite'}
           </button>
@@ -216,7 +216,7 @@ export default function TeamPage() {
                         </select>
                         <button
                           onClick={() => handleUpdateRole(m.user_id)}
-                          className="text-sm text-indigo-600 hover:text-indigo-800"
+                          className="text-sm text-teak-dark hover:text-teak"
                         >
                           Save
                         </button>
@@ -232,7 +232,7 @@ export default function TeamPage() {
                         {m.roles.map((r) => (
                           <span
                             key={r}
-                            className="rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-700"
+                            className="rounded-full bg-teak/10 px-2 py-0.5 text-xs font-medium text-teak-dark"
                           >
                             {r.replace(/_/g, ' ')}
                           </span>
@@ -251,7 +251,7 @@ export default function TeamPage() {
                         setEditingId(m.user_id);
                         setEditRole(m.roles[0] || 'sales_rep');
                       }}
-                      className="mr-3 text-indigo-600 hover:text-indigo-800"
+                      className="mr-3 text-teak-dark hover:text-teak"
                     >
                       Edit
                     </button>

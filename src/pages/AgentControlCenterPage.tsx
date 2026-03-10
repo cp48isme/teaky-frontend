@@ -54,7 +54,7 @@ export default function AgentControlCenterPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Spinner className="h-8 w-8 text-indigo-600" />
+        <Spinner className="h-8 w-8 text-teak-dark" />
       </div>
     );
   }
@@ -70,7 +70,7 @@ export default function AgentControlCenterPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-gray-900">Agent Control Center</h2>
+          <h2 className="font-heading text-lg font-semibold text-brand-dark">Agent Control Center</h2>
           <p className="mt-1 text-sm text-gray-500">
             Monitor and manage agent tasks across your organization
           </p>

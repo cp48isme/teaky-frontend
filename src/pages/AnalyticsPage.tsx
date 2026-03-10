@@ -75,7 +75,7 @@ export default function AnalyticsPage() {
   if (loading && !summary) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Spinner className="h-8 w-8 text-indigo-600" />
+        <Spinner className="h-8 w-8 text-teak-dark" />
       </div>
     );
   }
@@ -83,7 +83,7 @@ export default function AnalyticsPage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <h2 className="text-xl font-bold text-gray-900">Analytics</h2>
+        <h2 className="font-heading text-xl font-bold text-brand-dark">Analytics</h2>
         <DateRangeSelector
           granularity={granularity}
           onGranularityChange={setGranularity}

@@ -49,7 +49,7 @@ export default function PricingStep({
             key={opt.value}
             className={`flex cursor-pointer items-start gap-3 rounded-lg border p-4 transition-colors ${
               selectedApproach === opt.value
-                ? 'border-indigo-500 bg-indigo-50'
+                ? 'border-teak bg-teak/10'
                 : 'border-gray-200 hover:border-gray-300'
             }`}
           >
@@ -58,7 +58,7 @@ export default function PricingStep({
               name="pricing"
               checked={selectedApproach === opt.value}
               onChange={() => onSelect(opt.value)}
-              className="mt-0.5 h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-500"
+              className="mt-0.5 h-4 w-4 border-gray-300 text-teak-dark focus:ring-teak"
             />
             <div>
               <span className="text-sm font-medium text-gray-900">
@@ -89,7 +89,7 @@ export default function PricingStep({
           <button
             type="button"
             onClick={onNext}
-            className="rounded-md bg-indigo-600 px-6 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+            className="rounded-md bg-teak-dark px-6 py-2 text-sm font-medium text-white hover:bg-teak"
           >
             Next
           </button>

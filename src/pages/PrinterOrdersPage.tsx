@@ -23,7 +23,7 @@ const STATUS_COLORS: Record<string, string> = {
   approved: 'bg-green-100 text-green-800',
   in_production: 'bg-purple-100 text-purple-800',
   quality_check: 'bg-orange-100 text-orange-800',
-  shipped: 'bg-indigo-100 text-indigo-800',
+  shipped: 'bg-teal-100 text-teal-800',
   delivered: 'bg-teal-100 text-teal-800',
   completed: 'bg-gray-100 text-gray-800',
   cancelled: 'bg-red-100 text-red-800',
@@ -45,10 +45,10 @@ export default function PrinterOrdersPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-gray-900">Orders</h2>
+        <h2 className="font-heading text-xl font-bold text-brand-dark">Orders</h2>
         <Link
           to="/orders/new"
-          className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+          className="rounded-md bg-teak-dark px-4 py-2 text-sm font-medium text-white hover:bg-teak"
         >
           New Order
         </Link>
@@ -62,7 +62,7 @@ export default function PrinterOrdersPage() {
             onClick={() => setStatusFilter(f.value)}
             className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
               statusFilter === f.value
-                ? 'bg-indigo-600 text-white'
+                ? 'bg-teak-dark text-white'
                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
             }`}
           >
@@ -73,7 +73,7 @@ export default function PrinterOrdersPage() {
 
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <Spinner className="h-8 w-8 text-indigo-600" />
+          <Spinner className="h-8 w-8 text-teak-dark" />
         </div>
       ) : orders.length === 0 ? (
         <p className="py-8 text-center text-gray-500">No orders found.</p>
@@ -95,7 +95,7 @@ export default function PrinterOrdersPage() {
                   <td className="px-4 py-3">
                     <Link
                       to={`/orders/${order.id}`}
-                      className="font-medium text-indigo-600 hover:text-indigo-800"
+                      className="font-medium text-teak-dark hover:text-teak"
                     >
                       {order.order_number}
                     </Link>

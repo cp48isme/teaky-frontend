@@ -8,10 +8,10 @@ export default function EquipmentSummary({ equipment }: Props) {
   return (
     <div className="rounded-lg border border-gray-200 bg-white p-6">
       <div className="flex items-start justify-between">
-        <h3 className="text-sm font-semibold text-gray-900">Equipment</h3>
+        <h3 className="font-heading text-sm font-semibold text-brand-dark">Equipment</h3>
         <a
           href="/get-started"
-          className="text-xs text-indigo-600 hover:text-indigo-800"
+          className="text-xs text-teak-dark hover:text-teak"
         >
           Manage
         </a>
@@ -20,7 +20,7 @@ export default function EquipmentSummary({ equipment }: Props) {
       {equipment.length === 0 ? (
         <p className="mt-2 text-sm text-gray-500">
           No equipment added yet.{' '}
-          <a href="/get-started" className="text-indigo-600 hover:text-indigo-800">
+          <a href="/get-started" className="text-teak-dark hover:text-teak">
             Add equipment
           </a>
         </p>

@@ -193,7 +193,7 @@ export default function SpreadsheetImport({ onImport, onCancel }: SpreadsheetImp
                 onClick={() => fileInputRef.current?.click()}
                 className={`flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-8 transition-colors ${
                   dragging
-                    ? 'border-indigo-500 bg-indigo-50'
+                    ? 'border-teak bg-teak/10'
                     : 'border-gray-300 bg-gray-50 hover:border-gray-400'
                 }`}
               >
@@ -240,7 +240,7 @@ export default function SpreadsheetImport({ onImport, onCancel }: SpreadsheetImp
                     setFileName(null);
                     setError(null);
                   }}
-                  className="text-xs text-indigo-600 hover:text-indigo-800"
+                  className="text-xs text-teak-dark hover:text-teak"
                 >
                   Choose different file
                 </button>
@@ -288,7 +288,7 @@ export default function SpreadsheetImport({ onImport, onCancel }: SpreadsheetImp
             <button
               type="button"
               onClick={handleImport}
-              className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+              className="rounded-md bg-teak-dark px-4 py-2 text-sm font-medium text-white hover:bg-teak"
             >
               Import {parsedRows.length} Product{parsedRows.length !== 1 ? 's' : ''}
             </button>

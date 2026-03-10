@@ -127,7 +127,7 @@ export default function AgentTaskDetailPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Spinner className="h-8 w-8 text-indigo-600" />
+        <Spinner className="h-8 w-8 text-teak-dark" />
       </div>
     );
   }
@@ -148,7 +148,7 @@ export default function AgentTaskDetailPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-gray-900">
+          <h2 className="font-heading text-lg font-semibold text-brand-dark">
             {task.agent_type} Task
           </h2>
           <p className="mt-1 text-sm text-gray-500">
@@ -305,14 +305,14 @@ export default function AgentTaskDetailPage() {
                 <div
                   className={`max-w-xs rounded-lg px-3 py-2 text-sm ${
                     msg.direction === 'outbound'
-                      ? 'bg-indigo-600 text-white'
+                      ? 'bg-teak-dark text-white'
                       : 'bg-gray-100 text-gray-900'
                   }`}
                 >
                   <p>{msg.body}</p>
                   <p
                     className={`mt-1 text-xs ${
-                      msg.direction === 'outbound' ? 'text-indigo-200' : 'text-gray-400'
+                      msg.direction === 'outbound' ? 'text-white/60' : 'text-gray-400'
                     }`}
                   >
                     {new Date(msg.created_at).toLocaleTimeString()}
@@ -337,12 +337,12 @@ export default function AgentTaskDetailPage() {
                   }
                 }}
                 placeholder="Type a message..."
-                className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-teak focus:outline-none focus:ring-1 focus:ring-teak"
               />
               <button
                 onClick={handleSendMessage}
                 disabled={sending || !newMessage.trim()}
-                className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+                className="rounded-md bg-teak-dark px-4 py-2 text-sm font-medium text-white hover:bg-teak disabled:opacity-50"
               >
                 {sending ? 'Sending...' : 'Send'}
               </button>

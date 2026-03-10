@@ -50,7 +50,7 @@ export default function PortalDetailPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Spinner className="h-8 w-8 text-indigo-600" />
+        <Spinner className="h-8 w-8 text-teak-dark" />
       </div>
     );
   }
@@ -59,7 +59,7 @@ export default function PortalDetailPage() {
     return (
       <div className="py-20 text-center">
         <p className="text-sm text-red-600">{error || 'Portal not found'}</p>
-        <Link to="/portals" className="mt-2 text-sm text-indigo-600 hover:text-indigo-800">
+        <Link to="/portals" className="mt-2 text-sm text-teak-dark hover:text-teak">
           Back to portals
         </Link>
       </div>
@@ -83,7 +83,7 @@ export default function PortalDetailPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold text-gray-900">{portal.name}</h2>
+          <h2 className="font-heading text-xl font-bold text-brand-dark">{portal.name}</h2>
         </div>
         <div className="flex items-center gap-3">
           {portal.status === 'draft' && (
@@ -187,7 +187,7 @@ export default function PortalDetailPage() {
       <div className="flex gap-3">
         <Link
           to={`/portals/${portal.id}/products`}
-          className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+          className="rounded-md bg-teak-dark px-4 py-2 text-sm font-medium text-white hover:bg-teak"
         >
           Manage Products
         </Link>
@@ -230,7 +230,7 @@ export default function PortalDetailPage() {
             placeholder="user@example.com"
             value={inviteEmail}
             onChange={(e) => setInviteEmail(e.target.value)}
-            className="flex-1 rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            className="flex-1 rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-teak focus:outline-none focus:ring-1 focus:ring-teak"
             required
           />
           <select
@@ -244,7 +244,7 @@ export default function PortalDetailPage() {
           <button
             type="submit"
             disabled={inviting}
-            className="rounded-md bg-indigo-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+            className="rounded-md bg-teak-dark px-4 py-1.5 text-sm font-medium text-white hover:bg-teak disabled:opacity-50"
           >
             {inviting ? 'Sending...' : 'Invite'}
           </button>

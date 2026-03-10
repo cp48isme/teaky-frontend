@@ -18,7 +18,7 @@ export default function PortalCatalogPage() {
 
   if (!portal) return null;
 
-  const primaryColor = portal.brand_config?.primary_color || '#4F46E5';
+  const primaryColor = portal.brand_config?.primary_color || '#558B2F';
   const filtered = categoryFilter
     ? products.filter((p) => p.category === categoryFilter)
     : products;

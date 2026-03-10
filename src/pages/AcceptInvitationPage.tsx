@@ -37,7 +37,7 @@ export default function AcceptInvitationPage() {
           <div className="mt-6 flex flex-col gap-3">
             <button
               onClick={() => navigate('/login')}
-              className="w-full rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+              className="w-full rounded-md bg-teak-dark px-4 py-2 text-sm font-medium text-white hover:bg-teak"
             >
               Log In
             </button>
@@ -88,7 +88,7 @@ export default function AcceptInvitationPage() {
         <button
           onClick={handleAccept}
           disabled={accepting}
-          className="mt-6 w-full rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+          className="mt-6 w-full rounded-md bg-teak-dark px-4 py-2.5 text-sm font-medium text-white hover:bg-teak disabled:opacity-50"
         >
           {accepting ? <Spinner className="mx-auto h-5 w-5 text-white" /> : 'Accept Invitation'}
         </button>

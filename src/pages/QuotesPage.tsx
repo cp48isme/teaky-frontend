@@ -96,7 +96,7 @@ export default function QuotesPage() {
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold text-gray-900">Quote Requests</h1>
+        <h1 className="font-heading text-xl font-bold text-brand-dark">Quote Requests</h1>
       </div>
 
       {/* Filters */}
@@ -107,7 +107,7 @@ export default function QuotesPage() {
             setSelectedPortalId(e.target.value);
             setPage(1);
           }}
-          className="rounded-md border border-gray-300 px-3 py-1.5 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+          className="rounded-md border border-gray-300 px-3 py-1.5 text-sm shadow-sm focus:border-teak focus:ring-teak"
         >
           {portals.map((p) => (
             <option key={p.id} value={p.id}>
@@ -121,7 +121,7 @@ export default function QuotesPage() {
             setStatusFilter(e.target.value);
             setPage(1);
           }}
-          className="rounded-md border border-gray-300 px-3 py-1.5 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+          className="rounded-md border border-gray-300 px-3 py-1.5 text-sm shadow-sm focus:border-teak focus:ring-teak"
         >
           {STATUS_OPTIONS.map((opt) => (
             <option key={opt.value} value={opt.value}>
@@ -134,7 +134,7 @@ export default function QuotesPage() {
       {/* Results */}
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <Spinner className="h-6 w-6 text-indigo-600" />
+          <Spinner className="h-6 w-6 text-teak-dark" />
         </div>
       ) : data && data.items.length > 0 ? (
         <>
@@ -203,7 +203,7 @@ export default function QuotesPage() {
                           );
                           setQuoteNotes(quote.notes || '');
                         }}
-                        className="text-indigo-600 hover:text-indigo-500"
+                        className="text-teak-dark hover:text-teak"
                       >
                         View
                       </button>
@@ -287,7 +287,7 @@ export default function QuotesPage() {
                     min="0"
                     value={quotePrice}
                     onChange={(e) => setQuotePrice(e.target.value)}
-                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm shadow-sm focus:border-teak focus:ring-teak"
                     placeholder="Enter price"
                   />
                 </div>
@@ -299,7 +299,7 @@ export default function QuotesPage() {
                   value={quoteNotes}
                   onChange={(e) => setQuoteNotes(e.target.value)}
                   rows={3}
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm shadow-sm focus:border-teak focus:ring-teak"
                 />
               </div>
             </div>
@@ -316,7 +316,7 @@ export default function QuotesPage() {
                 <button
                   onClick={() => handleStatusUpdate(selectedQuote.id, 'quoted')}
                   disabled={saving || !quotePrice}
-                  className="rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-indigo-500 disabled:opacity-50"
+                  className="rounded-md bg-teak-dark px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-teak disabled:opacity-50"
                 >
                   {saving ? 'Sending...' : 'Send Quote'}
                 </button>

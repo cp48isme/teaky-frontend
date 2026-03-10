@@ -107,7 +107,7 @@ export default function NotificationBell({ unreadCount, onCountChange }: Props) 
             {unreadCount > 0 && (
               <button
                 onClick={handleMarkAllRead}
-                className="text-xs text-indigo-600 hover:text-indigo-800"
+                className="text-xs text-teak-dark hover:text-teak"
               >
                 Mark all read
               </button>
@@ -128,12 +128,12 @@ export default function NotificationBell({ unreadCount, onCountChange }: Props) 
                 <div
                   key={n.id}
                   className={`border-b border-gray-50 px-4 py-2.5 last:border-0 ${
-                    n.read_at ? '' : 'bg-indigo-50/30'
+                    n.read_at ? '' : 'bg-teak/5'
                   }`}
                 >
                   <div className="flex items-start gap-2">
                     {!n.read_at && (
-                      <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-indigo-600" />
+                      <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-teak-dark" />
                     )}
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium text-gray-900 truncate">
@@ -147,7 +147,7 @@ export default function NotificationBell({ unreadCount, onCountChange }: Props) 
                     {!n.read_at && (
                       <button
                         onClick={() => handleMarkRead(n.id)}
-                        className="shrink-0 text-xs text-indigo-600 hover:text-indigo-800"
+                        className="shrink-0 text-xs text-teak-dark hover:text-teak"
                       >
                         Read
                       </button>
@@ -162,7 +162,7 @@ export default function NotificationBell({ unreadCount, onCountChange }: Props) 
             <Link
               to="/settings/notifications"
               onClick={() => setOpen(false)}
-              className="text-xs text-indigo-600 hover:text-indigo-800"
+              className="text-xs text-teak-dark hover:text-teak"
             >
               View all notifications
             </Link>

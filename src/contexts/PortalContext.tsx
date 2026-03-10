@@ -50,7 +50,7 @@ export function PortalProvider({ children }: { children: ReactNode }) {
       {portal?.brand_config && (
         <style>{`
           :root {
-            --portal-primary: ${portal.brand_config.primary_color || '#4F46E5'};
+            --portal-primary: ${portal.brand_config.primary_color || '#558B2F'};
             --portal-secondary: ${portal.brand_config.secondary_color || '#6B7280'};
             --portal-accent: ${portal.brand_config.accent_color || '#F59E0B'};
           }

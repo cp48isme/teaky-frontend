@@ -6,9 +6,9 @@ interface Props {
 
 export default function StatCard({ label, value, subtitle }: Props) {
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-4">
+    <div className="rounded-lg border border-gray-200 border-l-2 border-l-teak/30 bg-white p-4">
       <p className="text-sm font-medium text-gray-500">{label}</p>
-      <p className="mt-1 text-2xl font-semibold text-gray-900">{value}</p>
+      <p className="mt-1 font-heading text-2xl font-semibold text-brand-dark">{value}</p>
       {subtitle && (
         <p className="mt-1 text-xs text-gray-400">{subtitle}</p>
       )}

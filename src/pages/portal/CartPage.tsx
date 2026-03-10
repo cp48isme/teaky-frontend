@@ -8,12 +8,12 @@ export default function CartPage() {
   const { portal } = usePortalContext();
   const { cart, loading, updateItem, removeItem } = useCart();
 
-  const primaryColor = portal?.brand_config?.primary_color || '#4F46E5';
+  const primaryColor = portal?.brand_config?.primary_color || '#558B2F';
 
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Spinner className="h-8 w-8 text-indigo-600" />
+        <Spinner className="h-8 w-8 text-teak-dark" />
       </div>
     );
   }
@@ -119,7 +119,7 @@ export default function CartPage() {
       <div className="mt-6 flex justify-between">
         <Link
           to={`/p/${slug}/products`}
-          className="text-sm text-indigo-600 hover:text-indigo-800"
+          className="text-sm text-teak-dark hover:text-teak"
         >
           Continue Shopping
         </Link>

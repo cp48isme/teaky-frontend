@@ -20,3 +20,12 @@ export async function replaceOrgCapabilities(
     body: JSON.stringify({ capability_ids: capabilityIds }),
   });
 }
+
+export async function getCapabilitySuggestions(
+  equipmentIds: string[],
+): Promise<Capability[]> {
+  if (equipmentIds.length === 0) return [];
+  return apiRequest<Capability[]>(
+    `/equipment/capability-suggestions?equipment_ids=${equipmentIds.join(',')}`,
+  );
+}

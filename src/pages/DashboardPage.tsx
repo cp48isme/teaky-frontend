@@ -40,7 +40,7 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Spinner className="h-8 w-8 text-indigo-600" />
+        <Spinner className="h-8 w-8 text-teak-dark" />
       </div>
     );
   }
@@ -49,7 +49,7 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-bold text-gray-900">Dashboard</h2>
+      <h2 className="font-heading text-xl font-bold text-brand-dark">Dashboard</h2>
 
       {/* Stat Cards */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -72,7 +72,7 @@ export default function DashboardPage() {
       {/* Analytics link */}
       <Link
         to="/analytics"
-        className="inline-block text-sm font-medium text-indigo-600 hover:text-indigo-500"
+        className="inline-block text-sm font-medium text-teak-dark hover:text-teak"
       >
         View detailed analytics &rarr;
       </Link>

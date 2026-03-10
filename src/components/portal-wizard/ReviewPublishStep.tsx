@@ -25,8 +25,8 @@ export default function ReviewPublishStep({
   onSaveDraft,
   onBack,
 }: Props) {
-  const primaryColor = brandConfig.primary_color || '#4F46E5';
-  const secondaryColor = brandConfig.secondary_color || '#6366F1';
+  const primaryColor = brandConfig.primary_color || '#558B2F';
+  const secondaryColor = brandConfig.secondary_color || '#7CB342';
 
   return (
     <div className="space-y-6">
@@ -52,7 +52,7 @@ export default function ReviewPublishStep({
                 </p>
                 <p className="text-sm">
                   <span className="font-medium text-gray-700">URL:</span>{' '}
-                  <span className="font-mono text-indigo-600">{slug}.teaky.com</span>
+                  <span className="font-mono text-teak-dark">{slug}.teaky.com</span>
                 </p>
               </div>
             </div>
@@ -263,7 +263,7 @@ export default function ReviewPublishStep({
             type="button"
             onClick={onPublish}
             disabled={publishing}
-            className="rounded-md bg-indigo-600 px-6 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+            className="rounded-md bg-teak-dark px-6 py-2 text-sm font-medium text-white hover:bg-teak disabled:opacity-50"
           >
             {publishing ? 'Publishing...' : 'Publish Now'}
           </button>

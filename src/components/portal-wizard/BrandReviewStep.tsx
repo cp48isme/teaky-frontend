@@ -73,7 +73,7 @@ export default function BrandReviewStep({
               type="file"
               accept="image/*"
               onChange={(e) => e.target.files?.[0] && handleLogoUpload(e.target.files[0])}
-              className="mt-1 block text-sm text-gray-500 file:mr-4 file:rounded file:border-0 file:bg-indigo-50 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-indigo-700 hover:file:bg-indigo-100"
+              className="mt-1 block text-sm text-gray-500 file:mr-4 file:rounded file:border-0 file:bg-teak/10 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-teak-dark hover:file:bg-teak/15"
             />
           </div>
 
@@ -94,7 +94,7 @@ export default function BrandReviewStep({
               type="file"
               accept="image/*"
               onChange={(e) => e.target.files?.[0] && handleFaviconUpload(e.target.files[0])}
-              className="mt-1 block text-sm text-gray-500 file:mr-4 file:rounded file:border-0 file:bg-indigo-50 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-indigo-700 hover:file:bg-indigo-100"
+              className="mt-1 block text-sm text-gray-500 file:mr-4 file:rounded file:border-0 file:bg-teak/10 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-teak-dark hover:file:bg-teak/15"
             />
           </div>
 
@@ -107,7 +107,7 @@ export default function BrandReviewStep({
                 <div className="mt-1 flex items-center gap-2">
                   <input
                     type="color"
-                    value={brandConfig.primary_color || '#4F46E5'}
+                    value={brandConfig.primary_color || '#558B2F'}
                     onChange={(e) => handleColorChange('primary_color', e.target.value)}
                     className="h-8 w-8 cursor-pointer rounded border border-gray-300"
                   />
@@ -115,8 +115,8 @@ export default function BrandReviewStep({
                     type="text"
                     value={brandConfig.primary_color || ''}
                     onChange={(e) => handleColorChange('primary_color', e.target.value)}
-                    placeholder="#4F46E5"
-                    className="block w-full rounded-md border border-gray-300 px-2 py-1 text-xs shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500"
+                    placeholder="#558B2F"
+                    className="block w-full rounded-md border border-gray-300 px-2 py-1 text-xs shadow-sm focus:border-teak focus:outline-none focus:ring-teak"
                   />
                 </div>
               </div>
@@ -134,7 +134,7 @@ export default function BrandReviewStep({
                     value={brandConfig.secondary_color || ''}
                     onChange={(e) => handleColorChange('secondary_color', e.target.value)}
                     placeholder="#6B7280"
-                    className="block w-full rounded-md border border-gray-300 px-2 py-1 text-xs shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500"
+                    className="block w-full rounded-md border border-gray-300 px-2 py-1 text-xs shadow-sm focus:border-teak focus:outline-none focus:ring-teak"
                   />
                 </div>
               </div>
@@ -152,7 +152,7 @@ export default function BrandReviewStep({
                     value={brandConfig.accent_color || ''}
                     onChange={(e) => handleColorChange('accent_color', e.target.value)}
                     placeholder="#F59E0B"
-                    className="block w-full rounded-md border border-gray-300 px-2 py-1 text-xs shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500"
+                    className="block w-full rounded-md border border-gray-300 px-2 py-1 text-xs shadow-sm focus:border-teak focus:outline-none focus:ring-teak"
                   />
                 </div>
               </div>
@@ -165,7 +165,7 @@ export default function BrandReviewStep({
               type="checkbox"
               checked={brandConfig.powered_by_teaky}
               onChange={(e) => onUpdate({ ...brandConfig, powered_by_teaky: e.target.checked })}
-              className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+              className="rounded border-gray-300 text-teak-dark focus:ring-teak"
             />
             <span className="text-gray-700">Show "Powered by Teaky" badge</span>
           </label>
@@ -178,7 +178,7 @@ export default function BrandReviewStep({
             {/* Header preview */}
             <div
               className="px-4 py-3 flex items-center gap-3"
-              style={{ backgroundColor: brandConfig.primary_color || '#4F46E5' }}
+              style={{ backgroundColor: brandConfig.primary_color || '#558B2F' }}
             >
               {brandConfig.logo_url && (
                 <img
@@ -225,7 +225,7 @@ export default function BrandReviewStep({
         </button>
         <button
           type="submit"
-          className="rounded-md bg-indigo-600 px-6 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+          className="rounded-md bg-teak-dark px-6 py-2 text-sm font-medium text-white hover:bg-teak"
         >
           Next
         </button>

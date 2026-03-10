@@ -116,7 +116,7 @@ export default function ProductAddStep({ products, onUpdate, onNext, onBack }: P
                 <button
                   type="button"
                   onClick={() => handleEditProduct(product)}
-                  className="text-sm text-indigo-600 hover:text-indigo-800"
+                  className="text-sm text-teak-dark hover:text-teak"
                 >
                   Edit
                 </button>
@@ -158,7 +158,7 @@ export default function ProductAddStep({ products, onUpdate, onNext, onBack }: P
             <button
               type="button"
               onClick={handleAddNew}
-              className="inline-flex items-center gap-1 rounded-md border border-dashed border-indigo-300 bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-700 hover:bg-indigo-100"
+              className="inline-flex items-center gap-1 rounded-md border border-dashed border-teak/30 bg-teak/10 px-4 py-2 text-sm font-medium text-teak-dark hover:bg-teak/15"
             >
               + Add Product
             </button>
@@ -182,7 +182,7 @@ export default function ProductAddStep({ products, onUpdate, onNext, onBack }: P
               </button>
               <button
                 type="submit"
-                className="rounded-md bg-indigo-600 px-6 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+                className="rounded-md bg-teak-dark px-6 py-2 text-sm font-medium text-white hover:bg-teak"
               >
                 {products.length === 0 ? 'Skip for now' : 'Next'}
               </button>
@@ -293,7 +293,7 @@ function ProductForm({ product, onChange, onSave, onCancel }: ProductFormProps) 
             required
             value={product.name}
             onChange={(e) => onChange({ ...product, name: e.target.value })}
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
+            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-teak focus:outline-none focus:ring-teak sm:text-sm"
           />
         </div>
         <div>
@@ -303,7 +303,7 @@ function ProductForm({ product, onChange, onSave, onCancel }: ProductFormProps) 
           <select
             value={product.category}
             onChange={(e) => onChange({ ...product, category: e.target.value })}
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
+            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-teak focus:outline-none focus:ring-teak sm:text-sm"
           >
             {CATEGORIES.map((cat) => (
               <option key={cat.value} value={cat.value}>
@@ -321,7 +321,7 @@ function ProductForm({ product, onChange, onSave, onCancel }: ProductFormProps) 
           value={product.description ?? ''}
           onChange={(e) => onChange({ ...product, description: e.target.value })}
           rows={2}
-          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
+          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-teak focus:outline-none focus:ring-teak sm:text-sm"
         />
       </div>
 
@@ -334,7 +334,7 @@ function ProductForm({ product, onChange, onSave, onCancel }: ProductFormProps) 
             value={product.sku ?? ''}
             onChange={(e) => onChange({ ...product, sku: e.target.value || undefined })}
             placeholder="Auto-generated if empty"
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
+            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-teak focus:outline-none focus:ring-teak sm:text-sm"
           />
         </div>
         <div>
@@ -344,7 +344,7 @@ function ProductForm({ product, onChange, onSave, onCancel }: ProductFormProps) 
             min={1}
             value={product.min_order_qty ?? 1}
             onChange={(e) => onChange({ ...product, min_order_qty: parseInt(e.target.value) || 1 })}
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
+            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-teak focus:outline-none focus:ring-teak sm:text-sm"
           />
         </div>
       </div>
@@ -353,7 +353,7 @@ function ProductForm({ product, onChange, onSave, onCancel }: ProductFormProps) 
       <div>
         <div className="flex items-center justify-between">
           <label className="text-sm font-medium text-gray-700">Sizes</label>
-          <button type="button" onClick={addSize} className="text-xs text-indigo-600 hover:text-indigo-800">
+          <button type="button" onClick={addSize} className="text-xs text-teak-dark hover:text-teak">
             + Add Size
           </button>
         </div>
@@ -364,7 +364,7 @@ function ProductForm({ product, onChange, onSave, onCancel }: ProductFormProps) 
               value={size.label}
               onChange={(e) => updateSize(i, { label: e.target.value })}
               placeholder="e.g., XL"
-              className="block w-1/2 rounded-md border border-gray-300 px-2 py-1 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500"
+              className="block w-1/2 rounded-md border border-gray-300 px-2 py-1 text-sm shadow-sm focus:border-teak focus:outline-none focus:ring-teak"
             />
             <input
               type="number"
@@ -372,7 +372,7 @@ function ProductForm({ product, onChange, onSave, onCancel }: ProductFormProps) 
               value={size.price_adjustment}
               onChange={(e) => updateSize(i, { price_adjustment: parseFloat(e.target.value) || 0 })}
               placeholder="Price adj."
-              className="block w-1/3 rounded-md border border-gray-300 px-2 py-1 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500"
+              className="block w-1/3 rounded-md border border-gray-300 px-2 py-1 text-sm shadow-sm focus:border-teak focus:outline-none focus:ring-teak"
             />
             <button type="button" onClick={() => removeSize(i)} className="text-xs text-red-500 hover:text-red-700">
               &times;
@@ -385,7 +385,7 @@ function ProductForm({ product, onChange, onSave, onCancel }: ProductFormProps) 
       <div>
         <div className="flex items-center justify-between">
           <label className="text-sm font-medium text-gray-700">Colors</label>
-          <button type="button" onClick={addColor} className="text-xs text-indigo-600 hover:text-indigo-800">
+          <button type="button" onClick={addColor} className="text-xs text-teak-dark hover:text-teak">
             + Add Color
           </button>
         </div>
@@ -396,7 +396,7 @@ function ProductForm({ product, onChange, onSave, onCancel }: ProductFormProps) 
               value={color.name}
               onChange={(e) => updateColor(i, { name: e.target.value })}
               placeholder="Color name"
-              className="block w-1/3 rounded-md border border-gray-300 px-2 py-1 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500"
+              className="block w-1/3 rounded-md border border-gray-300 px-2 py-1 text-sm shadow-sm focus:border-teak focus:outline-none focus:ring-teak"
             />
             <input
               type="color"
@@ -409,7 +409,7 @@ function ProductForm({ product, onChange, onSave, onCancel }: ProductFormProps) 
               value={color.hex_code ?? ''}
               onChange={(e) => updateColor(i, { hex_code: e.target.value })}
               placeholder="#hex"
-              className="block w-1/4 rounded-md border border-gray-300 px-2 py-1 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500"
+              className="block w-1/4 rounded-md border border-gray-300 px-2 py-1 text-sm shadow-sm focus:border-teak focus:outline-none focus:ring-teak"
             />
             <button type="button" onClick={() => removeColor(i)} className="text-xs text-red-500 hover:text-red-700">
               &times;
@@ -422,7 +422,7 @@ function ProductForm({ product, onChange, onSave, onCancel }: ProductFormProps) 
       <div>
         <div className="flex items-center justify-between">
           <label className="text-sm font-medium text-gray-700">Pricing Tiers</label>
-          <button type="button" onClick={addTier} className="text-xs text-indigo-600 hover:text-indigo-800">
+          <button type="button" onClick={addTier} className="text-xs text-teak-dark hover:text-teak">
             + Add Tier
           </button>
         </div>
@@ -434,7 +434,7 @@ function ProductForm({ product, onChange, onSave, onCancel }: ProductFormProps) 
               value={tier.min_qty}
               onChange={(e) => updateTier(i, { min_qty: parseInt(e.target.value) || 1 })}
               placeholder="Min"
-              className="block w-1/4 rounded-md border border-gray-300 px-2 py-1 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500"
+              className="block w-1/4 rounded-md border border-gray-300 px-2 py-1 text-sm shadow-sm focus:border-teak focus:outline-none focus:ring-teak"
             />
             <span className="text-xs text-gray-400">to</span>
             <input
@@ -443,7 +443,7 @@ function ProductForm({ product, onChange, onSave, onCancel }: ProductFormProps) 
               value={tier.max_qty ?? ''}
               onChange={(e) => updateTier(i, { max_qty: e.target.value ? parseInt(e.target.value) : null })}
               placeholder="Max (∞)"
-              className="block w-1/4 rounded-md border border-gray-300 px-2 py-1 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500"
+              className="block w-1/4 rounded-md border border-gray-300 px-2 py-1 text-sm shadow-sm focus:border-teak focus:outline-none focus:ring-teak"
             />
             <span className="text-xs text-gray-400">@</span>
             <input
@@ -453,7 +453,7 @@ function ProductForm({ product, onChange, onSave, onCancel }: ProductFormProps) 
               value={tier.unit_price}
               onChange={(e) => updateTier(i, { unit_price: parseFloat(e.target.value) || 0 })}
               placeholder="$/unit"
-              className="block w-1/4 rounded-md border border-gray-300 px-2 py-1 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500"
+              className="block w-1/4 rounded-md border border-gray-300 px-2 py-1 text-sm shadow-sm focus:border-teak focus:outline-none focus:ring-teak"
             />
             <button type="button" onClick={() => removeTier(i)} className="text-xs text-red-500 hover:text-red-700">
               &times;
@@ -488,7 +488,7 @@ function ProductForm({ product, onChange, onSave, onCancel }: ProductFormProps) 
           accept="image/*"
           disabled={uploadingMockup}
           onChange={(e) => e.target.files?.[0] && handleMockupUpload(e.target.files[0])}
-          className="mt-1 block text-sm text-gray-500 file:mr-4 file:rounded file:border-0 file:bg-indigo-50 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-indigo-700 hover:file:bg-indigo-100"
+          className="mt-1 block text-sm text-gray-500 file:mr-4 file:rounded file:border-0 file:bg-teak/10 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-teak-dark hover:file:bg-teak/15"
         />
       </div>
 
@@ -504,7 +504,7 @@ function ProductForm({ product, onChange, onSave, onCancel }: ProductFormProps) 
         <button
           type="submit"
           disabled={!product.name.trim()}
-          className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+          className="rounded-md bg-teak-dark px-4 py-2 text-sm font-medium text-white hover:bg-teak disabled:opacity-50"
         >
           Save Product
         </button>

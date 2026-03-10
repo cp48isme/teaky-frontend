@@ -54,9 +54,9 @@ export default function PlanStep({ onNext, onBack }: Props) {
       </div>
 
       {/* Current plan highlight */}
-      <div className="rounded-lg border-2 border-indigo-500 bg-indigo-50 p-4">
+      <div className="rounded-lg border-2 border-teak bg-teak/10 p-4">
         <div className="flex items-center gap-2">
-          <span className="rounded-full bg-indigo-600 px-2.5 py-0.5 text-xs font-medium text-white">
+          <span className="rounded-full bg-teak-dark px-2.5 py-0.5 text-xs font-medium text-white">
             Current
           </span>
           <span className="text-sm font-semibold text-gray-900">Free Plan</span>
@@ -80,7 +80,7 @@ export default function PlanStep({ onNext, onBack }: Props) {
                 <th
                   key={p.name}
                   className={`py-2 text-center font-medium ${
-                    p.current ? 'text-indigo-600' : 'text-gray-900'
+                    p.current ? 'text-teak-dark' : 'text-gray-900'
                   }`}
                 >
                   {p.name}
@@ -153,7 +153,7 @@ export default function PlanStep({ onNext, onBack }: Props) {
           <button
             type="button"
             onClick={onNext}
-            className="rounded-md bg-indigo-600 px-6 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+            className="rounded-md bg-teak-dark px-6 py-2 text-sm font-medium text-white hover:bg-teak"
           >
             Stay on Free
           </button>

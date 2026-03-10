@@ -99,7 +99,7 @@ export default function EquipmentPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Equipment</h1>
+        <h1 className="font-heading text-2xl font-bold text-brand-dark">Equipment</h1>
         <p className="mt-1 text-sm text-gray-500">
           Manage your shop's equipment. This helps our AI agents make better
           production recommendations.
@@ -173,11 +173,11 @@ export default function EquipmentPage() {
               e.key === 'Enter' && (e.preventDefault(), handleSearch())
             }
             placeholder="e.g. Kornit, Epson, Roland..."
-            className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+            className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-teak focus:outline-none"
           />
           <button
             onClick={handleSearch}
-            className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+            className="rounded-md bg-teak-dark px-4 py-2 text-sm font-medium text-white hover:bg-teak"
           >
             Search
           </button>
@@ -210,7 +210,7 @@ export default function EquipmentPage() {
                       <button
                         onClick={() => handleAdd(eq.id)}
                         disabled={adding === eq.id}
-                        className="rounded-md bg-indigo-50 px-3 py-1.5 text-sm font-medium text-indigo-700 hover:bg-indigo-100 disabled:opacity-50"
+                        className="rounded-md bg-teak/10 px-3 py-1.5 text-sm font-medium text-teak-dark hover:bg-teak/15 disabled:opacity-50"
                       >
                         {adding === eq.id ? 'Adding...' : 'Add'}
                       </button>

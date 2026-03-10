@@ -119,7 +119,7 @@ export default function ClientInfoStep({ data, onUpdate, onNext }: Props) {
           value={data.clientName}
           onChange={(e) => onUpdate({ clientName: e.target.value })}
           placeholder="e.g., Ace Hardware"
-          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
+          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-teak focus:outline-none focus:ring-teak sm:text-sm"
         />
       </div>
 
@@ -135,13 +135,13 @@ export default function ClientInfoStep({ data, onUpdate, onNext }: Props) {
             value={data.websiteUrl}
             onChange={(e) => onUpdate({ websiteUrl: e.target.value })}
             placeholder="https://client-website.com"
-            className="block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
+            className="block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-teak focus:outline-none focus:ring-teak sm:text-sm"
           />
           <button
             type="button"
             onClick={handleScan}
             disabled={scanning || !data.websiteUrl.trim()}
-            className="inline-flex items-center gap-2 whitespace-nowrap rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+            className="inline-flex items-center gap-2 whitespace-nowrap rounded-md bg-teak-dark px-4 py-2 text-sm font-medium text-white hover:bg-teak disabled:opacity-50"
           >
             {scanning ? (
               <>
@@ -202,7 +202,7 @@ export default function ClientInfoStep({ data, onUpdate, onNext }: Props) {
             required
             value={data.slug}
             onChange={(e) => onUpdate({ slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') })}
-            className="block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
+            className="block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-teak focus:outline-none focus:ring-teak sm:text-sm"
           />
         </div>
         {checkingSlug && <p className="mt-1 text-xs text-gray-400">Checking availability...</p>}
@@ -218,7 +218,7 @@ export default function ClientInfoStep({ data, onUpdate, onNext }: Props) {
         <button
           type="submit"
           disabled={!data.clientName.trim() || !data.slug.trim() || slugAvailable === false}
-          className="rounded-md bg-indigo-600 px-6 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+          className="rounded-md bg-teak-dark px-6 py-2 text-sm font-medium text-white hover:bg-teak disabled:opacity-50"
         >
           Next
         </button>

@@ -88,7 +88,7 @@ export default function AuditTrailPage() {
               value={actionFilter}
               onChange={(e) => setActionFilter(e.target.value)}
               placeholder="e.g. user.registered"
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm shadow-sm focus:border-teak focus:ring-teak"
             />
           </div>
           <div>
@@ -98,7 +98,7 @@ export default function AuditTrailPage() {
               value={resourceTypeFilter}
               onChange={(e) => setResourceTypeFilter(e.target.value)}
               placeholder="e.g. order"
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm shadow-sm focus:border-teak focus:ring-teak"
             />
           </div>
           <div>
@@ -107,7 +107,7 @@ export default function AuditTrailPage() {
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm shadow-sm focus:border-teak focus:ring-teak"
             />
           </div>
           <div>
@@ -116,14 +116,14 @@ export default function AuditTrailPage() {
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm shadow-sm focus:border-teak focus:ring-teak"
             />
           </div>
         </div>
         <div className="mt-3 flex gap-2">
           <button
             onClick={applyFilters}
-            className="rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-indigo-500"
+            className="rounded-md bg-teak-dark px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-teak"
           >
             Search
           </button>
@@ -139,7 +139,7 @@ export default function AuditTrailPage() {
       {/* Results */}
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <Spinner className="h-6 w-6 text-indigo-600" />
+          <Spinner className="h-6 w-6 text-teak-dark" />
         </div>
       ) : data && data.items.length > 0 ? (
         <>
@@ -221,7 +221,7 @@ export default function AuditTrailPage() {
                     onClick={() => goToPage(pageNum)}
                     className={`rounded-md border px-3 py-1 text-sm ${
                       pageNum === data.page
-                        ? 'border-indigo-600 bg-indigo-600 text-white'
+                        ? 'border-teak-dark bg-teak-dark text-white'
                         : 'border-gray-300 hover:bg-gray-50'
                     }`}
                   >

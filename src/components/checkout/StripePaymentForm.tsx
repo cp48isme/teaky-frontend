@@ -75,7 +75,7 @@ function PaymentForm({ onSuccess, primaryColor }: Omit<StripePaymentFormProps, '
         type="submit"
         disabled={!stripe || processing}
         className="w-full rounded-md px-4 py-3 text-sm font-medium text-white disabled:opacity-50"
-        style={{ backgroundColor: primaryColor || '#4F46E5' }}
+        style={{ backgroundColor: primaryColor || '#558B2F' }}
       >
         {processing ? (
           <span className="flex items-center justify-center gap-2">
@@ -102,7 +102,7 @@ export default function StripePaymentForm({
         appearance: {
           theme: 'stripe',
           variables: {
-            colorPrimary: primaryColor || '#4F46E5',
+            colorPrimary: primaryColor || '#558B2F',
           },
         },
       }}

@@ -93,14 +93,14 @@ export default function NewOrderOnBehalfPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Spinner className="h-8 w-8 text-indigo-600" />
+        <Spinner className="h-8 w-8 text-teak-dark" />
       </div>
     );
   }
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      <h2 className="text-xl font-bold text-gray-900">New Order on Behalf</h2>
+      <h2 className="font-heading text-xl font-bold text-brand-dark">New Order on Behalf</h2>
       <p className="text-sm text-gray-500">Create an order on behalf of a customer.</p>
 
       {error && (
@@ -151,7 +151,7 @@ export default function NewOrderOnBehalfPage() {
             <button
               type="button"
               onClick={addItem}
-              className="text-sm text-indigo-600 hover:text-indigo-800"
+              className="text-sm text-teak-dark hover:text-teak"
             >
               + Add Item
             </button>
@@ -331,7 +331,7 @@ export default function NewOrderOnBehalfPage() {
           <button
             type="submit"
             disabled={submitting}
-            className="rounded bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+            className="rounded bg-teak-dark px-4 py-2 text-sm font-medium text-white hover:bg-teak disabled:opacity-50"
           >
             {submitting ? 'Creating...' : 'Create Order'}
           </button>

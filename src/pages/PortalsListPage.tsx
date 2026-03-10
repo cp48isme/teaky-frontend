@@ -25,7 +25,7 @@ export default function PortalsListPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Spinner className="h-8 w-8 text-indigo-600" />
+        <Spinner className="h-8 w-8 text-teak-dark" />
       </div>
     );
   }
@@ -33,10 +33,10 @@ export default function PortalsListPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-gray-900">Portals</h2>
+        <h2 className="font-heading text-xl font-bold text-brand-dark">Portals</h2>
         <Link
           to="/portals/create"
-          className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+          className="rounded-md bg-teak-dark px-4 py-2 text-sm font-medium text-white hover:bg-teak"
         >
           + Create Portal
         </Link>
@@ -50,7 +50,7 @@ export default function PortalsListPage() {
           </p>
           <Link
             to="/portals/create"
-            className="mt-4 inline-block rounded-md bg-indigo-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-indigo-700"
+            className="mt-4 inline-block rounded-md bg-teak-dark px-6 py-2.5 text-sm font-medium text-white hover:bg-teak"
           >
             Create Portal
           </Link>

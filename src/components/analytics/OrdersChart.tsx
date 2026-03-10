@@ -34,14 +34,14 @@ export default function OrdersChart({ data }: Props) {
 
   return (
     <div className="rounded-lg border border-gray-200 bg-white p-4">
-      <h3 className="mb-4 text-sm font-semibold text-gray-700">Orders Over Time</h3>
+      <h3 className="mb-4 font-heading text-sm font-semibold text-brand-dark">Orders Over Time</h3>
       <ResponsiveContainer width="100%" height={280}>
         <BarChart data={chartData}>
           <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
           <XAxis dataKey="period" tick={{ fontSize: 12 }} />
           <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
           <Tooltip formatter={(v) => [Number(v), 'Orders']} />
-          <Bar dataKey="count" fill="#818cf8" radius={[4, 4, 0, 0]} />
+          <Bar dataKey="count" fill="#7CB342" radius={[4, 4, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
     </div>

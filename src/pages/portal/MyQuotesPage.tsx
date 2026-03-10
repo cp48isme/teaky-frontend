@@ -83,7 +83,7 @@ export default function MyQuotesPage() {
         <h1 className="text-xl font-bold text-gray-900">My Quotes</h1>
         <button
           onClick={() => setShowForm(true)}
-          className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-500"
+          className="rounded-md bg-teak-dark px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-teak"
         >
           Request a Quote
         </button>
@@ -104,7 +104,7 @@ export default function MyQuotesPage() {
               onChange={(e) => setDescription(e.target.value)}
               required
               rows={3}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-teak focus:ring-teak"
               placeholder="Describe what you're looking for..."
             />
           </div>
@@ -117,7 +117,7 @@ export default function MyQuotesPage() {
                 value={quantity}
                 onChange={(e) => setQuantity(e.target.value)}
                 required
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-teak focus:ring-teak"
               />
             </div>
             <div>
@@ -128,7 +128,7 @@ export default function MyQuotesPage() {
                 type="date"
                 value={desiredDate}
                 onChange={(e) => setDesiredDate(e.target.value)}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-teak focus:ring-teak"
               />
             </div>
           </div>
@@ -140,14 +140,14 @@ export default function MyQuotesPage() {
               type="text"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-teak focus:ring-teak"
             />
           </div>
           <div className="flex gap-2">
             <button
               type="submit"
               disabled={saving}
-              className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-500 disabled:opacity-50"
+              className="rounded-md bg-teak-dark px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-teak disabled:opacity-50"
             >
               {saving ? 'Submitting...' : 'Submit Quote Request'}
             </button>
@@ -165,7 +165,7 @@ export default function MyQuotesPage() {
       {/* Quote List */}
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <Spinner className="h-6 w-6 text-indigo-600" />
+          <Spinner className="h-6 w-6 text-teak-dark" />
         </div>
       ) : data && data.items.length > 0 ? (
         <div className="space-y-4">

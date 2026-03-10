@@ -159,7 +159,7 @@ export default function ProductManagementPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Spinner className="h-8 w-8 text-indigo-600" />
+        <Spinner className="h-8 w-8 text-teak-dark" />
       </div>
     );
   }
@@ -175,14 +175,14 @@ export default function ProductManagementPage() {
       {/* Header */}
       <div>
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold text-gray-900">Products</h2>
+          <h2 className="font-heading text-xl font-bold text-brand-dark">Products</h2>
           {!showForm && (
             <button
               onClick={() => {
                 resetForm();
                 setShowForm(true);
               }}
-              className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+              className="rounded-md bg-teak-dark px-4 py-2 text-sm font-medium text-white hover:bg-teak"
             >
               + Add Product
             </button>
@@ -279,7 +279,7 @@ export default function ProductManagementPage() {
                       </button>
                       <button
                         onClick={() => handleEdit(product)}
-                        className="text-sm text-indigo-600 hover:text-indigo-800 mr-3"
+                        className="text-sm text-teak-dark hover:text-teak mr-3"
                       >
                         Edit
                       </button>
@@ -356,7 +356,7 @@ function InlineProductForm({ data, onChange, onSave, onCancel, saving, isEditing
             required
             value={data.name}
             onChange={(e) => onChange({ ...data, name: e.target.value })}
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500"
+            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-teak focus:outline-none focus:ring-teak"
           />
         </div>
         <div>
@@ -364,7 +364,7 @@ function InlineProductForm({ data, onChange, onSave, onCancel, saving, isEditing
           <select
             value={data.category}
             onChange={(e) => onChange({ ...data, category: e.target.value })}
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500"
+            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-teak focus:outline-none focus:ring-teak"
           >
             {CATEGORIES.map((c) => (
               <option key={c.value} value={c.value}>{c.label}</option>
@@ -379,7 +379,7 @@ function InlineProductForm({ data, onChange, onSave, onCancel, saving, isEditing
           value={data.description ?? ''}
           onChange={(e) => onChange({ ...data, description: e.target.value })}
           rows={2}
-          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500"
+          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-teak focus:outline-none focus:ring-teak"
         />
       </div>
 
@@ -391,7 +391,7 @@ function InlineProductForm({ data, onChange, onSave, onCancel, saving, isEditing
             value={data.sku ?? ''}
             onChange={(e) => onChange({ ...data, sku: e.target.value || undefined })}
             placeholder="Auto"
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500"
+            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-teak focus:outline-none focus:ring-teak"
           />
         </div>
         <div>
@@ -401,7 +401,7 @@ function InlineProductForm({ data, onChange, onSave, onCancel, saving, isEditing
             min={1}
             value={data.min_order_qty ?? 1}
             onChange={(e) => onChange({ ...data, min_order_qty: parseInt(e.target.value) || 1 })}
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500"
+            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-teak focus:outline-none focus:ring-teak"
           />
         </div>
         <div>
@@ -411,7 +411,7 @@ function InlineProductForm({ data, onChange, onSave, onCancel, saving, isEditing
             accept="image/*"
             disabled={uploadingMockup}
             onChange={(e) => e.target.files?.[0] && handleMockupUpload(e.target.files[0])}
-            className="mt-1 block w-full text-sm text-gray-500 file:mr-2 file:rounded file:border-0 file:bg-indigo-50 file:px-2 file:py-1 file:text-xs file:text-indigo-700"
+            className="mt-1 block w-full text-sm text-gray-500 file:mr-2 file:rounded file:border-0 file:bg-teak/10 file:px-2 file:py-1 file:text-xs file:text-teak-dark"
           />
         </div>
       </div>
@@ -424,7 +424,7 @@ function InlineProductForm({ data, onChange, onSave, onCancel, saving, isEditing
             value={dmExternalId}
             onChange={(e) => onDmExternalIdChange(e.target.value)}
             placeholder="e.g. DM-PROD-001"
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500"
+            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-teak focus:outline-none focus:ring-teak"
           />
           <p className="mt-1 text-xs text-gray-500">External product ID used for DocketManager integration</p>
         </div>
@@ -439,7 +439,7 @@ function InlineProductForm({ data, onChange, onSave, onCancel, saving, isEditing
             onClick={() =>
               onChange({ ...data, sizes: [...(data.sizes ?? []), { label: '', price_adjustment: 0 }] })
             }
-            className="text-xs text-indigo-600"
+            className="text-xs text-teak-dark"
           >
             + Add
           </button>
@@ -492,7 +492,7 @@ function InlineProductForm({ data, onChange, onSave, onCancel, saving, isEditing
                 pricing_tiers: [...(data.pricing_tiers ?? []), { min_qty: 1, max_qty: null, unit_price: 0 }],
               })
             }
-            className="text-xs text-indigo-600"
+            className="text-xs text-teak-dark"
           >
             + Add
           </button>
@@ -560,7 +560,7 @@ function InlineProductForm({ data, onChange, onSave, onCancel, saving, isEditing
         <button
           type="submit"
           disabled={saving || !data.name.trim()}
-          className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+          className="rounded-md bg-teak-dark px-4 py-2 text-sm font-medium text-white hover:bg-teak disabled:opacity-50"
         >
           {saving ? 'Saving...' : isEditing ? 'Update' : 'Add Product'}
         </button>

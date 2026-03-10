@@ -238,7 +238,7 @@ export default function IntegrationsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Spinner className="h-8 w-8 text-indigo-600" />
+        <Spinner className="h-8 w-8 text-teak-dark" />
       </div>
     );
   }
@@ -307,7 +307,7 @@ export default function IntegrationsPage() {
                   id="auto-push"
                   checked={autoPush}
                   onChange={(e) => setAutoPush(e.target.checked)}
-                  className="h-4 w-4 rounded border-gray-300 text-indigo-600"
+                  className="h-4 w-4 rounded border-gray-300 text-teak-dark"
                 />
                 <label htmlFor="auto-push" className="text-sm text-gray-700">
                   Auto-push orders on approval
@@ -428,7 +428,7 @@ export default function IntegrationsPage() {
             <button
               onClick={handleSave}
               disabled={saving}
-              className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+              className="rounded-md bg-teak-dark px-4 py-2 text-sm font-medium text-white hover:bg-teak disabled:opacity-50"
             >
               {saving ? 'Saving...' : 'Save Settings'}
             </button>
@@ -574,7 +574,7 @@ export default function IntegrationsPage() {
                 <button
                   onClick={handleAddQueueMapping}
                   disabled={!newQueueName.trim()}
-                  className="rounded bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+                  className="rounded bg-teak-dark px-3 py-1.5 text-xs font-medium text-white hover:bg-teak disabled:opacity-50"
                 >
                   Add
                 </button>
@@ -584,7 +584,7 @@ export default function IntegrationsPage() {
                 <button
                   onClick={handleSaveQueueMappings}
                   disabled={savingQueue}
-                  className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+                  className="rounded-md bg-teak-dark px-4 py-2 text-sm font-medium text-white hover:bg-teak disabled:opacity-50"
                 >
                   {savingQueue ? 'Saving...' : 'Save Queue Mappings'}
                 </button>

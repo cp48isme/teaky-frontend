@@ -53,7 +53,7 @@ export default function PortalProductDetailPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Spinner className="h-8 w-8 text-indigo-600" />
+        <Spinner className="h-8 w-8 text-teak-dark" />
       </div>
     );
   }
@@ -62,18 +62,18 @@ export default function PortalProductDetailPage() {
     return (
       <div className="mx-auto max-w-6xl px-6 py-20 text-center">
         <h2 className="text-lg font-bold text-gray-900">Product Not Found</h2>
-        <Link to={`/p/${slug}/products`} className="mt-2 text-sm text-indigo-600 hover:text-indigo-800">
+        <Link to={`/p/${slug}/products`} className="mt-2 text-sm text-teak-dark hover:text-teak">
           Back to catalog
         </Link>
       </div>
     );
   }
 
-  const primaryColor = portal.brand_config?.primary_color || '#4F46E5';
+  const primaryColor = portal.brand_config?.primary_color || '#558B2F';
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-8">
-      <Link to={`/p/${slug}/products`} className="text-sm text-indigo-600 hover:text-indigo-800">
+      <Link to={`/p/${slug}/products`} className="text-sm text-teak-dark hover:text-teak">
         &larr; Back to products
       </Link>
 
@@ -360,7 +360,7 @@ export default function PortalProductDetailPage() {
                         onChange={(e) => setQuoteDescription(e.target.value)}
                         rows={3}
                         placeholder="Any special requirements..."
-                        className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+                        className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-teak focus:outline-none"
                       />
                     </div>
                     <div>
@@ -371,7 +371,7 @@ export default function PortalProductDetailPage() {
                         type="date"
                         value={quoteDesiredDate}
                         onChange={(e) => setQuoteDesiredDate(e.target.value)}
-                        className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+                        className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-teak focus:outline-none"
                       />
                     </div>
                     <div className="flex gap-3">

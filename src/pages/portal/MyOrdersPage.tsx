@@ -9,7 +9,7 @@ const STATUS_COLORS: Record<string, string> = {
   pending_approval: 'bg-yellow-100 text-yellow-800',
   approved: 'bg-green-100 text-green-800',
   in_production: 'bg-purple-100 text-purple-800',
-  shipped: 'bg-indigo-100 text-indigo-800',
+  shipped: 'bg-teal-100 text-teal-800',
   delivered: 'bg-teal-100 text-teal-800',
   completed: 'bg-gray-100 text-gray-800',
   cancelled: 'bg-red-100 text-red-800',
@@ -31,7 +31,7 @@ export default function MyOrdersPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Spinner className="h-8 w-8 text-indigo-600" />
+        <Spinner className="h-8 w-8 text-teak-dark" />
       </div>
     );
   }
@@ -45,7 +45,7 @@ export default function MyOrdersPage() {
           <p className="text-gray-500">You haven't placed any orders yet.</p>
           <Link
             to={`/p/${slug}/products`}
-            className="mt-4 inline-block text-sm text-indigo-600 hover:text-indigo-800"
+            className="mt-4 inline-block text-sm text-teak-dark hover:text-teak"
           >
             Browse Products
           </Link>

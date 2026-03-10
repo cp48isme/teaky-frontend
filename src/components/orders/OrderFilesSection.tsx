@@ -83,7 +83,7 @@ export default function OrderFilesSection({ orderId }: Props) {
       {/* File List */}
       {loading ? (
         <div className="flex items-center justify-center py-4">
-          <Spinner className="h-5 w-5 text-indigo-600" />
+          <Spinner className="h-5 w-5 text-teak-dark" />
         </div>
       ) : files.length > 0 ? (
         <div className="divide-y divide-gray-100">
@@ -94,7 +94,7 @@ export default function OrderFilesSection({ orderId }: Props) {
                   href={file.file_url}
                   target="_blank"
                   rel="noreferrer"
-                  className="text-sm font-medium text-indigo-600 hover:text-indigo-800 truncate block"
+                  className="text-sm font-medium text-teak-dark hover:text-teak truncate block"
                 >
                   {file.filename}
                 </a>
@@ -131,13 +131,13 @@ export default function OrderFilesSection({ orderId }: Props) {
         onClick={() => fileInputRef.current?.click()}
         className={`cursor-pointer rounded-lg border-2 border-dashed p-6 text-center transition-colors ${
           dragOver
-            ? 'border-indigo-400 bg-indigo-50'
+            ? 'border-teak bg-teak/10'
             : 'border-gray-300 hover:border-gray-400'
         }`}
       >
         {uploading ? (
           <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
-            <Spinner className="h-4 w-4 text-indigo-600" /> Uploading...
+            <Spinner className="h-4 w-4 text-teak-dark" /> Uploading...
           </div>
         ) : (
           <>

@@ -81,12 +81,24 @@ export default function CreatePortalStep({
         </div>
       </div>
 
+      {/* AI Agent Awareness */}
+      <div className="mx-auto max-w-sm rounded-lg border border-teak/20 bg-teak/5 p-4 text-left">
+        <p className="text-sm text-teak-dark font-medium">
+          Your AI agents are ready
+        </p>
+        <p className="mt-1 text-xs text-gray-600">
+          Your equipment and capabilities profile powers our AI agents. They'll
+          use this to make smart recommendations as you build portals, process
+          orders, and grow your business.
+        </p>
+      </div>
+
       {/* CTAs */}
       <div className="space-y-3">
         <button
           type="button"
           onClick={handleCreatePortal}
-          className="w-full rounded-md bg-indigo-600 px-6 py-3 text-sm font-medium text-white hover:bg-indigo-700"
+          className="w-full rounded-md bg-teak-dark px-6 py-3 text-sm font-medium text-white hover:bg-teak"
         >
           Create Your First Portal
         </button>

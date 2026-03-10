@@ -16,7 +16,7 @@ export default function SettingsLayout() {
         { label: 'Dashboard', to: '/dashboard' },
         { label: 'Settings' },
       ]} />
-      <h1 className="text-xl font-bold text-gray-900">Settings</h1>
+      <h1 className="font-heading text-xl font-bold text-brand-dark">Settings</h1>
 
       <div className="mt-4 border-b border-gray-200">
         <nav className="flex gap-6">
@@ -27,7 +27,7 @@ export default function SettingsLayout() {
               className={({ isActive }) =>
                 `border-b-2 pb-3 text-sm font-medium transition-colors ${
                   isActive
-                    ? 'border-indigo-600 text-indigo-600'
+                    ? 'border-teak-dark text-teak-dark'
                     : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
                 }`
               }

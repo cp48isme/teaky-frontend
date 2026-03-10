@@ -39,7 +39,7 @@ export default function CheckoutPage() {
   const [creatingIntent, setCreatingIntent] = useState(false);
   const [showPayment, setShowPayment] = useState(false);
 
-  const primaryColor = portal?.brand_config?.primary_color || '#4F46E5';
+  const primaryColor = portal?.brand_config?.primary_color || '#558B2F';
 
   // Fetch shipping rates when address is sufficiently filled
   useEffect(() => {
@@ -154,7 +154,7 @@ export default function CheckoutPage() {
                   value={address.name}
                   onChange={(e) => setAddress({ ...address, name: e.target.value })}
                   disabled={showPayment}
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 disabled:bg-gray-50 disabled:text-gray-500"
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-teak focus:ring-1 focus:ring-teak disabled:bg-gray-50 disabled:text-gray-500"
                 />
               </div>
 
@@ -166,7 +166,7 @@ export default function CheckoutPage() {
                   value={address.line1}
                   onChange={(e) => setAddress({ ...address, line1: e.target.value })}
                   disabled={showPayment}
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 disabled:bg-gray-50 disabled:text-gray-500"
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-teak focus:ring-1 focus:ring-teak disabled:bg-gray-50 disabled:text-gray-500"
                 />
               </div>
 
@@ -177,7 +177,7 @@ export default function CheckoutPage() {
                   value={address.line2 || ''}
                   onChange={(e) => setAddress({ ...address, line2: e.target.value })}
                   disabled={showPayment}
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 disabled:bg-gray-50 disabled:text-gray-500"
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-teak focus:ring-1 focus:ring-teak disabled:bg-gray-50 disabled:text-gray-500"
                 />
               </div>
 
@@ -190,7 +190,7 @@ export default function CheckoutPage() {
                     value={address.city}
                     onChange={(e) => setAddress({ ...address, city: e.target.value })}
                     disabled={showPayment}
-                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 disabled:bg-gray-50 disabled:text-gray-500"
+                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-teak focus:ring-1 focus:ring-teak disabled:bg-gray-50 disabled:text-gray-500"
                   />
                 </div>
                 <div>
@@ -201,7 +201,7 @@ export default function CheckoutPage() {
                     value={address.state}
                     onChange={(e) => setAddress({ ...address, state: e.target.value })}
                     disabled={showPayment}
-                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 disabled:bg-gray-50 disabled:text-gray-500"
+                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-teak focus:ring-1 focus:ring-teak disabled:bg-gray-50 disabled:text-gray-500"
                   />
                 </div>
               </div>
@@ -215,7 +215,7 @@ export default function CheckoutPage() {
                     value={address.postal_code}
                     onChange={(e) => setAddress({ ...address, postal_code: e.target.value })}
                     disabled={showPayment}
-                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 disabled:bg-gray-50 disabled:text-gray-500"
+                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-teak focus:ring-1 focus:ring-teak disabled:bg-gray-50 disabled:text-gray-500"
                   />
                 </div>
                 <div>
@@ -225,7 +225,7 @@ export default function CheckoutPage() {
                     value={address.country}
                     onChange={(e) => setAddress({ ...address, country: e.target.value })}
                     disabled={showPayment}
-                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 disabled:bg-gray-50 disabled:text-gray-500"
+                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-teak focus:ring-1 focus:ring-teak disabled:bg-gray-50 disabled:text-gray-500"
                   />
                 </div>
               </div>
@@ -236,7 +236,7 @@ export default function CheckoutPage() {
               <h2 className="text-lg font-semibold text-gray-900">Shipping Method</h2>
               {loadingRates ? (
                 <div className="mt-2 flex items-center gap-2 text-sm text-gray-500">
-                  <Spinner className="h-4 w-4 text-indigo-600" /> Fetching shipping rates...
+                  <Spinner className="h-4 w-4 text-teak-dark" /> Fetching shipping rates...
                 </div>
               ) : shippingRates.length > 0 ? (
                 <div className="mt-2 space-y-2">
@@ -245,7 +245,7 @@ export default function CheckoutPage() {
                       key={rate.rate_id}
                       className={`flex cursor-pointer items-center justify-between rounded-md border p-3 text-sm ${
                         selectedRate?.rate_id === rate.rate_id
-                          ? 'border-indigo-500 bg-indigo-50'
+                          ? 'border-teak bg-teak/10'
                           : 'border-gray-200 hover:bg-gray-50'
                       }`}
                     >
@@ -256,7 +256,7 @@ export default function CheckoutPage() {
                           checked={selectedRate?.rate_id === rate.rate_id}
                           onChange={() => setSelectedRate(rate)}
                           disabled={showPayment}
-                          className="h-4 w-4 text-indigo-600"
+                          className="h-4 w-4 text-teak-dark"
                         />
                         <div>
                           <span className="font-medium text-gray-900">
@@ -289,7 +289,7 @@ export default function CheckoutPage() {
                   value={poNumber}
                   onChange={(e) => setPoNumber(e.target.value)}
                   disabled={showPayment}
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 disabled:bg-gray-50 disabled:text-gray-500"
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-teak focus:ring-1 focus:ring-teak disabled:bg-gray-50 disabled:text-gray-500"
                 />
               </div>
 
@@ -300,7 +300,7 @@ export default function CheckoutPage() {
                   onChange={(e) => setNotes(e.target.value)}
                   rows={3}
                   disabled={showPayment}
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 disabled:bg-gray-50 disabled:text-gray-500"
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-teak focus:ring-1 focus:ring-teak disabled:bg-gray-50 disabled:text-gray-500"
                 />
               </div>
             </div>
@@ -335,7 +335,7 @@ export default function CheckoutPage() {
                     setShowPayment(false);
                     setClientSecret(null);
                   }}
-                  className="text-sm text-indigo-600 hover:text-indigo-800"
+                  className="text-sm text-teak-dark hover:text-teak"
                 >
                   Edit address
                 </button>
@@ -403,7 +403,7 @@ export default function CheckoutPage() {
 
           {submitting && (
             <div className="mt-4 flex items-center justify-center gap-2 text-sm text-gray-500">
-              <Spinner className="h-4 w-4 text-indigo-600" /> Confirming order...
+              <Spinner className="h-4 w-4 text-teak-dark" /> Confirming order...
             </div>
           )}
         </div>

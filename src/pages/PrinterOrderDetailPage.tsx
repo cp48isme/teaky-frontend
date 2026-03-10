@@ -31,7 +31,7 @@ const STATUS_COLORS: Record<string, string> = {
   approved: 'bg-green-100 text-green-800',
   in_production: 'bg-purple-100 text-purple-800',
   quality_check: 'bg-orange-100 text-orange-800',
-  shipped: 'bg-indigo-100 text-indigo-800',
+  shipped: 'bg-teal-100 text-teal-800',
   delivered: 'bg-teal-100 text-teal-800',
   completed: 'bg-gray-100 text-gray-800',
   cancelled: 'bg-red-100 text-red-800',
@@ -44,7 +44,7 @@ const PRODUCTION_STATUS_COLORS: Record<string, string> = {
   finishing: 'bg-orange-50 text-orange-700',
   quality_check: 'bg-cyan-50 text-cyan-700',
   ready_to_ship: 'bg-green-50 text-green-700',
-  shipped: 'bg-indigo-50 text-indigo-700',
+  shipped: 'bg-teak/10 text-teak-dark',
   picked_up: 'bg-teal-50 text-teal-700',
 };
 
@@ -308,7 +308,7 @@ export default function PrinterOrderDetailPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Spinner className="h-8 w-8 text-indigo-600" />
+        <Spinner className="h-8 w-8 text-teak-dark" />
       </div>
     );
   }
@@ -329,7 +329,7 @@ export default function PrinterOrderDetailPage() {
       ]} />
 
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-gray-900">{order.order_number}</h2>
+        <h2 className="font-heading text-xl font-bold text-brand-dark">{order.order_number}</h2>
         <div className="flex items-center gap-2">
           {order.production_status && (
             <span
@@ -375,7 +375,7 @@ export default function PrinterOrderDetailPage() {
           <button
             key={status}
             onClick={() => handleStatusTransition(status)}
-            className="rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-indigo-700"
+            className="rounded-md bg-teak-dark px-3 py-1.5 text-xs font-medium text-white hover:bg-teak"
           >
             {status.replace(/_/g, ' ')}
           </button>
@@ -436,7 +436,7 @@ export default function PrinterOrderDetailPage() {
                 disabled={updatingProduction || order.production_status === status}
                 className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors disabled:opacity-50 ${
                   order.production_status === status
-                    ? 'bg-indigo-600 text-white'
+                    ? 'bg-teak-dark text-white'
                     : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
                 }`}
               >
@@ -564,7 +564,7 @@ export default function PrinterOrderDetailPage() {
           <div className="flex items-center gap-2">
             <button
               onClick={handleSaveDetails}
-              className="rounded bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-indigo-700"
+              className="rounded bg-teak-dark px-3 py-1.5 text-xs font-medium text-white hover:bg-teak"
             >
               Save
             </button>
@@ -592,7 +592,7 @@ export default function PrinterOrderDetailPage() {
           <h3 className="font-medium text-gray-900">
             Files {orderFiles.length > 0 && <span className="text-xs text-gray-500">({orderFiles.length})</span>}
           </h3>
-          <label className="cursor-pointer rounded bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-indigo-700">
+          <label className="cursor-pointer rounded bg-teak-dark px-3 py-1.5 text-xs font-medium text-white hover:bg-teak">
             {uploading ? 'Uploading...' : 'Upload File'}
             <input
               type="file"
@@ -623,7 +623,7 @@ export default function PrinterOrderDetailPage() {
                       href={f.download_url}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-xs text-indigo-600 hover:underline"
+                      className="text-xs text-teak-dark hover:underline"
                     >
                       Download
                     </a>
@@ -682,7 +682,7 @@ export default function PrinterOrderDetailPage() {
           <button
             onClick={handleManualPush}
             disabled={pushing}
-            className="rounded bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+            className="rounded bg-teak-dark px-3 py-1.5 text-xs font-medium text-white hover:bg-teak disabled:opacity-50"
           >
             {pushing ? 'Pushing...' : 'Push to MIS'}
           </button>
@@ -724,7 +724,7 @@ export default function PrinterOrderDetailPage() {
             <button
               onClick={handleSubmitProof}
               disabled={!selectedLineItem || !proofFileUrl}
-              className="rounded bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+              className="rounded bg-teak-dark px-3 py-1.5 text-xs font-medium text-white hover:bg-teak disabled:opacity-50"
             >
               Submit Proof
             </button>
@@ -748,7 +748,7 @@ export default function PrinterOrderDetailPage() {
                         </span>
                       </p>
                       {proof.file_url && (
-                        <a href={proof.file_url} target="_blank" rel="noreferrer" className="text-xs text-indigo-600 hover:underline">
+                        <a href={proof.file_url} target="_blank" rel="noreferrer" className="text-xs text-teak-dark hover:underline">
                           View File
                         </a>
                       )}

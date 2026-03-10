@@ -7,7 +7,7 @@ export default function PortalHomePage() {
 
   if (!portal) return null;
 
-  const primaryColor = portal.brand_config?.primary_color || '#4F46E5';
+  const primaryColor = portal.brand_config?.primary_color || '#558B2F';
   const featured = products.slice(0, 6);
 
   return (

@@ -8,10 +8,10 @@ export default function CompanyProfileCard({ profile }: Props) {
   if (!profile) {
     return (
       <div className="rounded-lg border border-gray-200 bg-white p-6">
-        <h3 className="text-sm font-semibold text-gray-900">Company Profile</h3>
+        <h3 className="font-heading text-sm font-semibold text-brand-dark">Company Profile</h3>
         <p className="mt-2 text-sm text-gray-500">
           No profile set up yet.{' '}
-          <a href="/get-started" className="text-indigo-600 hover:text-indigo-800">
+          <a href="/get-started" className="text-teak-dark hover:text-teak">
             Complete the wizard
           </a>
         </p>
@@ -22,10 +22,10 @@ export default function CompanyProfileCard({ profile }: Props) {
   return (
     <div className="rounded-lg border border-gray-200 bg-white p-6">
       <div className="flex items-start justify-between">
-        <h3 className="text-sm font-semibold text-gray-900">Company Profile</h3>
+        <h3 className="font-heading text-sm font-semibold text-brand-dark">Company Profile</h3>
         <a
           href="/get-started"
-          className="text-xs text-indigo-600 hover:text-indigo-800"
+          className="text-xs text-teak-dark hover:text-teak"
         >
           Edit
         </a>
@@ -63,7 +63,7 @@ export default function CompanyProfileCard({ profile }: Props) {
                 href={profile.website_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-indigo-600 hover:text-indigo-800"
+                className="text-teak-dark hover:text-teak"
               >
                 {profile.website_url}
               </a>

@@ -32,7 +32,7 @@ export default function DateRangeSelector({
             onClick={() => onGranularityChange(g.value)}
             className={`px-3 py-1.5 text-sm font-medium first:rounded-l-md last:rounded-r-md ${
               granularity === g.value
-                ? 'bg-indigo-600 text-white'
+                ? 'bg-teak-dark text-white'
                 : 'text-gray-700 hover:bg-gray-50'
             }`}
           >

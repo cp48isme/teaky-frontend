@@ -13,7 +13,7 @@ export default function PortalLayout() {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <Spinner className="h-8 w-8 text-indigo-600" />
+        <Spinner className="h-8 w-8 text-teak-dark" />
       </div>
     );
   }
@@ -31,7 +31,7 @@ export default function PortalLayout() {
     );
   }
 
-  const primaryColor = portal.brand_config?.primary_color || '#4F46E5';
+  const primaryColor = portal.brand_config?.primary_color || '#558B2F';
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
@@ -110,7 +110,7 @@ export default function PortalLayout() {
       <footer className="border-t bg-white px-6 py-4 text-center">
         {portal.brand_config?.powered_by_teaky !== false && (
           <p className="text-xs text-gray-400">
-            Powered by <span className="font-medium text-indigo-600">Teaky</span>
+            Powered by <span className="font-medium text-teak-dark">Teaky</span>
           </p>
         )}
       </footer>

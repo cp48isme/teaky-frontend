@@ -111,7 +111,7 @@ export default function CreatePortalPage() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <div className={`${currentStep === 5 ? 'max-w-5xl' : 'max-w-3xl'} mx-auto w-full px-4 py-8 flex-1 transition-all`}>
-        <h1 className="text-2xl font-bold text-gray-900 mb-8">Create Portal</h1>
+        <h1 className="font-heading text-2xl font-bold text-brand-dark mb-8">Create Portal</h1>
 
         {/* Step indicator */}
         <nav className="mb-8">
@@ -123,7 +123,7 @@ export default function CreatePortalPage() {
                     index < currentStep
                       ? 'bg-green-500 text-white'
                       : index === currentStep
-                        ? 'bg-indigo-600 text-white'
+                        ? 'bg-teak-dark text-white'
                         : 'bg-gray-200 text-gray-600'
                   }`}
                 >
@@ -258,13 +258,13 @@ function CategoryStep({ categories, onUpdate, onNext, onBack }: CategoryStepProp
           onChange={(e) => setNewName(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addCategory())}
           placeholder="e.g. Apparel, Signage, Business Cards..."
-          className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+          className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-teak focus:outline-none"
         />
         <button
           type="button"
           onClick={addCategory}
           disabled={!newName.trim()}
-          className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+          className="rounded-md bg-teak-dark px-4 py-2 text-sm font-medium text-white hover:bg-teak disabled:opacity-50"
         >
           Add
         </button>
@@ -302,7 +302,7 @@ function CategoryStep({ categories, onUpdate, onNext, onBack }: CategoryStepProp
         <button
           type="button"
           onClick={onNext}
-          className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+          className="rounded-md bg-teak-dark px-4 py-2 text-sm font-medium text-white hover:bg-teak"
         >
           Next
         </button>

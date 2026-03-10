@@ -52,6 +52,7 @@ export default function GetStartedWizardPage() {
   const [pricingApproach, setPricingApproach] = useState<string | null>(null);
   const [equipmentCount, setEquipmentCount] = useState(0);
   const [capabilityCount, setCapabilityCount] = useState(0);
+  const [orgEquipmentIds, setOrgEquipmentIds] = useState<string[]>([]);
 
   // Load existing profile if any (resume wizard)
   useEffect(() => {
@@ -81,6 +82,7 @@ export default function GetStartedWizardPage() {
       try {
         const eq = await getOrgEquipment(orgId);
         setEquipmentCount(eq.length);
+        setOrgEquipmentIds(eq.map((e) => e.equipment_id));
       } catch {
         // ignore
       }
@@ -147,6 +149,7 @@ export default function GetStartedWizardPage() {
       try {
         const eq = await getOrgEquipment(orgId);
         setEquipmentCount(eq.length);
+        setOrgEquipmentIds(eq.map((e) => e.equipment_id));
       } catch {
         // ignore
       }
@@ -176,7 +179,7 @@ export default function GetStartedWizardPage() {
   if (loading) {
     return (
       <div className="flex min-h-[400px] items-center justify-center">
-        <Spinner className="h-8 w-8 text-indigo-600" />
+        <Spinner className="h-8 w-8 text-teak-dark" />
       </div>
     );
   }
@@ -193,7 +196,7 @@ export default function GetStartedWizardPage() {
           </svg>
           Back to Dashboard
         </Link>
-        <h1 className="text-2xl font-bold text-gray-900 mb-8">Get Started</h1>
+        <h1 className="font-heading text-2xl font-bold text-brand-dark mb-8">Get Started</h1>
 
         {/* Step indicator */}
         <nav className="mb-8">
@@ -205,7 +208,7 @@ export default function GetStartedWizardPage() {
                     index < currentStep
                       ? 'bg-green-500 text-white'
                       : index === currentStep
-                        ? 'bg-indigo-600 text-white'
+                        ? 'bg-teak-dark text-white'
                         : 'bg-gray-200 text-gray-600'
                   }`}
                 >
@@ -245,6 +248,7 @@ export default function GetStartedWizardPage() {
           )}
           {currentStep === 2 && (
             <CapabilitiesStep
+              equipmentIds={orgEquipmentIds}
               onNext={handleCapabilitiesNext}
               onBack={() => setCurrentStep(1)}
             />

@@ -31,11 +31,11 @@ export default function PortalSettingsStep({ slug, data, onUpdate, onNext, onBac
       </div>
 
       {/* Subdomain Display */}
-      <div className="rounded-lg border border-indigo-200 bg-indigo-50 p-4">
-        <p className="text-sm font-medium text-indigo-900">Portal URL</p>
-        <p className="mt-1 text-sm text-indigo-700">
+      <div className="rounded-lg border border-teak/30 bg-teak/10 p-4">
+        <p className="text-sm font-medium text-brand-dark">Portal URL</p>
+        <p className="mt-1 text-sm text-teak-dark">
           <span className="font-mono">{slug}.teaky.com</span>
-          <span className="ml-2 text-xs text-indigo-500">
+          <span className="ml-2 text-xs text-teak">
             (also accessible at teaky.com/p/{slug})
           </span>
         </p>
@@ -52,7 +52,7 @@ export default function PortalSettingsStep({ slug, data, onUpdate, onNext, onBac
           value={data.customDomain}
           onChange={(e) => onUpdate({ customDomain: e.target.value })}
           placeholder="orders.acme.com"
-          className="mt-2 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm font-mono focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+          className="mt-2 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm font-mono focus:border-teak focus:ring-1 focus:ring-teak"
         />
         {data.customDomain && (
           <div className="mt-2 rounded-md border border-amber-200 bg-amber-50 p-3">
@@ -83,7 +83,7 @@ export default function PortalSettingsStep({ slug, data, onUpdate, onNext, onBac
                 value={option.value}
                 checked={data.approvalWorkflow === option.value}
                 onChange={() => onUpdate({ approvalWorkflow: option.value })}
-                className="mt-0.5 border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                className="mt-0.5 border-gray-300 text-teak-dark focus:ring-teak"
               />
               <div>
                 <p className="text-sm font-medium text-gray-900">{option.label}</p>
@@ -105,7 +105,7 @@ export default function PortalSettingsStep({ slug, data, onUpdate, onNext, onBac
             type="checkbox"
             checked={data.selfRegistration}
             onChange={(e) => onUpdate({ selfRegistration: e.target.checked })}
-            className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+            className="rounded border-gray-300 text-teak-dark focus:ring-teak"
           />
         </label>
 
@@ -118,7 +118,7 @@ export default function PortalSettingsStep({ slug, data, onUpdate, onNext, onBac
             type="checkbox"
             checked={data.requirePo}
             onChange={(e) => onUpdate({ requirePo: e.target.checked })}
-            className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+            className="rounded border-gray-300 text-teak-dark focus:ring-teak"
           />
         </label>
       </div>
@@ -133,7 +133,7 @@ export default function PortalSettingsStep({ slug, data, onUpdate, onNext, onBac
         </button>
         <button
           type="submit"
-          className="rounded-md bg-indigo-600 px-6 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+          className="rounded-md bg-teak-dark px-6 py-2 text-sm font-medium text-white hover:bg-teak"
         >
           Next
         </button>

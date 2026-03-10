@@ -107,7 +107,7 @@ export default function NotificationsPage() {
           onClick={() => setTab('notifications')}
           className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${
             tab === 'notifications'
-              ? 'border-indigo-600 text-indigo-600'
+              ? 'border-teak-dark text-teak-dark'
               : 'border-transparent text-gray-500 hover:text-gray-700'
           }`}
         >
@@ -117,7 +117,7 @@ export default function NotificationsPage() {
           onClick={() => setTab('preferences')}
           className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${
             tab === 'preferences'
-              ? 'border-indigo-600 text-indigo-600'
+              ? 'border-teak-dark text-teak-dark'
               : 'border-transparent text-gray-500 hover:text-gray-700'
           }`}
         >
@@ -141,7 +141,7 @@ export default function NotificationsPage() {
             </div>
             <button
               onClick={handleMarkAllRead}
-              className="text-sm text-indigo-600 hover:text-indigo-800"
+              className="text-sm text-teak-dark hover:text-teak"
             >
               Mark all as read
             </button>
@@ -149,7 +149,7 @@ export default function NotificationsPage() {
 
           {loading ? (
             <div className="flex items-center justify-center py-20">
-              <Spinner className="h-8 w-8 text-indigo-600" />
+              <Spinner className="h-8 w-8 text-teak-dark" />
             </div>
           ) : notifications.length === 0 ? (
             <div className="rounded-lg border border-gray-200 bg-white px-6 py-12 text-center">
@@ -161,14 +161,14 @@ export default function NotificationsPage() {
                 <div
                   key={n.id}
                   className={`rounded-lg border bg-white px-4 py-3 transition-colors ${
-                    n.read_at ? 'border-gray-100' : 'border-indigo-200 bg-indigo-50/30'
+                    n.read_at ? 'border-gray-100' : 'border-teak/30 bg-teak/10'
                   }`}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
                         {!n.read_at && (
-                          <span className="h-2 w-2 rounded-full bg-indigo-600" />
+                          <span className="h-2 w-2 rounded-full bg-teak-dark" />
                         )}
                         <h3 className="text-sm font-medium text-gray-900">{n.title}</h3>
                       </div>
@@ -180,7 +180,7 @@ export default function NotificationsPage() {
                     {!n.read_at && (
                       <button
                         onClick={() => handleMarkRead(n.id)}
-                        className="ml-3 shrink-0 text-xs text-indigo-600 hover:text-indigo-800"
+                        className="ml-3 shrink-0 text-xs text-teak-dark hover:text-teak"
                       >
                         Mark read
                       </button>
@@ -197,7 +197,7 @@ export default function NotificationsPage() {
         <>
           {prefsLoading ? (
             <div className="flex items-center justify-center py-20">
-              <Spinner className="h-8 w-8 text-indigo-600" />
+              <Spinner className="h-8 w-8 text-teak-dark" />
             </div>
           ) : (
             <div className="rounded-lg border border-gray-200 bg-white">
@@ -231,7 +231,7 @@ export default function NotificationsPage() {
                           onChange={() =>
                             handleTogglePref(pref.event_type, 'in_app_enabled')
                           }
-                          className="rounded border-gray-300 text-indigo-600"
+                          className="rounded border-gray-300 text-teak-dark"
                         />
                       </td>
                       <td className="px-4 py-2.5 text-center">
@@ -241,7 +241,7 @@ export default function NotificationsPage() {
                           onChange={() =>
                             handleTogglePref(pref.event_type, 'email_enabled')
                           }
-                          className="rounded border-gray-300 text-indigo-600"
+                          className="rounded border-gray-300 text-teak-dark"
                         />
                       </td>
                     </tr>

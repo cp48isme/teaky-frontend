@@ -125,11 +125,11 @@ export default function StaffOrderPage() {
   };
 
   const inputClass =
-    'mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500';
+    'mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-teak focus:ring-1 focus:ring-teak';
 
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-bold text-gray-900">Create Order on Behalf of Customer</h2>
+      <h2 className="font-heading text-xl font-bold text-brand-dark">Create Order on Behalf of Customer</h2>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Customer & Portal */}
@@ -152,7 +152,7 @@ export default function StaffOrderPage() {
             <label className="block text-sm font-medium text-gray-700">Portal</label>
             {loadingPortals ? (
               <div className="mt-1 flex items-center gap-2 text-sm text-gray-500">
-                <Spinner className="h-4 w-4 text-indigo-600" /> Loading portals...
+                <Spinner className="h-4 w-4 text-teak-dark" /> Loading portals...
               </div>
             ) : (
               <select
@@ -187,7 +187,7 @@ export default function StaffOrderPage() {
 
           {loadingProducts && selectedPortalId ? (
             <div className="flex items-center gap-2 text-sm text-gray-500">
-              <Spinner className="h-4 w-4 text-indigo-600" /> Loading products...
+              <Spinner className="h-4 w-4 text-teak-dark" /> Loading products...
             </div>
           ) : !selectedPortalId ? (
             <p className="text-sm text-gray-500">Select a portal to see available products.</p>
@@ -399,7 +399,7 @@ export default function StaffOrderPage() {
           <button
             type="submit"
             disabled={submitting}
-            className="rounded-md bg-indigo-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+            className="rounded-md bg-teak-dark px-6 py-2.5 text-sm font-medium text-white hover:bg-teak disabled:opacity-50"
           >
             {submitting ? (
               <span className="flex items-center gap-2">

@@ -38,13 +38,13 @@ export default function RevenueChart({ data }: Props) {
 
   return (
     <div className="rounded-lg border border-gray-200 bg-white p-4">
-      <h3 className="mb-4 text-sm font-semibold text-gray-700">Revenue Over Time</h3>
+      <h3 className="mb-4 font-heading text-sm font-semibold text-brand-dark">Revenue Over Time</h3>
       <ResponsiveContainer width="100%" height={280}>
         <AreaChart data={chartData}>
           <defs>
             <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3} />
-              <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+              <stop offset="5%" stopColor="#558B2F" stopOpacity={0.3} />
+              <stop offset="95%" stopColor="#558B2F" stopOpacity={0} />
             </linearGradient>
           </defs>
           <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
@@ -54,7 +54,7 @@ export default function RevenueChart({ data }: Props) {
           <Area
             type="monotone"
             dataKey="revenue"
-            stroke="#6366f1"
+            stroke="#558B2F"
             fill="url(#revenueGradient)"
             strokeWidth={2}
           />

@@ -65,7 +65,7 @@ export default function MessageCenterPage() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-bold text-gray-900">Messages</h2>
+      <h2 className="font-heading text-xl font-bold text-brand-dark">Messages</h2>
 
       {/* Channel Filter */}
       <div className="flex flex-wrap gap-2">
@@ -80,7 +80,7 @@ export default function MessageCenterPage() {
             onClick={() => setChannelFilter(f.value)}
             className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
               channelFilter === f.value
-                ? 'bg-indigo-600 text-white'
+                ? 'bg-teak-dark text-white'
                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
             }`}
           >
@@ -91,7 +91,7 @@ export default function MessageCenterPage() {
 
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <Spinner className="h-8 w-8 text-indigo-600" />
+          <Spinner className="h-8 w-8 text-teak-dark" />
         </div>
       ) : filteredMessages.length === 0 ? (
         <p className="py-8 text-center text-gray-500">No messages found.</p>
@@ -105,7 +105,7 @@ export default function MessageCenterPage() {
                   key={message.id}
                   onClick={() => setSelectedMessage(message)}
                   className={`w-full px-4 py-3 text-left transition-colors hover:bg-gray-50 ${
-                    selectedMessage?.id === message.id ? 'bg-indigo-50' : ''
+                    selectedMessage?.id === message.id ? 'bg-teak/10' : ''
                   }`}
                 >
                   <div className="flex items-center justify-between">
@@ -176,7 +176,7 @@ export default function MessageCenterPage() {
                     Order:{' '}
                     <a
                       href={`/orders/${selectedMessage.order_id}`}
-                      className="text-indigo-600 hover:text-indigo-800"
+                      className="text-teak-dark hover:text-teak"
                     >
                       {selectedMessage.order_id}
                     </a>

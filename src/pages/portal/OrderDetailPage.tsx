@@ -22,7 +22,7 @@ const STATUS_COLORS: Record<string, string> = {
   pending_approval: 'bg-yellow-100 text-yellow-800',
   approved: 'bg-green-100 text-green-800',
   in_production: 'bg-purple-100 text-purple-800',
-  shipped: 'bg-indigo-100 text-indigo-800',
+  shipped: 'bg-teal-100 text-teal-800',
   delivered: 'bg-teal-100 text-teal-800',
   completed: 'bg-gray-100 text-gray-800',
   cancelled: 'bg-red-100 text-red-800',
@@ -55,7 +55,7 @@ export default function OrderDetailPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Spinner className="h-8 w-8 text-indigo-600" />
+        <Spinner className="h-8 w-8 text-teak-dark" />
       </div>
     );
   }
@@ -74,7 +74,7 @@ export default function OrderDetailPage() {
 
   return (
     <div className="mx-auto max-w-4xl px-6 py-8">
-      <Link to={`/p/${slug}/orders`} className="text-sm text-indigo-600 hover:text-indigo-800">
+      <Link to={`/p/${slug}/orders`} className="text-sm text-teak-dark hover:text-teak">
         &larr; Back to orders
       </Link>
 
@@ -104,7 +104,7 @@ export default function OrderDetailPage() {
               <span className="text-sm text-green-700">Items added to your cart!</span>
               <Link
                 to={`/p/${slug}/cart`}
-                className="text-sm font-medium text-indigo-600 hover:text-indigo-800"
+                className="text-sm font-medium text-teak-dark hover:text-teak"
               >
                 View Cart
               </Link>
@@ -132,7 +132,7 @@ export default function OrderDetailPage() {
                 }
               }}
               disabled={reordering}
-              className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+              className="rounded-md bg-teak-dark px-4 py-2 text-sm font-medium text-white hover:bg-teak disabled:opacity-50"
             >
               {reordering ? 'Adding to Cart...' : 'Reorder'}
             </button>
@@ -147,7 +147,7 @@ export default function OrderDetailPage() {
             <div
               key={step}
               className={`h-2 flex-1 rounded-full ${
-                i <= currentStepIndex ? 'bg-indigo-600' : 'bg-gray-200'
+                i <= currentStepIndex ? 'bg-teak-dark' : 'bg-gray-200'
               }`}
             />
           ))}
