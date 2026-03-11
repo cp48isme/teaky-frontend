@@ -5,6 +5,7 @@ import type { Portal } from '../types/portal';
 import Spinner from '../components/ui/Spinner';
 import Breadcrumbs from '../components/ui/Breadcrumbs';
 import ProductManagementGrid from '../components/products/ProductManagementGrid';
+import SplitScreenLayout from '../components/layout/SplitScreenLayout';
 
 export default function ProductManagementPage() {
   const { portalId } = useParams<{ portalId: string }>();
@@ -36,18 +37,20 @@ export default function ProductManagementPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <Breadcrumbs
-        items={[
-          { label: 'Dashboard', to: '/dashboard' },
-          { label: 'Portals', to: '/portals' },
-          { label: portal.name, to: `/portals/${portalId}` },
-          { label: 'Products' },
-        ]}
-      />
+    <SplitScreenLayout
+      leftContent={
+        <div className="space-y-6">
+          <Breadcrumbs
+            items={[
+              { label: 'Dashboard', to: '/dashboard' },
+              { label: 'Portals', to: '/portals' },
+              { label: portal.name, to: `/portals/${portalId}` },
+              { label: 'Products' },
+            ]}
+          />
 
-      {/* Header with View Live Store button */}
-      <div className="flex items-center justify-between">
+          {/* Header with View Live Store button */}
+          <div className="flex items-center justify-between">
         <h2 className="font-heading text-xl font-bold text-brand-dark">Products</h2>
         <a
           href={`/p/${portal.slug}`}
@@ -62,6 +65,9 @@ export default function ProductManagementPage() {
 
       {/* Product Management Grid */}
       <ProductManagementGrid portalId={portalId} />
-    </div>
+        </div>
+      }
+      previewUrl={`/p/${portal.slug}`}
+    />
   );
 }

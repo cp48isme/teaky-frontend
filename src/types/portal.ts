@@ -21,6 +21,9 @@ export interface Portal {
   approval_workflow: string;
   require_po: boolean;
   self_registration: boolean;
+  is_template: boolean;
+  template_portal_id: string | null;
+  duplication_count: number;
   created_at: string;
   updated_at: string;
 }
@@ -42,6 +45,7 @@ export interface UpdatePortalRequest {
   approval_workflow?: string;
   require_po?: boolean;
   self_registration?: boolean;
+  is_template?: boolean;
 }
 
 export interface PublicPortalResponse {
@@ -50,4 +54,25 @@ export interface PublicPortalResponse {
   brand_config: BrandConfig | null;
   type: string;
   status: string;
+}
+
+export interface DuplicatePortalRequest {
+  location_name: string;
+  location_address?: string | null;
+  custom_subdomain?: string | null;
+}
+
+export interface LocationRequest {
+  location_name: string;
+  location_address?: string | null;
+  custom_subdomain?: string | null;
+}
+
+export interface DuplicatePortalBatchRequest {
+  locations: LocationRequest[];
+}
+
+export interface DuplicatePortalBatchResponse {
+  portals: Portal[];
+  total_created: number;
 }

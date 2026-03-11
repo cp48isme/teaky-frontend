@@ -13,9 +13,10 @@ import PortalSettingsStep, {
 import ReviewPublishStep from '../components/portal-wizard/ReviewPublishStep';
 import DescribePortalStep from '../components/portal-wizard/DescribePortalStep';
 import AICreatedResultsStep from '../components/portal-wizard/AICreatedResultsStep';
+import AddLocationsStep from '../components/portal-wizard/AddLocationsStep';
 import { createPortal, publishPortal, updatePortal, type StoreCreationResult } from '../api/portals';
 import { createProduct } from '../api/products';
-import type { BrandConfig } from '../types/portal';
+import type { BrandConfig, Portal } from '../types/portal';
 import Spinner from '../components/ui/Spinner';
 
 const MANUAL_STEPS = [
@@ -50,7 +51,10 @@ export default function CreatePortalPage() {
     websiteUrl: '',
     slug: '',
     brandConfig: { ...DEFAULT_BRAND_CONFIG },
+    isFranchise: false,
   });
+
+  const [createdPortal, setCreatedPortal] = useState<Portal | null>(null);
 
   const [products, setProducts] = useState<WizardProduct[]>([]);
 
@@ -77,7 +81,13 @@ export default function CreatePortalPage() {
         brand_config: clientInfo.brandConfig,
       });
 
-      // 1b. Set custom domain if provided
+      // 1b. Mark as template if franchise mode
+      if (clientInfo.isFranchise) {
+        const updatedPortal = await updatePortal(portal.id, { is_template: true });
+        setCreatedPortal(updatedPortal);
+      }
+
+      // 1c. Set custom domain if provided
       if (portalSettings.customDomain) {
         await updatePortal(portal.id, { custom_domain: portalSettings.customDomain });
       }
@@ -88,12 +98,18 @@ export default function CreatePortalPage() {
         await createProduct(portal.id, productData);
       }
 
-      // 4. Publish if requested
+      // 3. Publish if requested
       if (publish) {
         await publishPortal(portal.id);
       }
 
-      navigate('/portals');
+      // 4. If franchise mode, go to AddLocationsStep; otherwise navigate away
+      if (clientInfo.isFranchise) {
+        setCreatedPortal(portal);
+        setCurrentStep(6); // AddLocationsStep
+      } else {
+        navigate('/portals');
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
     } finally {
@@ -237,6 +253,19 @@ export default function CreatePortalPage() {
                   onPublish={() => handleFinish(true)}
                   onSaveDraft={() => handleFinish(false)}
                   onBack={() => setCurrentStep(4)}
+                />
+              )}
+              {currentStep === 6 && createdPortal && (
+                <AddLocationsStep
+                  templatePortal={createdPortal}
+                  onComplete={(_portals) => {
+                    // Show success and navigate
+                    navigate('/portals');
+                  }}
+                  onSkip={() => {
+                    // User can add locations later
+                    navigate('/portals');
+                  }}
                 />
               )}
             </>

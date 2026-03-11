@@ -11,6 +11,7 @@ export interface ClientInfoData {
   websiteUrl: string;
   slug: string;
   brandConfig: BrandConfig;
+  isFranchise: boolean;
 }
 
 interface Props {
@@ -216,6 +217,28 @@ export default function ClientInfoStep({ data, onUpdate, onNext }: Props) {
         {!checkingSlug && slugAvailable === false && (
           <p className="mt-1 text-xs text-red-600">This slug is already taken</p>
         )}
+      </div>
+
+      {/* Franchise / Multi-Location Toggle */}
+      <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+        <label className="flex items-start gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={data.isFranchise}
+            onChange={(e) => onUpdate({ isFranchise: e.target.checked })}
+            className="mt-1 h-4 w-4 rounded border-gray-300 text-teak-dark focus:ring-teak"
+          />
+          <div className="flex-1">
+            <span className="text-sm font-medium text-gray-900">
+              This is a franchise or multi-location business
+            </span>
+            <p className="mt-1 text-xs text-gray-600">
+              Enable this if you need to create the same portal for multiple locations
+              (e.g., franchise stores, regional offices). You'll be able to add locations
+              after the portal is created.
+            </p>
+          </div>
+        </label>
       </div>
 
       <div className="flex justify-end">

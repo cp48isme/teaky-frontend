@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { PortalProvider } from './contexts/PortalContext';
 import { CartProvider } from './contexts/CartContext';
+import { PreviewProvider } from './context/PreviewContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import AppLayout from './components/layout/AppLayout';
 import PortalLayout from './components/layout/PortalLayout';
@@ -44,8 +45,9 @@ import PlaceholderPage from './pages/PlaceholderPage';
 function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <Routes>
+      <PreviewProvider>
+        <AuthProvider>
+          <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/invite/:token" element={<AcceptInvitationPage />} />
@@ -248,7 +250,8 @@ function App() {
           <Route path="/contact" element={<PlaceholderPage page="contact" />} />
           <Route path="/" element={<LandingPage />} />
         </Routes>
-      </AuthProvider>
+        </AuthProvider>
+      </PreviewProvider>
     </BrowserRouter>
   );
 }

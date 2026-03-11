@@ -4,6 +4,9 @@ import type {
   CreatePortalRequest,
   UpdatePortalRequest,
   PublicPortalResponse,
+  DuplicatePortalRequest,
+  DuplicatePortalBatchRequest,
+  DuplicatePortalBatchResponse,
 } from '../types/portal';
 import type { Product } from '../types/product';
 import type { Invitation } from '../types/team';
@@ -118,4 +121,27 @@ export async function listPortalInvitations(
   portalId: string,
 ): Promise<Invitation[]> {
   return apiRequest<Invitation[]>(`/portals/${portalId}/invitations`);
+}
+
+export async function duplicatePortal(
+  templateId: string,
+  request: DuplicatePortalRequest,
+): Promise<Portal> {
+  return apiRequest<Portal>(`/portals/${templateId}/duplicate`, {
+    method: 'POST',
+    body: JSON.stringify(request),
+  });
+}
+
+export async function duplicatePortalBatch(
+  templateId: string,
+  request: DuplicatePortalBatchRequest,
+): Promise<DuplicatePortalBatchResponse> {
+  return apiRequest<DuplicatePortalBatchResponse>(
+    `/portals/${templateId}/duplicate-batch`,
+    {
+      method: 'POST',
+      body: JSON.stringify(request),
+    },
+  );
 }

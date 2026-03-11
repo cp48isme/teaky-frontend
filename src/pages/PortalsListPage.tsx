@@ -64,18 +64,38 @@ export default function PortalsListPage() {
               className="block rounded-lg border border-gray-200 bg-white p-5 shadow-sm hover:shadow-md transition-shadow"
             >
               <div className="flex items-start justify-between">
-                <h3 className="text-base font-semibold text-gray-900">{portal.name}</h3>
-                <span
-                  className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_COLORS[portal.status] ?? 'bg-gray-100 text-gray-800'}`}
-                >
-                  {portal.status}
-                </span>
+                <div className="flex-1">
+                  <h3 className="text-base font-semibold text-gray-900">{portal.name}</h3>
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <span
+                      className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_COLORS[portal.status] ?? 'bg-gray-100 text-gray-800'}`}
+                    >
+                      {portal.status}
+                    </span>
+                    {portal.is_template && (
+                      <span className="inline-flex rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-700">
+                        Template
+                      </span>
+                    )}
+                    {portal.template_portal_id && (
+                      <span className="inline-flex rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
+                        Franchise
+                      </span>
+                    )}
+                  </div>
+                </div>
               </div>
-              <p className="mt-1 text-sm text-gray-500 font-mono">{portal.slug}.teaky.com</p>
+              <p className="mt-3 text-sm text-gray-500 font-mono">{portal.slug}.teaky.com</p>
               <div className="mt-3 flex items-center gap-3 text-xs text-gray-400">
                 <span>{portal.type}</span>
                 <span>&middot;</span>
                 <span>Created {new Date(portal.created_at).toLocaleDateString()}</span>
+                {portal.is_template && portal.duplication_count > 0 && (
+                  <>
+                    <span>&middot;</span>
+                    <span>{portal.duplication_count} location{portal.duplication_count !== 1 ? 's' : ''}</span>
+                  </>
+                )}
               </div>
             </Link>
           ))}

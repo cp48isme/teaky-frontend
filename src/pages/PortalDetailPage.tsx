@@ -1,18 +1,21 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import {
   getPortal,
   publishPortal,
   invitePortalUser,
   listPortalInvitations,
+  duplicatePortal,
 } from '../api/portals';
 import type { Portal } from '../types/portal';
 import type { Invitation } from '../types/team';
 import Spinner from '../components/ui/Spinner';
 import Breadcrumbs from '../components/ui/Breadcrumbs';
+import SplitScreenLayout from '../components/layout/SplitScreenLayout';
 
 export default function PortalDetailPage() {
   const { portalId } = useParams<{ portalId: string }>();
+  const navigate = useNavigate();
   const [portal, setPortal] = useState<Portal | null>(null);
   const [loading, setLoading] = useState(true);
   const [publishing, setPublishing] = useState(false);
@@ -22,6 +25,10 @@ export default function PortalDetailPage() {
   const [inviteRole, setInviteRole] = useState('end_user');
   const [inviting, setInviting] = useState(false);
   const [inviteError, setInviteError] = useState('');
+  const [showDuplicateModal, setShowDuplicateModal] = useState(false);
+  const [duplicateLocation, setDuplicateLocation] = useState('');
+  const [duplicateSubdomain, setDuplicateSubdomain] = useState('');
+  const [duplicating, setDuplicating] = useState(false);
 
   useEffect(() => {
     if (!portalId) return;
@@ -44,6 +51,25 @@ export default function PortalDetailPage() {
       setError('Failed to publish portal');
     } finally {
       setPublishing(false);
+    }
+  };
+
+  const handleDuplicate = async () => {
+    if (!portalId || !duplicateLocation.trim()) return;
+    setDuplicating(true);
+    try {
+      const newPortal = await duplicatePortal(portalId, {
+        location_name: duplicateLocation,
+        custom_subdomain: duplicateSubdomain || null,
+      });
+      setShowDuplicateModal(false);
+      setDuplicateLocation('');
+      setDuplicateSubdomain('');
+      navigate(`/portals/${newPortal.id}`);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to duplicate portal');
+    } finally {
+      setDuplicating(false);
     }
   };
 
@@ -74,14 +100,16 @@ export default function PortalDetailPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <Breadcrumbs items={[
-        { label: 'Dashboard', to: '/dashboard' },
-        { label: 'Portals', to: '/portals' },
-        { label: portal.name },
-      ]} />
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    <SplitScreenLayout
+      leftContent={
+        <div className="space-y-6">
+          <Breadcrumbs items={[
+            { label: 'Dashboard', to: '/dashboard' },
+            { label: 'Portals', to: '/portals' },
+            { label: portal.name },
+          ]} />
+          {/* Header */}
+          <div className="flex items-center justify-between">
         <div>
           <h2 className="font-heading text-xl font-bold text-brand-dark">{portal.name}</h2>
         </div>
@@ -97,6 +125,14 @@ export default function PortalDetailPage() {
             View Live Store
           </a>
 
+          {portal.is_template && (
+            <button
+              onClick={() => setShowDuplicateModal(true)}
+              className="rounded-md border border-purple-600 bg-purple-50 px-4 py-2 text-sm font-medium text-purple-700 hover:bg-purple-100"
+            >
+              + Duplicate for New Location
+            </button>
+          )}
           {portal.status === 'draft' && (
             <button
               onClick={handlePublish}
@@ -113,6 +149,71 @@ export default function PortalDetailPage() {
           </span>
         </div>
       </div>
+
+      {/* Duplicate Modal */}
+      {showDuplicateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
+            <h3 className="text-lg font-semibold text-gray-900">Duplicate Portal</h3>
+            <p className="mt-2 text-sm text-gray-600">
+              Create a new portal for a different location based on: <strong>{portal.name}</strong>
+            </p>
+            <div className="mt-4 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Location Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={duplicateLocation}
+                  onChange={(e) => setDuplicateLocation(e.target.value)}
+                  placeholder="e.g., Downtown Seattle"
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-teak focus:outline-none focus:ring-teak sm:text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Custom Subdomain <span className="text-gray-400">(optional)</span>
+                </label>
+                <div className="mt-1 flex items-center gap-1">
+                  <span className="text-sm text-gray-500">teaky.com/p/</span>
+                  <input
+                    type="text"
+                    value={duplicateSubdomain}
+                    onChange={(e) =>
+                      setDuplicateSubdomain(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))
+                    }
+                    placeholder="auto-generated"
+                    className="block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-teak focus:outline-none focus:ring-teak sm:text-sm"
+                  />
+                </div>
+                <p className="mt-1 text-xs text-gray-400">Leave blank to auto-generate from location name</p>
+              </div>
+            </div>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  setShowDuplicateModal(false);
+                  setDuplicateLocation('');
+                  setDuplicateSubdomain('');
+                }}
+                disabled={duplicating}
+                className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDuplicate}
+                disabled={duplicating || !duplicateLocation.trim()}
+                className="inline-flex items-center gap-2 rounded-md bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700 disabled:opacity-50"
+              >
+                {duplicating && <Spinner className="h-4 w-4 text-white" />}
+                Duplicate
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Info Grid */}
       <div className="grid gap-6 lg:grid-cols-2">
@@ -287,6 +388,9 @@ export default function PortalDetailPage() {
           </div>
         )}
       </div>
-    </div>
+        </div>
+      }
+      previewUrl={`/p/${portal.slug}`}
+    />
   );
 }
