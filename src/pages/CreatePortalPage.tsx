@@ -11,13 +11,15 @@ import PortalSettingsStep, {
   type PortalSettingsData,
 } from '../components/portal-wizard/PortalSettingsStep';
 import ReviewPublishStep from '../components/portal-wizard/ReviewPublishStep';
-import { createPortal, publishPortal, updatePortal } from '../api/portals';
+import DescribePortalStep from '../components/portal-wizard/DescribePortalStep';
+import AICreatedResultsStep from '../components/portal-wizard/AICreatedResultsStep';
+import { createPortal, publishPortal, updatePortal, type StoreCreationResult } from '../api/portals';
 import { createProduct } from '../api/products';
 import { createCategory } from '../api/categories';
 import type { BrandConfig } from '../types/portal';
 import Spinner from '../components/ui/Spinner';
 
-const STEPS = [
+const MANUAL_STEPS = [
   'Client Info',
   'Brand Review',
   'Categories',
@@ -41,6 +43,8 @@ export default function CreatePortalPage() {
   const [currentStep, setCurrentStep] = useState(0);
   const [publishing, setPublishing] = useState(false);
   const [error, setError] = useState('');
+  const [isAIMode, setIsAIMode] = useState(false);
+  const [aiResult, setAiResult] = useState<StoreCreationResult | null>(null);
 
   // Wizard-wide state
   const [clientInfo, setClientInfo] = useState<ClientInfoData>({
@@ -116,31 +120,47 @@ export default function CreatePortalPage() {
         {/* Step indicator */}
         <nav className="mb-8">
           <ol className="flex items-center">
-            {STEPS.map((step, index) => (
-              <li key={step} className="flex items-center">
-                <span
-                  className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium shrink-0 ${
-                    index < currentStep
-                      ? 'bg-green-500 text-white'
-                      : index === currentStep
-                        ? 'bg-teak-dark text-white'
-                        : 'bg-gray-200 text-gray-600'
-                  }`}
-                >
-                  {index < currentStep ? '\u2713' : index + 1}
+            {isAIMode && aiResult ? (
+              // AI mode - show just the result step
+              <li className="flex items-center">
+                <span className="flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium shrink-0 bg-teak-dark text-white">
+                  ✓
                 </span>
                 <span className="ml-2 text-sm text-gray-600 hidden lg:inline whitespace-nowrap">
-                  {step}
+                  Portal Created
                 </span>
-                {index < STEPS.length - 1 && (
-                  <div
-                    className={`w-8 h-0.5 mx-2 ${
-                      index < currentStep ? 'bg-green-500' : 'bg-gray-200'
-                    }`}
-                  />
-                )}
               </li>
-            ))}
+            ) : (
+              // Manual mode
+              [
+                'Describe',
+                ...MANUAL_STEPS,
+              ].map((step, index) => (
+                <li key={step} className="flex items-center">
+                  <span
+                    className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium shrink-0 ${
+                      index < currentStep
+                        ? 'bg-green-500 text-white'
+                        : index === currentStep
+                          ? 'bg-teak-dark text-white'
+                          : 'bg-gray-200 text-gray-600'
+                    }`}
+                  >
+                    {index < currentStep ? '\u2713' : index + 1}
+                  </span>
+                  <span className="ml-2 text-sm text-gray-600 hidden lg:inline whitespace-nowrap">
+                    {step}
+                  </span>
+                  {index < MANUAL_STEPS.length && (
+                    <div
+                      className={`w-8 h-0.5 mx-2 ${
+                        index < currentStep ? 'bg-green-500' : 'bg-gray-200'
+                      }`}
+                    />
+                  )}
+                </li>
+              ))
+            )}
           </ol>
         </nav>
 
@@ -153,63 +173,85 @@ export default function CreatePortalPage() {
 
         {/* Step content */}
         <div className="bg-white rounded-lg shadow p-6 sm:p-8 min-h-[300px]">
-          {currentStep === 0 && (
-            <ClientInfoStep
-              data={clientInfo}
-              onUpdate={(partial) =>
-                setClientInfo((prev) => ({ ...prev, ...partial }))
-              }
-              onNext={() => setCurrentStep(1)}
-            />
+          {/* AI Mode - Show results */}
+          {isAIMode && aiResult && (
+            <AICreatedResultsStep result={aiResult} />
           )}
-          {currentStep === 1 && (
-            <BrandReviewStep
-              clientName={clientInfo.clientName}
-              brandConfig={clientInfo.brandConfig}
-              onUpdate={handleBrandConfigUpdate}
-              onNext={() => setCurrentStep(2)}
-              onBack={() => setCurrentStep(0)}
-            />
-          )}
-          {currentStep === 2 && (
-            <CategoryStep
-              categories={categoryNames}
-              onUpdate={setCategoryNames}
-              onNext={() => setCurrentStep(3)}
-              onBack={() => setCurrentStep(1)}
-            />
-          )}
-          {currentStep === 3 && (
-            <ProductAddStep
-              products={products}
-              onUpdate={setProducts}
-              onNext={() => setCurrentStep(4)}
-              onBack={() => setCurrentStep(2)}
-            />
-          )}
-          {currentStep === 4 && (
-            <PortalSettingsStep
-              slug={clientInfo.slug}
-              data={portalSettings}
-              onUpdate={(partial) =>
-                setPortalSettings((prev) => ({ ...prev, ...partial }))
-              }
-              onNext={() => setCurrentStep(5)}
-              onBack={() => setCurrentStep(3)}
-            />
-          )}
-          {currentStep === 5 && (
-            <ReviewPublishStep
-              clientName={clientInfo.clientName}
-              slug={clientInfo.slug}
-              brandConfig={clientInfo.brandConfig}
-              products={products}
-              settings={portalSettings}
-              publishing={publishing}
-              onPublish={() => handleFinish(true)}
-              onSaveDraft={() => handleFinish(false)}
-              onBack={() => setCurrentStep(4)}
-            />
+
+          {/* Manual Mode */}
+          {!isAIMode && (
+            <>
+              {currentStep === 0 && (
+                <DescribePortalStep
+                  onSuccess={(result) => {
+                    setAiResult(result);
+                    setIsAIMode(true);
+                  }}
+                  onBuildManually={() => {
+                    setIsAIMode(false);
+                    setCurrentStep(1);
+                  }}
+                />
+              )}
+              {currentStep === 1 && (
+                <ClientInfoStep
+                  data={clientInfo}
+                  onUpdate={(partial) =>
+                    setClientInfo((prev) => ({ ...prev, ...partial }))
+                  }
+                  onNext={() => setCurrentStep(2)}
+                />
+              )}
+              {currentStep === 2 && (
+                <BrandReviewStep
+                  clientName={clientInfo.clientName}
+                  brandConfig={clientInfo.brandConfig}
+                  onUpdate={handleBrandConfigUpdate}
+                  onNext={() => setCurrentStep(3)}
+                  onBack={() => setCurrentStep(1)}
+                />
+              )}
+              {currentStep === 3 && (
+                <CategoryStep
+                  categories={categoryNames}
+                  onUpdate={setCategoryNames}
+                  onNext={() => setCurrentStep(4)}
+                  onBack={() => setCurrentStep(2)}
+                />
+              )}
+              {currentStep === 4 && (
+                <ProductAddStep
+                  products={products}
+                  onUpdate={setProducts}
+                  onNext={() => setCurrentStep(5)}
+                  onBack={() => setCurrentStep(3)}
+                />
+              )}
+              {currentStep === 5 && (
+                <PortalSettingsStep
+                  slug={clientInfo.slug}
+                  data={portalSettings}
+                  onUpdate={(partial) =>
+                    setPortalSettings((prev) => ({ ...prev, ...partial }))
+                  }
+                  onNext={() => setCurrentStep(6)}
+                  onBack={() => setCurrentStep(4)}
+                />
+              )}
+              {currentStep === 6 && (
+                <ReviewPublishStep
+                  clientName={clientInfo.clientName}
+                  slug={clientInfo.slug}
+                  brandConfig={clientInfo.brandConfig}
+                  products={products}
+                  settings={portalSettings}
+                  publishing={publishing}
+                  onPublish={() => handleFinish(true)}
+                  onSaveDraft={() => handleFinish(false)}
+                  onBack={() => setCurrentStep(5)}
+                />
+              )}
+            </>
           )}
         </div>
 

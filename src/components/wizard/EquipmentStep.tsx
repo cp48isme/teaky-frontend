@@ -7,7 +7,9 @@ import {
   createCustomEquipment,
   uploadOnboardingDocument,
 } from '../../api/equipment';
+import { getCapabilitySuggestions } from '../../api/capabilities';
 import type { Equipment, OrganizationEquipment } from '../../types/equipment';
+import type { Capability } from '../../types/capability';
 import { useOrganizationId } from '../../hooks/useOrganizationId';
 import Spinner from '../ui/Spinner';
 
@@ -45,6 +47,10 @@ export default function EquipmentStep({ onNext, onBack }: Props) {
   const [loading, setLoading] = useState(true);
   const [addingId, setAddingId] = useState<string | null>(null);
 
+  // Suggested capabilities
+  const [suggestedCapabilities, setSuggestedCapabilities] = useState<Capability[]>([]);
+  const [loadingCapabilities, setLoadingCapabilities] = useState(false);
+
   // Custom equipment form
   const [showCustomForm, setShowCustomForm] = useState(false);
   const [customName, setCustomName] = useState('');
@@ -67,6 +73,20 @@ export default function EquipmentStep({ onNext, onBack }: Props) {
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [orgId]);
+
+  // Fetch suggested capabilities when equipment changes
+  useEffect(() => {
+    if (orgEquipment.length === 0) {
+      setSuggestedCapabilities([]);
+      return;
+    }
+    setLoadingCapabilities(true);
+    const equipmentIds = orgEquipment.map((oe) => oe.equipment_id);
+    getCapabilitySuggestions(equipmentIds)
+      .then(setSuggestedCapabilities)
+      .catch(() => setSuggestedCapabilities([]))
+      .finally(() => setLoadingCapabilities(false));
+  }, [orgEquipment]);
 
   // Debounced search
   useEffect(() => {
@@ -230,6 +250,33 @@ export default function EquipmentStep({ onNext, onBack }: Props) {
                 </div>
               );
             })}
+          </div>
+        </div>
+      )}
+
+      {/* Suggested Capabilities */}
+      {suggestedCapabilities.length > 0 && (
+        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-medium text-blue-900">
+              Suggested Capabilities
+            </h3>
+            {loadingCapabilities && (
+              <Spinner className="h-4 w-4 text-blue-600" />
+            )}
+          </div>
+          <p className="mt-1 text-xs text-blue-700 mb-3">
+            Based on your equipment, the AI suggests you can offer these services:
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {suggestedCapabilities.map((cap) => (
+              <span
+                key={cap.id}
+                className="inline-flex items-center rounded-full bg-white px-3 py-1 text-sm font-medium text-blue-900 border border-blue-200"
+              >
+                ✓ {cap.name}
+              </span>
+            ))}
           </div>
         </div>
       )}

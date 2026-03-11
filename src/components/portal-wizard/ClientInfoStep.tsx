@@ -4,6 +4,7 @@ import { checkSlugAvailable } from '../../api/portals';
 import type { ScrapeWebsiteResponse } from '../../types/scraping';
 import type { BrandConfig } from '../../types/portal';
 import Spinner from '../ui/Spinner';
+import ScanProgress from '../ui/ScanProgress';
 
 export interface ClientInfoData {
   clientName: string;
@@ -154,6 +155,9 @@ export default function ClientInfoStep({ data, onUpdate, onNext }: Props) {
         </div>
         {scanError && <p className="mt-2 text-sm text-amber-600">{scanError}</p>}
       </div>
+
+      {/* Scan Progress */}
+      <ScanProgress isScanning={scanning} />
 
       {/* Scan Results Preview */}
       {hasResults && (

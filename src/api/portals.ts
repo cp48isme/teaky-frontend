@@ -49,6 +49,28 @@ export async function checkSlugAvailable(
   );
 }
 
+export interface StoreCreationResult {
+  portal_id: string;
+  portal_url: string;
+  portal_name: string;
+  products_created: number;
+  categories_created: string[];
+  brand_assets_found: Record<string, unknown>;
+  capability_gaps: string[];
+  playbook_applied: string | null;
+  warnings: string[];
+  agent_summary: string;
+}
+
+export async function createPortalFromDescription(
+  description: string,
+): Promise<StoreCreationResult> {
+  return apiRequest<StoreCreationResult>('/portals/create-from-description', {
+    method: 'POST',
+    body: JSON.stringify({ description }),
+  });
+}
+
 export async function getPublicPortal(
   slug: string,
 ): Promise<PublicPortalResponse> {
