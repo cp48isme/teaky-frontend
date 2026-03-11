@@ -28,6 +28,7 @@ export interface Product {
   pricing_tiers: PricingTier[];
   mockup_urls: string[];
   min_order_qty: number;
+  base_price?: number | null;
   proof_required: boolean;
   safe_order_eligible: boolean;
   dm_external_id: string | null;
@@ -47,6 +48,7 @@ export interface CreateProductRequest {
   pricing_tiers?: PricingTier[];
   mockup_urls?: string[];
   min_order_qty?: number;
+  base_price?: number;
   proof_required?: boolean;
   safe_order_eligible?: boolean;
 }
@@ -62,6 +64,7 @@ export interface UpdateProductRequest {
   pricing_tiers?: PricingTier[];
   mockup_urls?: string[];
   min_order_qty?: number;
+  base_price?: number;
   proof_required?: boolean;
   safe_order_eligible?: boolean;
   dm_external_id?: string | null;

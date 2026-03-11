@@ -15,14 +15,12 @@ import DescribePortalStep from '../components/portal-wizard/DescribePortalStep';
 import AICreatedResultsStep from '../components/portal-wizard/AICreatedResultsStep';
 import { createPortal, publishPortal, updatePortal, type StoreCreationResult } from '../api/portals';
 import { createProduct } from '../api/products';
-import { createCategory } from '../api/categories';
 import type { BrandConfig } from '../types/portal';
 import Spinner from '../components/ui/Spinner';
 
 const MANUAL_STEPS = [
   'Client Info',
   'Brand Review',
-  'Categories',
   'Add Products',
   'Portal Settings',
   'Review & Publish',
@@ -55,7 +53,6 @@ export default function CreatePortalPage() {
   });
 
   const [products, setProducts] = useState<WizardProduct[]>([]);
-  const [categoryNames, setCategoryNames] = useState<string[]>([]);
 
   const [portalSettings, setPortalSettings] = useState<PortalSettingsData>({
     approvalWorkflow: 'none',
@@ -85,15 +82,7 @@ export default function CreatePortalPage() {
         await updatePortal(portal.id, { custom_domain: portalSettings.customDomain });
       }
 
-      // 2. Create categories
-      for (const [i, name] of categoryNames.entries()) {
-        if (name.trim()) {
-          const slug = name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-          await createCategory(portal.id, { name: name.trim(), slug, sort_order: i });
-        }
-      }
-
-      // 3. Create all products
+      // 2. Create all products (categories auto-created from products)
       for (const product of products) {
         const { _tempId, ...productData } = product;
         await createProduct(portal.id, productData);
@@ -114,7 +103,7 @@ export default function CreatePortalPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      <div className={`${currentStep === 5 ? 'max-w-5xl' : 'max-w-3xl'} mx-auto w-full px-4 py-8 flex-1 transition-all`}>
+      <div className={`${currentStep === 4 ? 'max-w-5xl' : 'max-w-3xl'} mx-auto w-full px-4 py-8 flex-1 transition-all`}>
         <h1 className="font-heading text-2xl font-bold text-brand-dark mb-8">Create Portal</h1>
 
         {/* Step indicator */}
@@ -175,7 +164,14 @@ export default function CreatePortalPage() {
         <div className="bg-white rounded-lg shadow p-6 sm:p-8 min-h-[300px]">
           {/* AI Mode - Show results */}
           {isAIMode && aiResult && (
-            <AICreatedResultsStep result={aiResult} />
+            <AICreatedResultsStep
+              result={aiResult}
+              onCreateNew={() => {
+                setAiResult(null);
+                setIsAIMode(false);
+                setCurrentStep(0);
+              }}
+            />
           )}
 
           {/* Manual Mode */}
@@ -212,33 +208,25 @@ export default function CreatePortalPage() {
                 />
               )}
               {currentStep === 3 && (
-                <CategoryStep
-                  categories={categoryNames}
-                  onUpdate={setCategoryNames}
+                <ProductAddStep
+                  products={products}
+                  onUpdate={setProducts}
                   onNext={() => setCurrentStep(4)}
                   onBack={() => setCurrentStep(2)}
                 />
               )}
               {currentStep === 4 && (
-                <ProductAddStep
-                  products={products}
-                  onUpdate={setProducts}
-                  onNext={() => setCurrentStep(5)}
-                  onBack={() => setCurrentStep(3)}
-                />
-              )}
-              {currentStep === 5 && (
                 <PortalSettingsStep
                   slug={clientInfo.slug}
                   data={portalSettings}
                   onUpdate={(partial) =>
                     setPortalSettings((prev) => ({ ...prev, ...partial }))
                   }
-                  onNext={() => setCurrentStep(6)}
-                  onBack={() => setCurrentStep(4)}
+                  onNext={() => setCurrentStep(5)}
+                  onBack={() => setCurrentStep(3)}
                 />
               )}
-              {currentStep === 6 && (
+              {currentStep === 5 && (
                 <ReviewPublishStep
                   clientName={clientInfo.clientName}
                   slug={clientInfo.slug}
@@ -248,7 +236,7 @@ export default function CreatePortalPage() {
                   publishing={publishing}
                   onPublish={() => handleFinish(true)}
                   onSaveDraft={() => handleFinish(false)}
-                  onBack={() => setCurrentStep(5)}
+                  onBack={() => setCurrentStep(4)}
                 />
               )}
             </>
@@ -261,93 +249,6 @@ export default function CreatePortalPage() {
             <Spinner className="h-4 w-4" /> Creating portal...
           </div>
         )}
-      </div>
-    </div>
-  );
-}
-
-/* ---- Category Step ---- */
-
-interface CategoryStepProps {
-  categories: string[];
-  onUpdate: (categories: string[]) => void;
-  onNext: () => void;
-  onBack: () => void;
-}
-
-function CategoryStep({ categories, onUpdate, onNext, onBack }: CategoryStepProps) {
-  const [newName, setNewName] = useState('');
-
-  const addCategory = () => {
-    if (!newName.trim()) return;
-    onUpdate([...categories, newName.trim()]);
-    setNewName('');
-  };
-
-  return (
-    <div className="space-y-4">
-      <div>
-        <h3 className="text-lg font-semibold text-gray-900">Categories</h3>
-        <p className="mt-1 text-sm text-gray-500">
-          Define product categories for your portal. You can add more later.
-        </p>
-      </div>
-
-      <div className="flex gap-2">
-        <input
-          type="text"
-          value={newName}
-          onChange={(e) => setNewName(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addCategory())}
-          placeholder="e.g. Apparel, Signage, Business Cards..."
-          className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-teak focus:outline-none"
-        />
-        <button
-          type="button"
-          onClick={addCategory}
-          disabled={!newName.trim()}
-          className="rounded-md bg-teak-dark px-4 py-2 text-sm font-medium text-white hover:bg-teak disabled:opacity-50"
-        >
-          Add
-        </button>
-      </div>
-
-      {categories.length > 0 ? (
-        <ul className="divide-y divide-gray-100 rounded-lg border border-gray-200">
-          {categories.map((name, i) => (
-            <li key={i} className="flex items-center justify-between px-4 py-3">
-              <span className="text-sm text-gray-900">{name}</span>
-              <button
-                type="button"
-                onClick={() => onUpdate(categories.filter((_, j) => j !== i))}
-                className="text-xs text-red-600 hover:text-red-800"
-              >
-                Remove
-              </button>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p className="rounded-lg border-2 border-dashed border-gray-200 p-6 text-center text-sm text-gray-400">
-          No categories yet. You can skip this step and add them later.
-        </p>
-      )}
-
-      <div className="flex justify-between border-t pt-4">
-        <button
-          type="button"
-          onClick={onBack}
-          className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-        >
-          Back
-        </button>
-        <button
-          type="button"
-          onClick={onNext}
-          className="rounded-md bg-teak-dark px-4 py-2 text-sm font-medium text-white hover:bg-teak"
-        >
-          Next
-        </button>
       </div>
     </div>
   );

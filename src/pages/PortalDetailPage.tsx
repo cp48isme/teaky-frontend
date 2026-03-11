@@ -86,6 +86,17 @@ export default function PortalDetailPage() {
           <h2 className="font-heading text-xl font-bold text-brand-dark">{portal.name}</h2>
         </div>
         <div className="flex items-center gap-3">
+          {/* View Live Store Button */}
+          <a
+            href={`/p/${portal.slug}`}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-2 rounded-md bg-gradient-to-r from-teak to-teak-dark px-4 py-2 text-sm font-medium text-white shadow-sm hover:shadow-md transition"
+          >
+            <span>🌐</span>
+            View Live Store
+          </a>
+
           {portal.status === 'draft' && (
             <button
               onClick={handlePublish}

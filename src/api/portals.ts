@@ -71,6 +71,19 @@ export async function createPortalFromDescription(
   });
 }
 
+export async function createProductsFromDescription(
+  portalId: string,
+  description: string,
+): Promise<{ products_created: number; summary: string }> {
+  return apiRequest<{ products_created: number; summary: string }>(
+    `/portals/${portalId}/products/create-from-description`,
+    {
+      method: 'POST',
+      body: JSON.stringify({ description }),
+    }
+  );
+}
+
 export async function getPublicPortal(
   slug: string,
 ): Promise<PublicPortalResponse> {
