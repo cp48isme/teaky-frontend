@@ -118,9 +118,9 @@ export default function CreatePortalPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-brand-light flex flex-col">
       <div className={`${currentStep === 4 ? 'max-w-5xl' : 'max-w-3xl'} mx-auto w-full px-4 py-8 flex-1 transition-all`}>
-        <h1 className="font-heading text-2xl font-bold text-brand-dark mb-8">Create Portal</h1>
+        <h1 className="font-heading text-3xl font-extrabold text-brand-dark mb-8 lg:text-4xl">Create Portal</h1>
 
         {/* Step indicator */}
         <nav className="mb-8">

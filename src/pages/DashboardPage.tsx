@@ -49,7 +49,7 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <h2 className="font-heading text-xl font-bold text-brand-dark">Dashboard</h2>
+      <h1 className="font-heading text-3xl font-extrabold text-brand-dark lg:text-4xl">Dashboard</h1>
 
       {/* Stat Cards */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">

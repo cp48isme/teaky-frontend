@@ -65,7 +65,7 @@ export default function MessageCenterPage() {
 
   return (
     <div className="space-y-6">
-      <h2 className="font-heading text-xl font-bold text-brand-dark">Messages</h2>
+      <h1 className="font-heading text-3xl font-extrabold text-brand-dark lg:text-4xl">Messages</h1>
 
       {/* Channel Filter */}
       <div className="flex flex-wrap gap-2">

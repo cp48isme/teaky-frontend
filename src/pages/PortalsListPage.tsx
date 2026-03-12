@@ -33,24 +33,24 @@ export default function PortalsListPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="font-heading text-xl font-bold text-brand-dark">Portals</h2>
+        <h1 className="font-heading text-3xl font-extrabold text-brand-dark lg:text-4xl">Portals</h1>
         <Link
           to="/portals/create"
-          className="rounded-md bg-teak-dark px-4 py-2 text-sm font-medium text-white hover:bg-teak"
+          className="rounded-md bg-coral px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-coral/90"
         >
           + Create Portal
         </Link>
       </div>
 
       {portals.length === 0 ? (
-        <div className="rounded-lg border-2 border-dashed border-gray-300 p-12 text-center">
-          <h3 className="text-lg font-medium text-gray-900">No portals yet</h3>
-          <p className="mt-2 text-sm text-gray-500">
+        <div className="rounded-lg border-2 border-dashed border-gray-300 bg-white p-12 text-center">
+          <h3 className="font-heading text-2xl font-bold text-brand-dark">No portals yet</h3>
+          <p className="mt-3 text-base text-gray-600">
             Create your first client portal to get started.
           </p>
           <Link
             to="/portals/create"
-            className="mt-4 inline-block rounded-md bg-teak-dark px-6 py-2.5 text-sm font-medium text-white hover:bg-teak"
+            className="mt-6 inline-block rounded-md bg-coral px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-coral/90"
           >
             Create Portal
           </Link>

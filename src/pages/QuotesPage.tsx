@@ -96,7 +96,7 @@ export default function QuotesPage() {
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="font-heading text-xl font-bold text-brand-dark">Quote Requests</h1>
+        <h1 className="font-heading text-3xl font-extrabold text-brand-dark lg:text-4xl">Quote Requests</h1>
       </div>
 
       {/* Filters */}
@@ -316,7 +316,7 @@ export default function QuotesPage() {
                 <button
                   onClick={() => handleStatusUpdate(selectedQuote.id, 'quoted')}
                   disabled={saving || !quotePrice}
-                  className="rounded-md bg-teak-dark px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-teak disabled:opacity-50"
+                  className="rounded-md bg-teak-dark px-3 py-1.5 text-sm font-semibold text-white shadow-sm transition hover:bg-teak disabled:opacity-50"
                 >
                   {saving ? 'Sending...' : 'Send Quote'}
                 </button>

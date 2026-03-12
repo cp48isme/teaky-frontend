@@ -70,8 +70,8 @@ export default function AgentControlCenterPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="font-heading text-lg font-semibold text-brand-dark">Agent Control Center</h2>
-          <p className="mt-1 text-sm text-gray-500">
+          <h1 className="font-heading text-3xl font-extrabold text-brand-dark lg:text-4xl">Agent Control Center</h1>
+          <p className="mt-2 text-base text-gray-600">
             Monitor and manage agent tasks across your organization
           </p>
         </div>

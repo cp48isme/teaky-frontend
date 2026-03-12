@@ -45,10 +45,10 @@ export default function PrinterOrdersPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="font-heading text-xl font-bold text-brand-dark">Orders</h2>
+        <h1 className="font-heading text-3xl font-extrabold text-brand-dark lg:text-4xl">Orders</h1>
         <Link
           to="/orders/new"
-          className="rounded-md bg-teak-dark px-4 py-2 text-sm font-medium text-white hover:bg-teak"
+          className="rounded-md bg-coral px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-coral/90"
         >
           New Order
         </Link>
