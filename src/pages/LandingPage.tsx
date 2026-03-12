@@ -150,11 +150,15 @@ export default function LandingPage() {
               </div>
 
               <h1 className="font-heading text-5xl font-extrabold leading-[1.1] tracking-tight text-brand-dark sm:text-6xl lg:text-7xl">
-                Serve more customers. Sell more products.{' '}
+                Vision, meet{' '}
                 <span className="bg-gradient-to-r from-teak-dark via-teak to-teak-light bg-clip-text text-transparent">
-                  Grow without the grind.
+                  velocity.
                 </span>
               </h1>
+
+              <h2 className="mt-4 font-heading text-3xl font-bold leading-tight tracking-tight text-brand-dark sm:text-4xl lg:text-5xl">
+                Grow without the grind.
+              </h2>
 
               <p className="mt-6 max-w-xl text-lg leading-relaxed text-bark">
                 Stop just selling products — start offering a service. Teaky lets you create custom storefronts for every client, streamline design-to-delivery, and automate the work that slows you down. Purpose-built AI agents handle the heavy lifting so your team can focus on relationships, not repetition. This isn&apos;t AI bolted onto old workflows — it&apos;s a platform designed for the way business works now.
