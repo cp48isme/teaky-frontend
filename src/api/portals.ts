@@ -52,6 +52,13 @@ export async function checkSlugAvailable(
   );
 }
 
+export interface BrandData {
+  logo_url?: string | null;
+  colors?: string[];
+  industry?: string | null;
+  description?: string | null;
+}
+
 export interface StoreCreationResult {
   portal_id: string;
   portal_url: string;
@@ -67,10 +74,11 @@ export interface StoreCreationResult {
 
 export async function createPortalFromDescription(
   description: string,
+  brandData?: BrandData,
 ): Promise<StoreCreationResult> {
   return apiRequest<StoreCreationResult>('/portals/create-from-description', {
     method: 'POST',
-    body: JSON.stringify({ description }),
+    body: JSON.stringify({ description, brand_data: brandData }),
   });
 }
 

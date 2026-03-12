@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { createPortalFromDescription, type StoreCreationResult } from '../../api/portals';
+import { createPortalFromDescription, type StoreCreationResult, type BrandData } from '../../api/portals';
 import { scrapeWebsite } from '../../api/scraping';
 import Spinner from '../ui/Spinner';
 import ScanProgress from '../ui/ScanProgress';
@@ -26,8 +26,7 @@ export default function DescribePortalStep({ onSuccess, onBuildManually }: Props
     setError('');
 
     try {
-      // Build enriched description with scan results if available
-      let enrichedDescription = description;
+      let brandData: BrandData | undefined;
 
       if (websiteUrl.trim() && !scanResult) {
         // Scan the website if URL provided and not yet scanned
@@ -35,32 +34,28 @@ export default function DescribePortalStep({ onSuccess, onBuildManually }: Props
         try {
           const result = await scrapeWebsite(websiteUrl);
           setScanResult(result);
-
-          // Append scan results to description for better AI context
-          enrichedDescription = `${description}\n\nBrand Info from Website Scan:\n`;
-          if (result.industry) enrichedDescription += `Industry: ${result.industry}\n`;
-          if (result.brand_colors?.length) enrichedDescription += `Brand Colors: ${result.brand_colors.join(', ')}\n`;
-          if (result.location_city || result.location_state) {
-            const location = [result.location_city, result.location_state].filter(Boolean).join(', ');
-            if (location) enrichedDescription += `Location: ${location}\n`;
-          }
+          brandData = {
+            logo_url: result.logo_url,
+            colors: result.brand_colors || [],
+            industry: result.industry,
+            description: result.description,
+          };
         } catch {
           // Silently continue if scan fails - description is still usable
         } finally {
           setScanning(false);
         }
       } else if (scanResult) {
-        // Use previously scanned data if available
-        enrichedDescription = `${description}\n\nBrand Info from Website Scan:\n`;
-        if (scanResult.industry) enrichedDescription += `Industry: ${scanResult.industry}\n`;
-        if (scanResult.brand_colors?.length) enrichedDescription += `Brand Colors: ${scanResult.brand_colors.join(', ')}\n`;
-        if (scanResult.location_city || scanResult.location_state) {
-          const location = [scanResult.location_city, scanResult.location_state].filter(Boolean).join(', ');
-          if (location) enrichedDescription += `Location: ${location}\n`;
-        }
+        // Use previously scanned data
+        brandData = {
+          logo_url: scanResult.logo_url,
+          colors: scanResult.brand_colors || [],
+          industry: scanResult.industry,
+          description: scanResult.description,
+        };
       }
 
-      const result = await createPortalFromDescription(enrichedDescription);
+      const result = await createPortalFromDescription(description, brandData);
       onSuccess(result);
     } catch (err) {
       setError(
