@@ -206,8 +206,18 @@ export default function DescribePortalStep({ onSuccess, onBuildManually }: Props
         </div>
       )}
 
-      {/* Creating progress */}
-      {(creating || scanning) && <ScanProgress isScanning={creating || scanning} />}
+      {/* Scanning progress - only show when actually scanning */}
+      {scanning && <ScanProgress isScanning={true} />}
+
+      {/* Creating portal progress - different from scanning */}
+      {creating && !scanning && (
+        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+          <div className="flex items-center gap-3">
+            <Spinner className="h-5 w-5 text-blue-600" />
+            <p className="text-sm font-medium text-blue-900">Creating your portal...</p>
+          </div>
+        </div>
+      )}
 
       {/* Primary Action Button */}
       <button
