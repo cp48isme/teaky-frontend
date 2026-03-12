@@ -65,10 +65,22 @@ export default function GetStartedWizardPage() {
       try {
         const profile = await getCompanyProfileByOrg(orgId);
         setProfileId(profile.id);
+
+        // Convert brand_colors dict back to array format for UI
+        const brandColorsArray: string[] = [];
+        if (profile.brand_colors) {
+          if (profile.brand_colors.primary) brandColorsArray.push(profile.brand_colors.primary);
+          if (profile.brand_colors.secondary) brandColorsArray.push(profile.brand_colors.secondary);
+          if (profile.brand_colors.accent) brandColorsArray.push(profile.brand_colors.accent);
+          if (profile.brand_colors.tertiary) brandColorsArray.push(profile.brand_colors.tertiary);
+          if (profile.brand_colors.quaternary) brandColorsArray.push(profile.brand_colors.quaternary);
+        }
+
         setCompanyData((prev) => ({
           ...prev,
           websiteUrl: profile.website_url ?? prev.websiteUrl,
           logoUrl: profile.logo_url ?? prev.logoUrl,
+          brandColors: brandColorsArray.length > 0 ? brandColorsArray : prev.brandColors,
           industry: profile.industry ?? prev.industry,
           description: profile.description ?? prev.description,
           phone: profile.phone ?? prev.phone,
@@ -100,6 +112,19 @@ export default function GetStartedWizardPage() {
     if (!orgId) return;
     setSaving(true);
     try {
+      // Convert brandColors array to dict format expected by backend
+      const brandColorsDict: Record<string, string> | undefined = companyData.brandColors.length > 0
+        ? Object.fromEntries(
+            [
+              companyData.brandColors[0] && ['primary', companyData.brandColors[0]],
+              companyData.brandColors[1] && ['secondary', companyData.brandColors[1]],
+              companyData.brandColors[2] && ['accent', companyData.brandColors[2]],
+              companyData.brandColors[3] && ['tertiary', companyData.brandColors[3]],
+              companyData.brandColors[4] && ['quaternary', companyData.brandColors[4]],
+            ].filter(Boolean) as [string, string][]
+          )
+        : undefined;
+
       if (profileId) {
         // Update existing profile
         await updateCompanyProfile(profileId, {
@@ -111,6 +136,7 @@ export default function GetStartedWizardPage() {
           location_city: companyData.locationCity || undefined,
           location_state: companyData.locationState || undefined,
           location_country: companyData.locationCountry || undefined,
+          brand_colors: brandColorsDict,
         });
       } else {
         try {
@@ -123,6 +149,7 @@ export default function GetStartedWizardPage() {
             location_city: companyData.locationCity || undefined,
             location_state: companyData.locationState || undefined,
             location_country: companyData.locationCountry || undefined,
+            brand_colors: brandColorsDict,
           });
           setProfileId(created.id);
         } catch (err) {
