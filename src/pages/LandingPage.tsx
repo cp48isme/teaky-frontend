@@ -150,17 +150,14 @@ export default function LandingPage() {
               </div>
 
               <h1 className="font-heading text-5xl font-extrabold leading-[1.1] tracking-tight text-brand-dark sm:text-6xl lg:text-7xl">
-                Vision, meet{' '}
+                Serve more customers. Sell more products.{' '}
                 <span className="bg-gradient-to-r from-teak-dark via-teak to-teak-light bg-clip-text text-transparent">
-                  velocity.
+                  Grow without the grind.
                 </span>
               </h1>
 
               <p className="mt-6 max-w-xl text-lg leading-relaxed text-bark">
-                Teaky is the AI-powered operating system for branded merchandise and print
-                commerce. Portals, smart agents, and streamlined orders for print shops, event
-                planners, marketing firms, and anyone who needs custom products — all working
-                alongside your team.
+                Stop just selling products — start offering a service. Teaky lets you create custom storefronts for every client, streamline design-to-delivery, and automate the work that slows you down. Purpose-built AI agents handle the heavy lifting so your team can focus on relationships, not repetition. This isn&apos;t AI bolted onto old workflows — it&apos;s a platform designed for the way business works now.
               </p>
 
               <div className="mt-10 flex flex-wrap gap-4">
