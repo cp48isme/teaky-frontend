@@ -46,32 +46,60 @@ export default function ClientInfoStep({ data, onUpdate, onNext }: Props) {
   useEffect(() => {
     if (!data.slug || data.slug.length < 2) {
       setSlugAvailable(null);
+      setCheckingSlug(false);
       return;
     }
 
+    let cancelled = false;
     setCheckingSlug(true);
+
     const timer = setTimeout(async () => {
       try {
         const result = await checkSlugAvailable(data.slug);
-        setSlugAvailable(result.available);
+        if (!cancelled) {
+          setSlugAvailable(result.available);
+        }
       } catch {
-        setSlugAvailable(null);
+        if (!cancelled) {
+          setSlugAvailable(null);
+        }
       } finally {
-        setCheckingSlug(false);
+        if (!cancelled) {
+          setCheckingSlug(false);
+        }
       }
     }, 400);
 
-    return () => clearTimeout(timer);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
   }, [data.slug]);
 
   const handleScan = async () => {
     if (!data.websiteUrl.trim()) return;
+
+    // Normalize URL: add https:// if no scheme
+    let normalizedUrl = data.websiteUrl.trim();
+    if (!normalizedUrl.match(/^https?:\/\//i)) {
+      normalizedUrl = `https://${normalizedUrl}`;
+      onUpdate({ websiteUrl: normalizedUrl });
+    }
+
+    // Basic URL validation
+    try {
+      new URL(normalizedUrl);
+    } catch {
+      setScanError('Please enter a valid website URL (e.g., client-website.com)');
+      return;
+    }
+
     setScanning(true);
     setScanError('');
     setScanResult(null);
 
     try {
-      const result = await scrapeWebsite(data.websiteUrl);
+      const result = await scrapeWebsite(normalizedUrl);
       setScanResult(result);
 
       // Auto-fill brand config from scan results
@@ -84,8 +112,11 @@ export default function ClientInfoStep({ data, onUpdate, onNext }: Props) {
           accent_color: result.brand_colors?.[2] ?? data.brandConfig.accent_color,
         },
       });
-    } catch {
-      setScanError('Could not scan website. You can configure branding in the next step.');
+    } catch (error) {
+      console.error('Website scan failed:', error);
+      setScanError(
+        'Could not scan website. Please check the URL and try again, or configure branding in the next step.',
+      );
     } finally {
       setScanning(false);
     }

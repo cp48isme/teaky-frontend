@@ -78,14 +78,34 @@ export default function EquipmentStep({ onNext, onBack }: Props) {
   useEffect(() => {
     if (orgEquipment.length === 0) {
       setSuggestedCapabilities([]);
+      setLoadingCapabilities(false);
       return;
     }
+
+    let cancelled = false;
     setLoadingCapabilities(true);
     const equipmentIds = orgEquipment.map((oe) => oe.equipment_id);
+
     getCapabilitySuggestions(equipmentIds)
-      .then(setSuggestedCapabilities)
-      .catch(() => setSuggestedCapabilities([]))
-      .finally(() => setLoadingCapabilities(false));
+      .then((suggestions) => {
+        if (!cancelled) {
+          setSuggestedCapabilities(suggestions);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setSuggestedCapabilities([]);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setLoadingCapabilities(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [orgEquipment]);
 
   // Debounced search

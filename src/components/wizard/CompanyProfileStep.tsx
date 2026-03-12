@@ -33,13 +33,37 @@ export default function CompanyProfileStep({ data, onUpdate, onNext }: Props) {
 
   const handleScan = async () => {
     if (!data.websiteUrl.trim()) return;
+
+    // Normalize URL: add https:// if no scheme
+    let normalizedUrl = data.websiteUrl.trim();
+    if (!normalizedUrl.match(/^https?:\/\//i)) {
+      normalizedUrl = `https://${normalizedUrl}`;
+      onUpdate({ websiteUrl: normalizedUrl });
+    }
+
+    // Basic URL validation
+    try {
+      new URL(normalizedUrl);
+    } catch {
+      setScanError('Please enter a valid website URL (e.g., yourcompany.com)');
+      return;
+    }
+
     setScanning(true);
     setScanError('');
     setScanResult(null);
     setScanAttempted(false);
 
     try {
-      const result = await scrapeWebsite(data.websiteUrl);
+      const result = await scrapeWebsite(normalizedUrl);
+
+      // Check if we got any useful results
+      const hasData =
+        result.logo_url ||
+        (result.brand_colors && result.brand_colors.length > 0) ||
+        result.industry ||
+        result.description;
+
       setScanResult(result);
 
       // Auto-fill fields from scan results
@@ -52,8 +76,16 @@ export default function CompanyProfileStep({ data, onUpdate, onNext }: Props) {
         locationState: result.location_state ?? '',
         locationCountry: result.location_country ?? '',
       });
-    } catch {
-      setScanError('Could not scan website. You can enter details manually.');
+
+      // If no data was found, show manual fields
+      if (!hasData) {
+        setShowManualFields(true);
+      }
+    } catch (error) {
+      console.error('Website scan failed:', error);
+      setScanError(
+        'Could not scan website. Please check the URL and try again, or enter details manually.',
+      );
       setShowManualFields(true);
     } finally {
       setScanning(false);
