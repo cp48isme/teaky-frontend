@@ -58,7 +58,7 @@ export default function CartPage() {
                 {item.color && <span>Color: {item.color}</span>}
               </div>
               <p className="mt-1 text-sm text-gray-600">
-                ${item.unit_price.toFixed(2)} each
+                ${Number(item.unit_price).toFixed(2)} each
               </p>
             </div>
 
@@ -86,7 +86,7 @@ export default function CartPage() {
               </div>
 
               <p className="w-20 text-right font-medium text-gray-900">
-                ${(item.unit_price * item.quantity).toFixed(2)}
+                ${(Number(item.unit_price) * item.quantity).toFixed(2)}
               </p>
 
               <button

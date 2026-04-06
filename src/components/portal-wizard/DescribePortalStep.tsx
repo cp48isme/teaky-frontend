@@ -98,7 +98,7 @@ export default function DescribePortalStep({ onSuccess, onBuildManually }: Props
     <form onSubmit={handleCreate} className="space-y-6">
       {/* Header */}
       <div>
-        <h2 className="text-3xl font-bold text-gray-900">Let's Create Your Store</h2>
+        <h2 className="font-heading text-3xl font-extrabold text-brand-dark lg:text-4xl">Let's Create Your Store</h2>
         <p className="mt-2 text-base text-gray-600">
           Describe your client and what they need. Our AI will instantly create a professional portal with products, categories, and branding.
         </p>

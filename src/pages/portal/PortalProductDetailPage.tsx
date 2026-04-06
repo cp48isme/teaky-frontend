@@ -210,7 +210,7 @@ export default function PortalProductDetailPage() {
                           {tier.min_qty}{tier.max_qty ? `\u2013${tier.max_qty}` : '+'}
                         </td>
                         <td className="px-4 py-2 text-right font-medium" style={{ color: primaryColor }}>
-                          ${tier.unit_price.toFixed(2)}
+                          ${Number(tier.unit_price).toFixed(2)}
                         </td>
                       </tr>
                     ))}

@@ -154,8 +154,8 @@ export default function AICreatedResultsStep({ result, onCreateNew }: Props) {
                 {product.category && (
                   <p className="text-xs text-gray-600 mt-1">{product.category}</p>
                 )}
-                {product.pricing_tiers && product.pricing_tiers.length > 0 && product.pricing_tiers[0].unit_price && (
-                  <p className="text-sm font-bold text-teak mt-2">${product.pricing_tiers[0].unit_price.toFixed(2)}</p>
+                {product.pricing_tiers?.[0]?.unit_price != null && (
+                  <p className="text-sm font-bold text-teak mt-2">${Number(product.pricing_tiers[0].unit_price).toFixed(2)}</p>
                 )}
               </div>
             ))}

@@ -13,6 +13,6 @@
   --color-brand-light: #FAFAF9;
 
   /* Typography */
-  --font-family-sans: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
-  --font-family-heading: 'Outfit', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-heading: 'Outfit', ui-sans-serif, system-ui, sans-serif;
 }

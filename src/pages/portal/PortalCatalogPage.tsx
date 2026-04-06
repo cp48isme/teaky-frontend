@@ -78,7 +78,7 @@ export default function PortalCatalogPage() {
                 <p className="mt-0.5 text-xs text-gray-500">{product.category}</p>
                 {product.pricing_tiers.length > 0 && (
                   <p className="mt-1 text-sm font-medium" style={{ color: primaryColor }}>
-                    From ${product.pricing_tiers[0].unit_price.toFixed(2)}
+                    From ${Number(product.pricing_tiers[0].unit_price).toFixed(2)}
                   </p>
                 )}
                 {product.sizes.length > 0 && (
