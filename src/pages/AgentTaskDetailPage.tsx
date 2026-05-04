@@ -8,6 +8,8 @@ import {
   completeAgentTask,
   escalateAgentTask,
   sendTaskMessage,
+  approveDraft,
+  rejectDraft,
 } from '../api/agentTasks';
 import type { AgentTask } from '../types/agent';
 import type { Message } from '../types/message';
@@ -18,6 +20,7 @@ const STATUS_COLORS: Record<string, string> = {
   pending: 'bg-yellow-100 text-yellow-800',
   in_progress: 'bg-blue-100 text-blue-800',
   awaiting_human: 'bg-orange-100 text-orange-800',
+  awaiting_review: 'bg-purple-100 text-purple-800',
   escalated: 'bg-red-100 text-red-800',
   completed: 'bg-green-100 text-green-800',
   failed: 'bg-red-100 text-red-800',
@@ -32,6 +35,9 @@ export default function AgentTaskDetailPage() {
   const [acting, setActing] = useState(false);
   const [newMessage, setNewMessage] = useState('');
   const [sending, setSending] = useState(false);
+  const [editedDraft, setEditedDraft] = useState<string>('');
+  const [isSubmittingDraft, setIsSubmittingDraft] = useState<boolean>(false);
+  const [draftError, setDraftError] = useState<string | null>(null);
 
   const loadData = async () => {
     if (!taskId) return;
@@ -55,6 +61,10 @@ export default function AgentTaskDetailPage() {
     const interval = setInterval(loadData, 10000);
     return () => clearInterval(interval);
   }, [taskId]);
+
+  useEffect(() => {
+    setEditedDraft(task?.state?.draft_response ?? '');
+  }, [task?.state?.draft_response]);
 
   const handleTakeover = async () => {
     if (!taskId) return;
@@ -121,6 +131,53 @@ export default function AgentTaskDetailPage() {
       alert('Failed to send message');
     } finally {
       setSending(false);
+    }
+  };
+
+  const handleApproveDraft = async () => {
+    if (!task) return;
+    const original = task.state?.draft_response ?? '';
+    if (editedDraft.trim() === '') return;
+    setIsSubmittingDraft(true);
+    setDraftError(null);
+    try {
+      await approveDraft(
+        task.id,
+        editedDraft === original ? undefined : editedDraft,
+      );
+      const [updated, msgs] = await Promise.all([
+        getAgentTask(task.id),
+        getTaskMessages(task.id),
+      ]);
+      setTask(updated);
+      setMessages(msgs);
+    } catch (err) {
+      setDraftError(
+        err instanceof Error ? err.message : 'Failed to approve draft',
+      );
+    } finally {
+      setIsSubmittingDraft(false);
+    }
+  };
+
+  const handleRejectDraft = async () => {
+    if (!task) return;
+    setIsSubmittingDraft(true);
+    setDraftError(null);
+    try {
+      await rejectDraft(task.id);
+      const [updated, msgs] = await Promise.all([
+        getAgentTask(task.id),
+        getTaskMessages(task.id),
+      ]);
+      setTask(updated);
+      setMessages(msgs);
+    } catch (err) {
+      setDraftError(
+        err instanceof Error ? err.message : 'Failed to reject draft',
+      );
+    } finally {
+      setIsSubmittingDraft(false);
     }
   };
 
@@ -204,6 +261,47 @@ export default function AgentTaskDetailPage() {
           </button>
         )}
       </div>
+
+      {task.status === 'awaiting_review' && (
+        <div className="mt-4 border-t pt-4">
+          <h3 className="text-sm font-medium text-gray-700 mb-2">
+            Review draft response
+          </h3>
+          <textarea
+            className="w-full border rounded p-2 text-sm font-mono"
+            rows={4}
+            value={editedDraft}
+            onChange={(e) => setEditedDraft(e.target.value)}
+            disabled={isSubmittingDraft}
+          />
+          {draftError && (
+            <div
+              role="alert"
+              className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-sm text-red-800"
+            >
+              {draftError}
+            </div>
+          )}
+          <div className="mt-2 flex gap-2">
+            <button
+              type="button"
+              disabled={isSubmittingDraft || editedDraft.trim() === ''}
+              onClick={handleApproveDraft}
+              className="px-3 py-1.5 bg-green-600 text-white rounded text-sm disabled:opacity-50"
+            >
+              {isSubmittingDraft ? 'Sending…' : 'Approve & Send'}
+            </button>
+            <button
+              type="button"
+              disabled={isSubmittingDraft}
+              onClick={handleRejectDraft}
+              className="px-3 py-1.5 bg-red-600 text-white rounded text-sm disabled:opacity-50"
+            >
+              Reject
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Task Details */}
       <div className="grid gap-6 lg:grid-cols-2">

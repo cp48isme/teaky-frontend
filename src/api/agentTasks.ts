@@ -1,5 +1,5 @@
 import { apiRequest } from './client';
-import type { AgentTask, AgentControlMetrics, CreateAgentTaskRequest, EscalateAgentTaskRequest } from '../types/agent';
+import type { AgentTask, AgentControlMetrics, CreateAgentTaskRequest, EscalateAgentTaskRequest, DraftActionResponse } from '../types/agent';
 import type { Message } from '../types/message';
 
 export async function listAgentTasks(
@@ -36,6 +36,20 @@ export async function escalateAgentTask(
     body: JSON.stringify(data),
   });
 }
+
+export const approveDraft = (
+  taskId: string,
+  body?: string,
+): Promise<DraftActionResponse> =>
+  apiRequest<DraftActionResponse>(`/agent-tasks/${taskId}/approve-draft`, {
+    method: 'POST',
+    body: JSON.stringify(body !== undefined ? { body } : {}),
+  });
+
+export const rejectDraft = (taskId: string): Promise<DraftActionResponse> =>
+  apiRequest<DraftActionResponse>(`/agent-tasks/${taskId}/reject-draft`, {
+    method: 'POST',
+  });
 
 export async function takeoverAgentTask(taskId: string): Promise<AgentTask> {
   return apiRequest<AgentTask>(`/agent-tasks/${taskId}/takeover`, {

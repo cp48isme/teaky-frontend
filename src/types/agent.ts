@@ -5,6 +5,7 @@ export interface AgentTaskState {
   pending_actions: Record<string, unknown>[];
   context_variables: Record<string, unknown>;
   channel_info: Record<string, unknown>;
+  draft_response?: string | null;
 }
 
 export interface AgentTask {
@@ -53,4 +54,10 @@ export interface AgentControlMetrics {
   escalation_count: number;
   escalation_rate: number;
   avg_resolution_hours: number | null;
+}
+
+export interface DraftActionResponse {
+  task_id: string;
+  status: string;
+  message: string;
 }
