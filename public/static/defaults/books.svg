@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <rect width="200" height="200" rx="12" fill="#F3F4F6"/>
+  <path d="M60 55 L60 140 Q100 130 100 130 Q100 130 140 140 L140 55 Q100 45 100 45 Q100 45 60 55 Z" stroke="#9CA3AF" stroke-width="3" fill="none"/>
+  <line x1="100" y1="45" x2="100" y2="130" stroke="#9CA3AF" stroke-width="2"/>
+  <text x="100" y="175" text-anchor="middle" font-family="system-ui" font-size="12" fill="#9CA3AF">Books</text>
+</svg>

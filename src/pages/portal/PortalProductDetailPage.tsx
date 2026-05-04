@@ -87,6 +87,7 @@ export default function PortalProductDetailPage() {
                 alt={product.name}
                 className="w-full rounded-lg border object-cover"
                 style={{ maxHeight: '400px' }}
+                onError={(e) => { e.currentTarget.style.display = 'none'; }}
               />
               {product.mockup_urls.length > 1 && (
                 <div className="mt-3 flex gap-2">

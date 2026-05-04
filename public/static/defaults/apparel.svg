@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <rect width="200" height="200" rx="12" fill="#F3F4F6"/>
+  <path d="M70 55 L55 70 L55 85 L70 80 L70 145 L130 145 L130 80 L145 85 L145 70 L130 55 L115 65 Q100 75 85 65 Z" stroke="#9CA3AF" stroke-width="3" fill="none"/>
+  <text x="100" y="175" text-anchor="middle" font-family="system-ui" font-size="12" fill="#9CA3AF">Apparel</text>
+</svg>

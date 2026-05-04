@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
+  <rect width="400" height="400" rx="16" fill="#F0F4F8"/>
+  <path d="M130 190 L130 150 L260 100 L260 240 L130 190" stroke="#64748B" stroke-width="4" fill="none" stroke-linejoin="round"/>
+  <rect x="260" y="130" width="30" height="80" rx="4" stroke="#64748B" stroke-width="3" fill="none"/>
+  <line x1="130" y1="190" x2="130" y2="250" stroke="#94A3B8" stroke-width="3"/>
+  <line x1="130" y1="250" x2="170" y2="280" stroke="#94A3B8" stroke-width="3"/>
+  <text x="200" y="340" text-anchor="middle" font-family="system-ui,sans-serif" font-size="22" font-weight="500" fill="#64748B">Marketing</text>
+</svg>

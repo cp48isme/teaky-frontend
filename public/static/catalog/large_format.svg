@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
+  <rect width="400" height="400" rx="16" fill="#F0F4F8"/>
+  <rect x="60" y="100" width="280" height="160" rx="6" stroke="#64748B" stroke-width="4" fill="none"/>
+  <circle cx="140" cy="155" r="25" stroke="#94A3B8" stroke-width="2" fill="none"/>
+  <path d="M80 230 L150 170 L210 210 L260 185 L320 230" stroke="#94A3B8" stroke-width="3" fill="none"/>
+  <line x1="60" y1="130" x2="60" y2="100" stroke="#64748B" stroke-width="3"/>
+  <line x1="340" y1="130" x2="340" y2="100" stroke="#64748B" stroke-width="3"/>
+  <text x="200" y="340" text-anchor="middle" font-family="system-ui,sans-serif" font-size="22" font-weight="500" fill="#64748B">Large Format</text>
+</svg>

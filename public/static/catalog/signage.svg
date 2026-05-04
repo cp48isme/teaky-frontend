@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
+  <rect width="400" height="400" rx="16" fill="#F0F4F8"/>
+  <rect x="90" y="90" width="220" height="140" rx="6" stroke="#64748B" stroke-width="4" fill="none"/>
+  <line x1="200" y1="230" x2="200" y2="290" stroke="#64748B" stroke-width="4"/>
+  <line x1="160" y1="290" x2="240" y2="290" stroke="#64748B" stroke-width="4" stroke-linecap="round"/>
+  <line x1="120" y1="130" x2="280" y2="130" stroke="#94A3B8" stroke-width="2"/>
+  <line x1="120" y1="155" x2="240" y2="155" stroke="#CBD5E1" stroke-width="2"/>
+  <line x1="120" y1="180" x2="260" y2="180" stroke="#CBD5E1" stroke-width="2"/>
+  <text x="200" y="340" text-anchor="middle" font-family="system-ui,sans-serif" font-size="22" font-weight="500" fill="#64748B">Signage & Displays</text>
+</svg>

@@ -67,12 +67,12 @@ export default function PortalCatalogPage() {
                   src={product.mockup_urls[0]}
                   alt={product.name}
                   className="h-44 w-full object-cover"
+                  onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.parentElement!.querySelector('.img-fallback')?.classList.remove('hidden'); }}
                 />
-              ) : (
-                <div className="h-44 w-full bg-gray-100 flex items-center justify-center">
-                  <span className="text-sm text-gray-400">No image</span>
-                </div>
-              )}
+              ) : null}
+              <div className={`h-44 w-full bg-gray-100 flex items-center justify-center img-fallback ${product.mockup_urls.length > 0 ? 'hidden' : ''}`}>
+                <span className="text-sm text-gray-400">{product.category || 'Product'}</span>
+              </div>
               <div className="p-4">
                 <h3 className="text-sm font-semibold text-gray-900">{product.name}</h3>
                 <p className="mt-0.5 text-xs text-gray-500">{product.category}</p>

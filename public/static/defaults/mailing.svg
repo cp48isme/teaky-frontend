@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <rect width="200" height="200" rx="12" fill="#F3F4F6"/>
+  <rect x="45" y="55" width="110" height="80" rx="4" stroke="#9CA3AF" stroke-width="3" fill="none"/>
+  <line x1="60" y1="75" x2="100" y2="75" stroke="#D1D5DB" stroke-width="2"/>
+  <line x1="60" y1="90" x2="140" y2="90" stroke="#D1D5DB" stroke-width="2"/>
+  <rect x="110" y="100" width="30" height="20" rx="2" stroke="#D1D5DB" stroke-width="1.5" fill="none"/>
+  <text x="100" y="175" text-anchor="middle" font-family="system-ui" font-size="12" fill="#9CA3AF">Mailing</text>
+</svg>

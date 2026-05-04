@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <rect width="200" height="200" rx="12" fill="#F3F4F6"/>
+  <path d="M65 130 L65 80 M85 130 L85 65 M105 130 L105 90 M125 130 L125 55 M145 130 L145 75" stroke="#9CA3AF" stroke-width="8" stroke-linecap="round"/>
+  <text x="100" y="175" text-anchor="middle" font-family="system-ui" font-size="12" fill="#9CA3AF">Marketing</text>
+</svg>

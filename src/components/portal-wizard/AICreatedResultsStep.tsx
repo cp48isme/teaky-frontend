@@ -143,11 +143,18 @@ export default function AICreatedResultsStep({ result, onCreateNew }: Props) {
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {products.slice(0, 6).map((product) => (
               <div key={product.id} className="rounded-lg border border-gray-200 bg-white p-4 hover:shadow-md transition">
-                <div className="aspect-square rounded-md bg-gray-100 mb-3 flex items-center justify-center">
+                <div className="aspect-square rounded-md bg-gray-100 mb-3 flex items-center justify-center overflow-hidden">
                   {product.mockup_urls && product.mockup_urls.length > 0 ? (
-                    <img src={product.mockup_urls[0]} alt={product.name} className="w-full h-full object-cover rounded-md" />
+                    <img
+                      src={product.mockup_urls[0]}
+                      alt={product.name}
+                      className="w-full h-full object-cover rounded-md"
+                      onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.parentElement!.innerHTML = `<div class="flex flex-col items-center justify-center h-full"><span class="text-xs text-gray-400">${product.category || 'Product'}</span></div>`; }}
+                    />
                   ) : (
-                    <span className="text-sm text-gray-400">No Image</span>
+                    <div className="flex flex-col items-center justify-center h-full">
+                      <span className="text-xs text-gray-400">{product.category || 'Product'}</span>
+                    </div>
                   )}
                 </div>
                 <h3 className="font-semibold text-gray-900 text-sm line-clamp-2">{product.name}</h3>

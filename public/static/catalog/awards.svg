@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
+  <rect width="400" height="400" rx="16" fill="#F0F4F8"/>
+  <path d="M155 100 L155 180 Q155 220 200 240 Q245 220 245 180 L245 100 Z" stroke="#64748B" stroke-width="4" fill="none"/>
+  <line x1="200" y1="240" x2="200" y2="275" stroke="#64748B" stroke-width="4"/>
+  <rect x="165" y="270" width="70" height="15" rx="3" stroke="#64748B" stroke-width="3" fill="none"/>
+  <path d="M155 140 L120 130 L130 165 L155 160" stroke="#94A3B8" stroke-width="2" fill="none"/>
+  <path d="M245 140 L280 130 L270 165 L245 160" stroke="#94A3B8" stroke-width="2" fill="none"/>
+  <text x="200" y="340" text-anchor="middle" font-family="system-ui,sans-serif" font-size="22" font-weight="500" fill="#64748B">Awards</text>
+</svg>

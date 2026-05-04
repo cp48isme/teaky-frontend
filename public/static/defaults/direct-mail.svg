@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <rect width="200" height="200" rx="12" fill="#F3F4F6"/>
+  <rect x="45" y="60" width="110" height="75" rx="4" stroke="#9CA3AF" stroke-width="3" fill="none"/>
+  <path d="M45 60 L100 105 L155 60" stroke="#9CA3AF" stroke-width="2" fill="none"/>
+  <text x="100" y="175" text-anchor="middle" font-family="system-ui" font-size="12" fill="#9CA3AF">Direct Mail</text>
+</svg>

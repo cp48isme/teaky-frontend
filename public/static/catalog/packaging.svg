@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
+  <rect width="400" height="400" rx="16" fill="#F0F4F8"/>
+  <rect x="110" y="110" width="180" height="160" rx="6" stroke="#64748B" stroke-width="4" fill="none"/>
+  <line x1="110" y1="145" x2="290" y2="145" stroke="#64748B" stroke-width="3"/>
+  <line x1="170" y1="110" x2="170" y2="145" stroke="#94A3B8" stroke-width="2"/>
+  <line x1="230" y1="110" x2="230" y2="145" stroke="#94A3B8" stroke-width="2"/>
+  <path d="M170 145 L170 175 Q200 190 230 175 L230 145" stroke="#94A3B8" stroke-width="2" fill="none"/>
+  <text x="200" y="340" text-anchor="middle" font-family="system-ui,sans-serif" font-size="22" font-weight="500" fill="#64748B">Packaging & Labels</text>
+</svg>
