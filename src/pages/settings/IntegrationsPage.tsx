@@ -11,7 +11,16 @@ import {
   getQuickBooksStatus,
   getQuickBooksConnectUrl,
 } from '../../api/quickbooks';
-import type { MISSettings, MISSyncLogEntry } from '../../types/mis';
+import {
+  isDMConfig,
+  isGenericCSVConfig,
+  isGenericWebhookConfig,
+  isPrintavoConfig,
+  isShopVOXConfig,
+  type MISConfig,
+  type MISSettings,
+  type MISSyncLogEntry,
+} from '../../types/mis';
 import type { QuickBooksStatus } from '../../types/quickbooks';
 import Spinner from '../../components/ui/Spinner';
 
@@ -35,8 +44,31 @@ const TEAKY_STATUSES = [
   'cancelled',
 ];
 
+// Resolve the auto_push toggle value when the user switches the provider
+// dropdown. Switch-back to the originally-loaded provider restores the saved
+// value from in-memory settings (no refetch). Any other transition defaults
+// to BE's auto_push_on_approval=true. CSV/Webhook providers don't carry the
+// field — the toggle isn't rendered for them, so the default is harmless.
+function resolveAutoPushForProvider(
+  newProvider: string,
+  settings: MISSettings | null,
+): boolean {
+  if (
+    settings === null ||
+    settings.mis_config === null ||
+    newProvider !== settings.mis_provider
+  ) {
+    return true;
+  }
+  const cfg = settings.mis_config;
+  if (isDMConfig(cfg) || isPrintavoConfig(cfg) || isShopVOXConfig(cfg)) {
+    return cfg.auto_push_on_approval;
+  }
+  return true;
+}
+
 export default function IntegrationsPage() {
-  const [, setSettings] = useState<MISSettings | null>(null);
+  const [settings, setSettings] = useState<MISSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
@@ -86,21 +118,30 @@ export default function IntegrationsPage() {
         const s = await getMISSettings();
         setSettings(s);
         setProvider(s.mis_provider || '');
-        const config = (s.mis_config as Record<string, unknown>) || {};
 
-        // Load provider-specific config
-        setAccountUrl((config.account_url as string) || '');
-        setApiKey((config.api_key as string) || '');
-        setAutoPush(config.auto_push_on_approval !== false);
-        setWebhookSecret((config.webhook_secret as string) || '');
-        setPrintavoApiToken((config.api_token as string) || '');
-        setPrintavoShopEmail((config.shop_email as string) || '');
-        setShopvoxApiUrl((config.api_url as string) || '');
-        setShopvoxApiKey((config.api_key as string) || '');
-        setShopvoxAppId((config.app_id as string) || '');
-        setCsvNotificationEmail((config.notification_email as string) || '');
-        setWebhookUrl((config.webhook_url as string) || '');
-        setWebhookSecretHeader((config.secret as string) || '');
+        const config = s.mis_config;
+        if (config === null) {
+          // No saved config — leave state at defaults
+        } else if (isDMConfig(config)) {
+          setAccountUrl(config.account_url);
+          setApiKey(config.api_key ?? '');
+          setWebhookSecret(config.webhook_secret ?? '');
+          setAutoPush(config.auto_push_on_approval);
+        } else if (isPrintavoConfig(config)) {
+          setPrintavoApiToken(config.api_token);
+          setPrintavoShopEmail(config.shop_email);
+          setAutoPush(config.auto_push_on_approval);
+        } else if (isShopVOXConfig(config)) {
+          setShopvoxApiUrl(config.api_url);
+          setShopvoxApiKey(config.api_key);
+          setShopvoxAppId(config.app_id);
+          setAutoPush(config.auto_push_on_approval);
+        } else if (isGenericCSVConfig(config)) {
+          setCsvNotificationEmail(config.notification_email);
+        } else if (isGenericWebhookConfig(config)) {
+          setWebhookUrl(config.webhook_url);
+          setWebhookSecretHeader(config.webhook_secret ?? '');
+        }
       } catch {
         setError('Failed to load MIS settings');
       } finally {
@@ -121,35 +162,38 @@ export default function IntegrationsPage() {
     }
   }, [provider]);
 
-  const buildConfig = () => {
+  const buildConfig = (): MISConfig | null => {
     switch (provider) {
       case 'docketmanager':
         return {
           account_url: accountUrl,
           api_key: apiKey || null,
-          auto_push_on_approval: autoPush,
           webhook_secret: webhookSecret || null,
           queue_mapping: queueMapping,
+          auto_push_on_approval: autoPush,
         };
       case 'printavo':
         return {
           api_token: printavoApiToken,
           shop_email: printavoShopEmail,
+          auto_push_on_approval: autoPush,
         };
       case 'shopvox':
         return {
           api_url: shopvoxApiUrl,
           api_key: shopvoxApiKey,
           app_id: shopvoxAppId,
+          auto_push_on_approval: autoPush,
         };
       case 'generic_csv':
         return {
           notification_email: csvNotificationEmail,
+          csv_format: 'standard',
         };
       case 'generic_webhook':
         return {
           webhook_url: webhookUrl,
-          secret: webhookSecretHeader || null,
+          webhook_secret: webhookSecretHeader || null,
         };
       default:
         return null;
@@ -267,7 +311,11 @@ export default function IntegrationsPage() {
             <label className="block text-sm font-medium text-gray-700">MIS Provider</label>
             <select
               value={provider}
-              onChange={(e) => setProvider(e.target.value)}
+              onChange={(e) => {
+                const newProvider = e.target.value;
+                setProvider(newProvider);
+                setAutoPush(resolveAutoPushForProvider(newProvider, settings));
+              }}
               className="mt-1 w-full max-w-xs rounded-md border border-gray-300 px-3 py-2 text-sm"
             >
               {MIS_PROVIDERS.map((p) => (
@@ -300,18 +348,6 @@ export default function IntegrationsPage() {
                   placeholder="Enter your DocketManager API key"
                   className="mt-1 w-full max-w-md rounded-md border border-gray-300 px-3 py-2 text-sm"
                 />
-              </div>
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="auto-push"
-                  checked={autoPush}
-                  onChange={(e) => setAutoPush(e.target.checked)}
-                  className="h-4 w-4 rounded border-gray-300 text-teak-dark"
-                />
-                <label htmlFor="auto-push" className="text-sm text-gray-700">
-                  Auto-push orders on approval
-                </label>
               </div>
             </>
           )}
@@ -422,6 +458,24 @@ export default function IntegrationsPage() {
                 />
               </div>
             </>
+          )}
+
+          {/* Auto-push toggle — rendered for providers that support it */}
+          {(provider === 'docketmanager' ||
+            provider === 'printavo' ||
+            provider === 'shopvox') && (
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="auto-push"
+                checked={autoPush}
+                onChange={(e) => setAutoPush(e.target.checked)}
+                className="h-4 w-4 rounded border-gray-300 text-teak-dark"
+              />
+              <label htmlFor="auto-push" className="text-sm text-gray-700">
+                Auto-push orders on approval
+              </label>
+            </div>
           )}
 
           <div className="flex items-center gap-3 pt-2">
