@@ -59,13 +59,19 @@ export interface BrandData {
   description?: string | null;
 }
 
+export interface BrandAssetsFound {
+  logo: boolean;
+  colors: string[];
+  industry: string | null;
+}
+
 export interface StoreCreationResult {
   portal_id: string;
   portal_url: string;
   portal_name: string;
   products_created: number;
   categories_created: string[];
-  brand_assets_found: Record<string, unknown>;
+  brand_assets_found: BrandAssetsFound;
   capability_gaps: string[];
   playbook_applied: string | null;
   warnings: string[];
