@@ -30,10 +30,9 @@ export default function AICreatedResultsStep({ result, onCreateNew }: Props) {
     fetchProducts();
   }, [result.portal_id]);
 
-  // Extract brand colors from brand_assets_found
-  const brandColors = result.brand_assets_found?.brand_colors as string[] | undefined || [];
-  const logoUrl = result.brand_assets_found?.logo_url as string | undefined;
-  const hasBranding = logoUrl || brandColors.length > 0;
+  const brandColors = result.brand_assets_found.colors;
+  const hasLogo = result.brand_assets_found.logo;
+  const hasBranding = hasLogo || brandColors.length > 0;
 
   return (
     <form className="space-y-8">
@@ -57,14 +56,12 @@ export default function AICreatedResultsStep({ result, onCreateNew }: Props) {
         {/* Logo and Brand Colors */}
         {hasBranding && (
           <div className="mt-4 space-y-3">
-            {logoUrl && (
+            {hasLogo && (
               <div>
                 <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">Brand Logo</p>
-                <img
-                  src={logoUrl}
-                  alt="Brand logo"
-                  className="h-16 object-contain rounded-lg border border-gray-100 bg-white p-2"
-                />
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-green-200 bg-green-50 px-3 py-1.5 text-sm font-medium text-green-700">
+                  ✓ Logo detected — will be applied to your portal
+                </span>
               </div>
             )}
             {brandColors.length > 0 && (
