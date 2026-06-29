@@ -13,6 +13,7 @@ import {
   getCompanyProfileByOrg,
   updateCompanyProfile,
 } from '../api/companyProfiles';
+import type { BrandColors } from '../types/companyProfile';
 import { getOrgEquipment } from '../api/equipment';
 import { getOrgCapabilities } from '../api/capabilities';
 import { useOrganizationId } from '../hooks/useOrganizationId';
@@ -112,17 +113,17 @@ export default function GetStartedWizardPage() {
     if (!orgId) return;
     setSaving(true);
     try {
-      // Convert brandColors array to dict format expected by backend
-      const brandColorsDict: Record<string, string> | undefined = companyData.brandColors.length > 0
-        ? Object.fromEntries(
-            [
-              companyData.brandColors[0] && ['primary', companyData.brandColors[0]],
-              companyData.brandColors[1] && ['secondary', companyData.brandColors[1]],
-              companyData.brandColors[2] && ['accent', companyData.brandColors[2]],
-              companyData.brandColors[3] && ['tertiary', companyData.brandColors[3]],
-              companyData.brandColors[4] && ['quaternary', companyData.brandColors[4]],
-            ].filter(Boolean) as [string, string][]
-          )
+      // Convert brandColors array to BrandColors shape expected by backend.
+      // `|| undefined` preserves omit-on-empty PATCH semantics: JSON.stringify
+      // drops undefined values, so empty/missing entries do not clear BE state.
+      const brandColorsDict: BrandColors | undefined = companyData.brandColors.length > 0
+        ? {
+            primary: companyData.brandColors[0] || undefined,
+            secondary: companyData.brandColors[1] || undefined,
+            accent: companyData.brandColors[2] || undefined,
+            tertiary: companyData.brandColors[3] || undefined,
+            quaternary: companyData.brandColors[4] || undefined,
+          }
         : undefined;
 
       if (profileId) {

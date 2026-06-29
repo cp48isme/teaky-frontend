@@ -1,3 +1,11 @@
+export interface BrandColors {
+  primary?: string | null;
+  secondary?: string | null;
+  accent?: string | null;
+  tertiary?: string | null;
+  quaternary?: string | null;
+}
+
 export interface CompanyProfile {
   id: string;
   organization_id: string;
@@ -12,7 +20,7 @@ export interface CompanyProfile {
   location_state: string | null;
   location_country: string | null;
   postal_code: string | null;
-  brand_colors: Record<string, string> | null;
+  brand_colors: BrandColors | null;
   is_wizard_complete: boolean;
   created_at: string;
   updated_at: string;
@@ -30,7 +38,7 @@ export interface CreateCompanyProfileRequest {
   location_state?: string;
   location_country?: string;
   postal_code?: string;
-  brand_colors?: Record<string, string>;
+  brand_colors?: BrandColors;
 }
 
 export interface UpdateCompanyProfileRequest {
@@ -45,6 +53,6 @@ export interface UpdateCompanyProfileRequest {
   location_state?: string;
   location_country?: string;
   postal_code?: string;
-  brand_colors?: Record<string, string>;
+  brand_colors?: BrandColors;
   is_wizard_complete?: boolean;
 }
