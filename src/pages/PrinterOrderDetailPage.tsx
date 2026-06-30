@@ -5,12 +5,10 @@ import {
   updateOrder,
   updateOrderStatus,
   cancelOrder,
-  listOrderFiles,
-  uploadOrderFile,
-  deleteOrderFile,
   updateProductionStatus,
   downloadOrderInvoicePdf,
 } from '../api/orders';
+import { listOrderFiles, uploadOrderFile, deleteOrderFile } from '../api/orderFiles';
 import { listProofs, submitProof, approveProof, rejectProof } from '../api/proofs';
 import { getOrderSyncStatus, manualPushOrder } from '../api/mis';
 import { getTrackingInfo } from '../api/shipping';
@@ -618,16 +616,14 @@ export default function PrinterOrderDetailPage() {
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
-                  {f.download_url && (
-                    <a
-                      href={f.download_url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-xs text-teak-dark hover:underline"
-                    >
-                      Download
-                    </a>
-                  )}
+                  <a
+                    href={f.file_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-xs text-teak-dark hover:underline"
+                  >
+                    Download
+                  </a>
                   <button
                     onClick={() => handleDeleteFile(f.id)}
                     className="text-xs text-red-500 hover:text-red-700"

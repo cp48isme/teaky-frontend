@@ -103,13 +103,12 @@ export interface CancelOrderRequest {
 export interface OrderFile {
   id: string;
   order_id: string;
-  uploaded_by_id: string;
   filename: string;
-  s3_key: string;
+  file_url: string;
   file_size_bytes: number;
   mime_type: string;
   file_category: string;
-  download_url: string | null;
+  uploaded_by_id: string;
   created_at: string;
 }
 
