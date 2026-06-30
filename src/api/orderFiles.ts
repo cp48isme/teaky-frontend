@@ -1,16 +1,7 @@
 import { apiRequest } from './client';
+import type { OrderFile } from '../types/order';
 
-export interface OrderFile {
-  id: string;
-  order_id: string;
-  filename: string;
-  file_url: string;
-  file_size_bytes: number;
-  mime_type: string;
-  file_category: string;
-  uploaded_by_id: string;
-  created_at: string;
-}
+export type { OrderFile };
 
 export async function listOrderFiles(orderId: string): Promise<OrderFile[]> {
   return apiRequest<OrderFile[]>(`/orders/${orderId}/files`);
