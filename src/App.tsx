@@ -15,6 +15,7 @@ import PortalsListPage from './pages/PortalsListPage';
 import CreatePortalPage from './pages/CreatePortalPage';
 import PortalDetailPage from './pages/PortalDetailPage';
 import ProductManagementPage from './pages/ProductManagementPage';
+import ProductRepricePage from './pages/ProductRepricePage';
 import PrinterOrdersPage from './pages/PrinterOrdersPage';
 import PrinterOrderDetailPage from './pages/PrinterOrderDetailPage';
 import NewOrderOnBehalfPage from './pages/NewOrderOnBehalfPage';
@@ -103,6 +104,16 @@ function App() {
               <ProtectedRoute>
                 <AppLayout>
                   <ProductManagementPage />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/portals/:portalId/products/reprice"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <ProductRepricePage />
                 </AppLayout>
               </ProtectedRoute>
             }

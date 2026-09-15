@@ -1,9 +1,11 @@
 import { useState, useEffect, type ChangeEvent } from 'react';
+import { Link } from 'react-router-dom';
 import { listProducts, createProduct, updateProduct, deleteProduct } from '../../api/products';
 import { createProductsFromDescription } from '../../api/portals';
 import { uploadFile } from '../../api/uploads';
 import type { Product, CreateProductRequest } from '../../types/product';
 import Spinner from '../ui/Spinner';
+import { formatMoney } from '../../lib/money';
 
 const CATEGORIES = [
   { value: 'apparel', label: 'Apparel' },
@@ -317,6 +319,13 @@ export default function ProductManagementGrid({ portalId, onProductsChange }: Pr
             Ask AI to Add Products
           </button>
 
+          <Link
+            to={`/portals/${portalId}/products/reprice`}
+            className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+          >
+            Bulk reprice
+          </Link>
+
           <button
             onClick={() => alert('Master Catalog Browser coming soon!')}
             className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
@@ -624,10 +633,19 @@ function ProductTable({
                     autoFocus
                     className="w-24 rounded border border-blue-300 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
-                ) : product.base_price ? (
-                  `$${product.base_price.toFixed(2)}`
                 ) : (
-                  '-'
+                  <span className="inline-flex items-center gap-1">
+                    {formatMoney(product.base_price)}
+                    {product.price_locked && (
+                      <span
+                        title="Price set by hand; bulk reprice skips it"
+                        aria-label="Price locked"
+                        className="text-xs text-gray-400"
+                      >
+                        🔒
+                      </span>
+                    )}
+                  </span>
                 )}
               </td>
               <td
