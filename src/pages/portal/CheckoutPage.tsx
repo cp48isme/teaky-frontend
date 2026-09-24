@@ -40,6 +40,10 @@ export default function CheckoutPage() {
   const [showPayment, setShowPayment] = useState(false);
 
   const primaryColor = portal?.brand_config?.primary_color || '#558B2F';
+  // S84: per-portal purchase-order requirement. A number or a name — invoicing
+  // bills from it ("a PO number or name"), so the field is text, never numeric.
+  const requirePo = Boolean(portal?.require_po);
+  const poMissing = requirePo && poNumber.trim() === '';
 
   // Fetch shipping rates when address is sufficiently filled
   useEffect(() => {
@@ -97,6 +101,11 @@ export default function CheckoutPage() {
   const handleProceedToPayment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!slug || !cart) return;
+
+    if (poMissing) {
+      setError('This portal requires a purchase-order number or reference on every order.');
+      return;
+    }
 
     setCreatingIntent(true);
     setError(null);
@@ -283,11 +292,16 @@ export default function CheckoutPage() {
 
             <div className="mt-4 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">PO Number (optional)</label>
+                <label className="block text-sm font-medium text-gray-700">
+                  PO number or reference {requirePo ? <span className="text-red-600">(required)</span> : '(optional)'}
+                </label>
                 <input
                   type="text"
                   value={poNumber}
                   onChange={(e) => setPoNumber(e.target.value)}
+                  required={requirePo}
+                  aria-required={requirePo}
+                  placeholder={requirePo ? 'Your purchase-order number or a reference your accounts payable will recognise' : undefined}
                   disabled={showPayment}
                   className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-teak focus:ring-1 focus:ring-teak disabled:bg-gray-50 disabled:text-gray-500"
                 />
