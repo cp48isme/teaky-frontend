@@ -292,16 +292,19 @@ export default function CheckoutPage() {
 
             <div className="mt-4 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  PO number or reference {requirePo ? <span className="text-red-600">(required)</span> : '(optional)'}
+                <label className="block text-sm font-medium text-gray-900">
+                  PO number or reference{requirePo && <span className="text-red-600"> (required)</span>}
                 </label>
+                <p className="mt-0.5 text-xs text-gray-600">
+                  Most hotels need this on their invoice. A PO number or a name both work.
+                </p>
                 <input
                   type="text"
                   value={poNumber}
                   onChange={(e) => setPoNumber(e.target.value)}
                   required={requirePo}
                   aria-required={requirePo}
-                  placeholder={requirePo ? 'Your purchase-order number or a reference your accounts payable will recognise' : undefined}
+                  placeholder="e.g. 5118824933 or the name your accounts payable will recognise"
                   disabled={showPayment}
                   className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-teak focus:ring-1 focus:ring-teak disabled:bg-gray-50 disabled:text-gray-500"
                 />
