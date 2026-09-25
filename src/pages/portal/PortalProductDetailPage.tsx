@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { unitPriceFor } from '../../lib/pricing';
 import { useParams, Link } from 'react-router-dom';
 import { getPublicProduct } from '../../api/portals';
 import { checkSafeOrder } from '../../api/orders';
@@ -260,7 +261,7 @@ export default function PortalProductDetailPage() {
                   setAdding(true);
                   setAdded(false);
                   try {
-                    const unitPrice = product.pricing_tiers[0].unit_price;
+                    const unitPrice = unitPriceFor(product, quantity) ?? product.pricing_tiers[0].unit_price;
                     await addItem({
                       product_id: product.id,
                       quantity,

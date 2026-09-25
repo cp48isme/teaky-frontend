@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { getMyOrder } from '../../api/orders';
 import { getTrackingInfo } from '../../api/shipping';
-import { useCart } from '../../contexts/CartContext';
+import { useReorder, canReorder } from '../../hooks/useReorder';
+import type { ReorderResult } from '../../hooks/useReorder';
 import type { Order } from '../../types/order';
 import type { TrackingInfo } from '../../types/shipping';
 import Spinner from '../../components/ui/Spinner';
@@ -30,15 +31,12 @@ const STATUS_COLORS: Record<string, string> = {
   cancelled: 'bg-red-100 text-red-800',
 };
 
-const REORDERABLE = new Set(['completed', 'delivered']);
-
 export default function OrderDetailPage() {
   const { slug, orderId } = useParams<{ slug: string; orderId: string }>();
-  const { addItem } = useCart();
+  const { reorder, reordering } = useReorder();
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
-  const [reordering, setReordering] = useState(false);
-  const [reordered, setReordered] = useState(false);
+  const [reordered, setReordered] = useState<ReorderResult | null>(null);
   const [trackingData, setTrackingData] = useState<TrackingInfo | null>(null);
 
   useEffect(() => {
@@ -114,39 +112,36 @@ export default function OrderDetailPage() {
         )}
       </div>
 
-      {/* Reorder Button */}
-      {REORDERABLE.has(order.status) && (
+      {/* Reorder: any order that was not cancelled, at today's price */}
+      {canReorder(order) && (
         <div className="mt-4">
           {reordered ? (
-            <div className="flex items-center gap-3 rounded-md border border-green-200 bg-green-50 px-4 py-3">
-              <span className="text-sm text-green-700">Items added to your cart!</span>
-              <Link
-                to={`/p/${slug}/cart`}
-                className="text-sm font-medium text-teak-dark hover:text-teak"
-              >
-                View Cart
-              </Link>
+            <div className="rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm">
+              <div className="flex items-center gap-3">
+                <span className="text-green-700">
+                  {reordered.added} item{reordered.added !== 1 && 's'} added to your cart at today's prices.
+                </span>
+                <Link
+                  to={`/p/${slug}/cart`}
+                  className="font-medium text-teak-dark hover:text-teak"
+                >
+                  View Cart
+                </Link>
+              </div>
+              {reordered.skipped.length > 0 && (
+                <p className="mt-1 text-yellow-700">
+                  Not added (no longer in the catalog): {reordered.skipped.join(', ')}
+                </p>
+              )}
             </div>
           ) : (
             <button
               onClick={async () => {
                 if (!order) return;
-                setReordering(true);
                 try {
-                  for (const item of order.line_items) {
-                    await addItem({
-                      product_id: item.product_id,
-                      quantity: item.quantity,
-                      size: item.size || undefined,
-                      color: item.color || undefined,
-                      unit_price: Number(item.unit_price),
-                    });
-                  }
-                  setReordered(true);
+                  setReordered(await reorder(order));
                 } catch {
                   alert('Failed to add items to cart');
-                } finally {
-                  setReordering(false);
                 }
               }}
               disabled={reordering}

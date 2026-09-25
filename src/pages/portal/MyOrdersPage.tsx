@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useState, useEffect, type MouseEvent } from 'react';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { listMyOrders } from '../../api/orders';
 import type { Order } from '../../types/order';
 import Spinner from '../../components/ui/Spinner';
 import { humanize } from '../../lib/labels';
+import { useReorder, canReorder } from '../../hooks/useReorder';
 
 const STATUS_COLORS: Record<string, string> = {
   submitted: 'bg-blue-100 text-blue-800',
@@ -18,8 +19,26 @@ const STATUS_COLORS: Record<string, string> = {
 
 export default function MyOrdersPage() {
   const { slug } = useParams<{ slug: string }>();
+  const navigate = useNavigate();
+  const { reorder, reordering } = useReorder();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [reorderError, setReorderError] = useState<string | null>(null);
+
+  const handleReorder = async (e: MouseEvent, order: Order) => {
+    e.preventDefault();
+    setReorderError(null);
+    try {
+      const result = await reorder(order);
+      if (result.added === 0) {
+        setReorderError('None of the items on that order are in the catalog any more.');
+        return;
+      }
+      navigate(`/p/${slug}/cart`);
+    } catch {
+      setReorderError('Could not add those items to your cart.');
+    }
+  };
 
   useEffect(() => {
     if (!slug) return;
@@ -40,6 +59,7 @@ export default function MyOrdersPage() {
   return (
     <div className="mx-auto max-w-4xl px-6 py-8">
       <h1 className="text-2xl font-bold text-gray-900">My Orders</h1>
+      {reorderError && <p className="mt-2 text-sm text-red-600">{reorderError}</p>}
 
       {orders.length === 0 ? (
         <div className="mt-8 text-center">
@@ -84,6 +104,16 @@ export default function MyOrdersPage() {
                   <p className="mt-1 text-sm font-medium text-gray-900">
                     ${Number(order.total).toFixed(2)}
                   </p>
+                  {canReorder(order) && (
+                    <button
+                      type="button"
+                      onClick={(e) => handleReorder(e, order)}
+                      disabled={reordering}
+                      className="mt-2 rounded-md border border-teak-dark px-3 py-1 text-xs font-medium text-teak-dark hover:bg-teak/10 disabled:opacity-50"
+                    >
+                      Reorder
+                    </button>
+                  )}
                 </div>
               </div>
             </Link>
