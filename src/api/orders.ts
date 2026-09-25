@@ -1,6 +1,7 @@
 import { apiRequest } from './client';
 import type {
   CancelOrderRequest,
+  CreateOrderFromCartRequest,
   CreateOrderOnBehalfRequest,
   Order,
   UpdateOrderRequest,
@@ -10,6 +11,18 @@ import type {
 } from '../types/order';
 
 // End-user portal orders
+/** Place an order from the buyer's cart on the invoice-terms path (S84, plan §5.5).
+ *  No PaymentIntent: the order is created pending_invoice and invoiced by RGI. */
+export async function createPortalOrder(
+  slug: string,
+  data: CreateOrderFromCartRequest,
+): Promise<Order> {
+  return apiRequest<Order>(`/p/${slug}/orders`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
 export async function listMyOrders(slug: string): Promise<Order[]> {
   return apiRequest<Order[]>(`/p/${slug}/orders`);
 }
