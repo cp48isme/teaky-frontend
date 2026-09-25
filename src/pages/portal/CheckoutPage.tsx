@@ -3,7 +3,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useCart } from "../../contexts/CartContext";
 import { usePortalContext } from "../../contexts/PortalContext";
 import { createPaymentIntent, confirmCheckout } from "../../api/checkout";
-import { createPortalOrder } from "../../api/orders";
+import { createPortalOrder, listMyOrders } from "../../api/orders";
+import { COUNTRIES } from "../../lib/labels";
 import { getShippingRates } from "../../api/shipping";
 import type { ShippingAddress } from "../../types/order";
 import type { ShippingRate } from "../../types/shipping";
@@ -26,14 +27,52 @@ export default function CheckoutPage() {
   const [error, setError] = useState<string | null>(null);
 
   const [address, setAddress] = useState<ShippingAddress>({
-    name: "",
+    name: portal?.name ?? "",
     line1: "",
     line2: "",
     city: "",
     state: "",
     postal_code: "",
     country: "US",
+    attention: "",
+    phone: "",
   });
+  // S85 item 8: the front desk confirms the hotel's address rather than
+  // retyping it. Prefilled from the buyer's most recent order in this portal;
+  // the ship-to name defaults to the portal (the hotel) itself.
+  const [prefilledFrom, setPrefilledFrom] = useState<string | null>(null);
+  useEffect(() => {
+    if (!slug) return;
+    let cancelled = false;
+    listMyOrders(slug)
+      .then((orders) => {
+        if (cancelled || orders.length === 0) return;
+        const latest = [...orders].sort((a, b) => (a.placed_at < b.placed_at ? 1 : -1))[0];
+        const prior = latest.shipping_address;
+        setAddress((current) => ({
+          ...current,
+          name: prior.name || current.name,
+          line1: prior.line1,
+          line2: prior.line2 ?? "",
+          city: prior.city,
+          state: prior.state,
+          postal_code: prior.postal_code,
+          country: prior.country || "US",
+          attention: prior.attention ?? "",
+          phone: prior.phone ?? "",
+        }));
+        setPrefilledFrom(latest.order_number);
+      })
+      .catch(() => {
+        /* no history: the form stays as the portal default */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [slug]);
+  useEffect(() => {
+    if (portal?.name) setAddress((current) => (current.name ? current : { ...current, name: portal.name }));
+  }, [portal?.name]);
   const [poNumber, setPoNumber] = useState("");
   const [notes, setNotes] = useState("");
 
@@ -203,8 +242,13 @@ export default function CheckoutPage() {
         {/* Shipping Address */}
         <div className="space-y-4">
           <h2 className="text-lg font-semibold text-gray-900">
-            Shipping Address
+            Ship to
           </h2>
+          <p className="text-sm text-gray-500">
+            {prefilledFrom
+              ? `Filled in from your last order (${prefilledFrom}). Check it and change anything that differs.`
+              : "Where the parcel goes and who should receive it."}
+          </p>
 
           <form onSubmit={handleProceedToPayment} id="address-form">
             <div className="space-y-4">
@@ -213,7 +257,7 @@ export default function CheckoutPage() {
                   htmlFor="ship-name"
                   className="block text-sm font-medium text-gray-700"
                 >
-                  Full Name
+                  Hotel or business name
                 </label>
                 <input
                   id="ship-name"
@@ -226,6 +270,47 @@ export default function CheckoutPage() {
                   disabled={showPayment}
                   className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-teak focus:ring-1 focus:ring-teak disabled:bg-gray-50 disabled:text-gray-500"
                 />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label
+                    htmlFor="ship-attention"
+                    className="block text-sm font-medium text-gray-700"
+                  >
+                    Attention (who receives it)
+                  </label>
+                  <input
+                    id="ship-attention"
+                    type="text"
+                    value={address.attention || ""}
+                    onChange={(e) =>
+                      setAddress({ ...address, attention: e.target.value })
+                    }
+                    placeholder="e.g. Front desk manager"
+                    disabled={showPayment}
+                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-teak focus:ring-1 focus:ring-teak disabled:bg-gray-50 disabled:text-gray-500"
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="ship-phone"
+                    className="block text-sm font-medium text-gray-700"
+                  >
+                    Phone
+                  </label>
+                  <input
+                    id="ship-phone"
+                    type="tel"
+                    value={address.phone || ""}
+                    onChange={(e) =>
+                      setAddress({ ...address, phone: e.target.value })
+                    }
+                    placeholder="For the carrier"
+                    disabled={showPayment}
+                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-teak focus:ring-1 focus:ring-teak disabled:bg-gray-50 disabled:text-gray-500"
+                  />
+                </div>
               </div>
 
               <div>
@@ -335,16 +420,21 @@ export default function CheckoutPage() {
                   >
                     Country
                   </label>
-                  <input
+                  <select
                     id="ship-country"
-                    type="text"
                     value={address.country}
                     onChange={(e) =>
                       setAddress({ ...address, country: e.target.value })
                     }
                     disabled={showPayment}
                     className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-teak focus:ring-1 focus:ring-teak disabled:bg-gray-50 disabled:text-gray-500"
-                  />
+                  >
+                    {COUNTRIES.map((c) => (
+                      <option key={c.code} value={c.code}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
             </div>

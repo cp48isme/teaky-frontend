@@ -72,21 +72,32 @@ export default function PortalSettingsStep({ slug, data, onUpdate, onNext, onBac
         </p>
         <div className="mt-2 space-y-2">
           {[
-            { value: 'none', label: 'No approval required', desc: 'Orders go directly to production' },
-            { value: 'portal_admin_approval', label: 'Portal admin approval', desc: 'Client admin must approve each order' },
-            { value: 'sales_rep_approval', label: 'Sales rep approval', desc: 'Your team approves each order' },
+            { value: 'none', label: 'No approval step', desc: 'Orders go straight to the printer. This is how every portal works today.', enforced: true },
+            { value: 'portal_admin_approval', label: 'Portal admin approval', desc: 'Not yet available: a client admin approving each order is planned, not built.', enforced: false },
+            { value: 'sales_rep_approval', label: 'Sales rep approval', desc: 'Not yet available: your team approving each order is planned, not built.', enforced: false },
           ].map((option) => (
-            <label key={option.value} className="flex items-start gap-3 rounded-lg border border-gray-200 p-3 cursor-pointer hover:bg-gray-50">
+            <label
+              key={option.value}
+              className={`flex items-start gap-3 rounded-lg border border-gray-200 p-3 ${option.enforced ? 'cursor-pointer hover:bg-gray-50' : 'cursor-not-allowed opacity-60'}`}
+            >
               <input
                 type="radio"
                 name="approval"
                 value={option.value}
                 checked={data.approvalWorkflow === option.value}
+                disabled={!option.enforced}
                 onChange={() => onUpdate({ approvalWorkflow: option.value })}
                 className="mt-0.5 border-gray-300 text-teak-dark focus:ring-teak"
               />
               <div>
-                <p className="text-sm font-medium text-gray-900">{option.label}</p>
+                <p className="text-sm font-medium text-gray-900">
+                  {option.label}
+                  {!option.enforced && (
+                    <span className="ml-2 rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                      Not yet enforced
+                    </span>
+                  )}
+                </p>
                 <p className="text-xs text-gray-500">{option.desc}</p>
               </div>
             </label>

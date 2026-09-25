@@ -13,6 +13,10 @@ export default function OrderConfirmationPage() {
   const [loading, setLoading] = useState(true);
 
   const primaryColor = portal?.brand_config?.primary_color || '#558B2F';
+  const support = portal?.brand_config;
+  const supportContact = support?.support_email || support?.support_phone
+    ? [support?.support_name, support?.support_email, support?.support_phone].filter(Boolean).join(' · ')
+    : null;
 
   useEffect(() => {
     if (!slug || !orderId) return;
@@ -81,6 +85,36 @@ export default function OrderConfirmationPage() {
             </div>
           )}
         </div>
+      </div>
+
+      <div className="mx-auto mt-6 max-w-md rounded-lg border bg-white p-6 text-left text-sm">
+        <h2 className="font-semibold text-gray-900">What happens next</h2>
+        <ol className="mt-2 list-decimal space-y-1 pl-5 text-gray-700">
+          {order.line_items.some((li) => li.needs_proof) ? (
+            <li>
+              A proof will be sent to you for approval before anything is printed. Nothing goes to
+              press until you approve it.
+            </li>
+          ) : (
+            <li>
+              No proof is needed: this is a reprint of artwork already approved for{' '}
+              {portal?.name ?? 'your property'}. It goes straight to the printer.
+            </li>
+          )}
+          <li>
+            You will be invoiced after it ships. No payment is taken now
+            {order.po_number ? `, and your reference ${order.po_number} will be on the invoice` : ''}.
+          </li>
+          <li>Freight is billed at cost on that invoice; nothing was charged for it here.</li>
+        </ol>
+        <p className="mt-3 text-gray-700">
+          Questions about this order?{' '}
+          {supportContact ? (
+            <span className="font-medium text-gray-900">{supportContact}</span>
+          ) : (
+            <span>Contact your account manager and quote {order.order_number}.</span>
+          )}
+        </p>
       </div>
 
       <div className="mt-8 flex justify-center gap-4">

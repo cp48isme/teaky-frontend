@@ -6,6 +6,10 @@ export interface BrandConfig {
   accent_color: string | null;
   banner_image_url: string | null;
   powered_by_teaky: boolean;
+  /** Who a buyer contacts about an order (S85 item 11). */
+  support_name?: string | null;
+  support_email?: string | null;
+  support_phone?: string | null;
 }
 
 export interface Portal {

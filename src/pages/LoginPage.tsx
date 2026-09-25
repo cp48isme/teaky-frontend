@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { ApiError } from '../api/client';
 import { usePostLoginRedirect } from '../hooks/usePostLoginRedirect';
+import { rememberSignedInEmail } from '../lib/portalSession';
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -19,6 +20,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await login({ email, password });
+      rememberSignedInEmail(email);
       await postLoginRedirect(searchParams.get('next'));
     } catch (err) {
       if (err instanceof ApiError) {

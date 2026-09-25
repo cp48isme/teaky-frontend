@@ -7,7 +7,7 @@ import type { ReorderResult } from '../../hooks/useReorder';
 import type { Order } from '../../types/order';
 import type { TrackingInfo } from '../../types/shipping';
 import Spinner from '../../components/ui/Spinner';
-import { humanize } from '../../lib/labels';
+import { humanize, countryName } from '../../lib/labels';
 import { isInvoiceOrder, FREIGHT_NOTE } from '../../lib/paymentTerms';
 
 const STATUS_STEPS = [
@@ -83,7 +83,7 @@ export default function OrderDetailPage() {
         <div className="flex items-center gap-2">
           {order.production_status && (
             <span className="rounded-full bg-purple-50 px-3 py-1 text-xs font-medium text-purple-700">
-              {order.production_status.replace(/_/g, ' ')}
+              {humanize(order.production_status)}
             </span>
           )}
           <span
@@ -206,12 +206,15 @@ export default function OrderDetailPage() {
           <h3 className="font-medium text-gray-900">Shipping Address</h3>
           <div className="mt-2 text-sm text-gray-600 space-y-1">
             <p>{order.shipping_address.name}</p>
+            {order.shipping_address.attention && <p>Attn: {order.shipping_address.attention}</p>}
             <p>{order.shipping_address.line1}</p>
             {order.shipping_address.line2 && <p>{order.shipping_address.line2}</p>}
             <p>
               {order.shipping_address.city}, {order.shipping_address.state}{' '}
               {order.shipping_address.postal_code}
             </p>
+            <p>{countryName(order.shipping_address.country)}</p>
+            {order.shipping_address.phone && <p>Phone: {order.shipping_address.phone}</p>}
           </div>
         </div>
 

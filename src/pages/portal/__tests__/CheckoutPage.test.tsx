@@ -15,7 +15,7 @@ vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
   return { ...actual, useNavigate: () => mockNavigate };
 });
-vi.mock('../../../api/orders', () => ({ createPortalOrder: vi.fn() }));
+vi.mock('../../../api/orders', () => ({ createPortalOrder: vi.fn(), listMyOrders: vi.fn().mockResolvedValue([]) }));
 vi.mock('../../../api/checkout', () => ({ createPaymentIntent: vi.fn(), confirmCheckout: vi.fn() }));
 vi.mock('../../../api/shipping', () => ({ getShippingRates: vi.fn().mockResolvedValue([]) }));
 vi.mock('../../../components/checkout/StripePaymentForm', () => ({ default: () => <div>stripe-form</div> }));
@@ -49,7 +49,7 @@ const products = [{ id: 'prod-1', name: 'Parking Passes', category: 'parking' }]
 vi.mock('../../../contexts/PortalContext', () => ({ usePortalContext: () => ({ portal, products, loading: false }) }));
 vi.mock('../../../contexts/CartContext', () => ({ useCart: () => ({ cart, loading: false, itemCount: 1 }) }));
 
-import { createPortalOrder } from '../../../api/orders';
+import { createPortalOrder, listMyOrders } from '../../../api/orders';
 import { createPaymentIntent } from '../../../api/checkout';
 
 function renderPage() {
@@ -63,7 +63,8 @@ function renderPage() {
 }
 
 async function fillAddress(user: ReturnType<typeof userEvent.setup>) {
-  await user.type(screen.getByLabelText('Full Name'), 'Front Desk');
+  await user.clear(screen.getByLabelText('Hotel or business name'));
+  await user.type(screen.getByLabelText('Hotel or business name'), 'Front Desk');
   await user.type(screen.getByLabelText('Address Line 1'), '325 Ward Pkwy');
   await user.type(screen.getByLabelText('City'), 'Kansas City');
   await user.type(screen.getByLabelText('State'), 'MO');
@@ -75,6 +76,32 @@ describe('CheckoutPage — invoice-terms buyer path', () => {
     vi.clearAllMocks();
     portal = { name: 'The Raphael Hotel', slug: 'raphael', brand_config: null, type: 'client', status: 'active', require_po: false };
     vi.mocked(createPortalOrder).mockResolvedValue({ id: 'order-9' } as never);
+    vi.mocked(listMyOrders).mockResolvedValue([]);
+  });
+
+  it('defaults the ship-to name to the hotel and offers Attention, Phone and a country list', () => {
+    renderPage();
+    expect(screen.getByLabelText('Hotel or business name')).toHaveValue('The Raphael Hotel');
+    expect(screen.getByLabelText('Attention (who receives it)')).toBeInTheDocument();
+    expect(screen.getByLabelText('Phone')).toBeInTheDocument();
+    expect(screen.getByLabelText('Country')).toHaveDisplayValue('United States');
+  });
+
+  it('prefills the address from the most recent order and posts attention and phone', async () => {
+    vi.mocked(listMyOrders).mockResolvedValue([
+      { order_number: 'ORD-OLD', placed_at: '2026-08-01T00:00:00Z', shipping_address: { name: 'Old', line1: '1 Old St', city: 'X', state: 'MO', postal_code: '00000', country: 'US' } },
+      { order_number: 'ORD-NEW', placed_at: '2026-09-20T00:00:00Z', shipping_address: { name: 'The Raphael Hotel', line1: '325 Ward Pkwy', city: 'Kansas City', state: 'MO', postal_code: '64112', country: 'US', attention: 'Front desk', phone: '816-555-0100' } },
+    ] as never);
+    const user = userEvent.setup();
+    renderPage();
+    expect(await screen.findByText(/Filled in from your last order \(ORD-NEW\)/)).toBeInTheDocument();
+    expect(screen.getByLabelText('Address Line 1')).toHaveValue('325 Ward Pkwy');
+    expect(screen.getByLabelText('Attention (who receives it)')).toHaveValue('Front desk');
+    await user.click(screen.getByRole('button', { name: 'Place order — to be invoiced' }));
+    await waitFor(() => expect(createPortalOrder).toHaveBeenCalledTimes(1));
+    expect(vi.mocked(createPortalOrder).mock.calls[0][1].shipping_address).toMatchObject({
+      name: 'The Raphael Hotel', line1: '325 Ward Pkwy', attention: 'Front desk', phone: '816-555-0100', country: 'US',
+    });
   });
 
   it('offers "Place order — to be invoiced" and never a payment step', () => {

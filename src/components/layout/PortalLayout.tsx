@@ -1,9 +1,10 @@
 import { useEffect } from 'react';
-import { Outlet, Link, useParams } from 'react-router-dom';
+import { Outlet, Link, useParams, useNavigate } from 'react-router-dom';
 import { usePortalContext } from '../../contexts/PortalContext';
 import { useCart } from '../../contexts/CartContext';
 import { isAuthenticated } from '../../api/client';
-import { rememberPortal } from '../../lib/portalSession';
+import { useAuth } from '../../contexts/AuthContext';
+import { rememberPortal, signedInEmail, forgetSignedInEmail } from '../../lib/portalSession';
 import Spinner from '../ui/Spinner';
 
 export default function PortalLayout() {
@@ -11,6 +12,18 @@ export default function PortalLayout() {
   const { portal, loading, error } = usePortalContext();
   const { itemCount } = useCart();
   const authed = isAuthenticated();
+  const navigate = useNavigate();
+  const { logout } = useAuth();
+  const email = authed ? signedInEmail() : null;
+
+  const signOut = async () => {
+    try {
+      await logout();
+    } finally {
+      forgetSignedInEmail();
+      navigate(`/p/${slug}`);
+    }
+  };
 
   useEffect(() => {
     if (slug) rememberPortal(slug);
@@ -43,7 +56,7 @@ export default function PortalLayout() {
     <div className="min-h-screen flex flex-col bg-gray-50">
       {/* Header */}
       <header
-        className="px-6 py-3 flex items-center justify-between shadow-sm"
+        className="px-6 py-3 flex flex-wrap items-center justify-between gap-x-6 gap-y-2 shadow-sm"
         style={{ backgroundColor: primaryColor }}
       >
         <div className="flex items-center gap-3">
@@ -61,7 +74,7 @@ export default function PortalLayout() {
             {portal.name}
           </Link>
         </div>
-        <nav className="flex items-center gap-4">
+        <nav className="flex flex-wrap items-center justify-end gap-x-4 gap-y-1">
           <Link
             to={`/p/${slug}`}
             className="text-sm font-medium text-white/80 hover:text-white"
@@ -90,19 +103,39 @@ export default function PortalLayout() {
               </Link>
               <Link
                 to={`/p/${slug}/cart`}
-                className="relative text-sm font-medium text-white/80 hover:text-white"
+                className="inline-flex items-center gap-1.5 text-sm font-medium text-white/80 hover:text-white"
               >
                 Cart
                 {itemCount > 0 && (
                   <span
-                    className="absolute -right-3 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-white text-[10px] font-bold"
+                    className="inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-white px-1.5 py-0.5 text-[11px] font-bold leading-none"
                     style={{ color: primaryColor }}
+                    aria-label={`${itemCount} items in cart`}
                   >
                     {itemCount}
                   </span>
                 )}
               </Link>
+              <span className="ml-2 border-l border-white/30 pl-3 text-xs text-white/80">
+                {email ? <span title={email}>{email}</span> : 'Signed in'}
+                {' · '}
+                <button
+                  type="button"
+                  onClick={signOut}
+                  className="font-medium text-white/90 underline-offset-2 hover:underline"
+                >
+                  Sign out
+                </button>
+              </span>
             </>
+          )}
+          {!authed && (
+            <Link
+              to={`/login?next=/p/${slug}`}
+              className="rounded-md bg-white/15 px-3 py-1 text-sm font-medium text-white hover:bg-white/25"
+            >
+              Sign in
+            </Link>
           )}
         </nav>
       </header>

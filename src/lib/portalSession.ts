@@ -48,3 +48,29 @@ export function safeNextPath(next: string | null | undefined): string | null {
   if (!next || !next.startsWith('/') || next.startsWith('//')) return null;
   return next;
 }
+
+const EMAIL_KEY = 'teaky_signed_in_email';
+
+export function rememberSignedInEmail(email: string): void {
+  try {
+    localStorage.setItem(EMAIL_KEY, email);
+  } catch {
+    // storage unavailable — the header simply omits the name
+  }
+}
+
+export function signedInEmail(): string | null {
+  try {
+    return localStorage.getItem(EMAIL_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export function forgetSignedInEmail(): void {
+  try {
+    localStorage.removeItem(EMAIL_KEY);
+  } catch {
+    // nothing to forget
+  }
+}
