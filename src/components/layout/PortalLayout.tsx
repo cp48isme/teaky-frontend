@@ -1,7 +1,9 @@
+import { useEffect } from 'react';
 import { Outlet, Link, useParams } from 'react-router-dom';
 import { usePortalContext } from '../../contexts/PortalContext';
 import { useCart } from '../../contexts/CartContext';
 import { isAuthenticated } from '../../api/client';
+import { rememberPortal } from '../../lib/portalSession';
 import Spinner from '../ui/Spinner';
 
 export default function PortalLayout() {
@@ -9,6 +11,10 @@ export default function PortalLayout() {
   const { portal, loading, error } = usePortalContext();
   const { itemCount } = useCart();
   const authed = isAuthenticated();
+
+  useEffect(() => {
+    if (slug) rememberPortal(slug);
+  }, [slug]);
 
   if (loading) {
     return (

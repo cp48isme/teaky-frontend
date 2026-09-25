@@ -1,15 +1,7 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { usePortalContext } from '../../contexts/PortalContext';
-
-const CATEGORIES = [
-  { value: '', label: 'All' },
-  { value: 'apparel', label: 'Apparel' },
-  { value: 'business_cards', label: 'Business Cards' },
-  { value: 'signage', label: 'Signage' },
-  { value: 'promotional', label: 'Promotional' },
-  { value: 'packaging', label: 'Packaging' },
-];
+import { humanize } from '../../lib/labels';
 
 export default function PortalCatalogPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -19,6 +11,12 @@ export default function PortalCatalogPage() {
   if (!portal) return null;
 
   const primaryColor = portal.brand_config?.primary_color || '#558B2F';
+  // Chips are the categories this portal's products actually carry, in
+  // catalog order, humanised. A portal with one category shows no chips.
+  const categories = Array.from(
+    new Set(products.map((p) => p.category).filter((c): c is string => Boolean(c))),
+  ).map((value) => ({ value, label: humanize(value) }));
+  const chips = categories.length > 1 ? [{ value: '', label: 'All' }, ...categories] : [];
   const filtered = categoryFilter
     ? products.filter((p) => p.category === categoryFilter)
     : products;
@@ -29,7 +27,7 @@ export default function PortalCatalogPage() {
 
       {/* Category Filter */}
       <div className="mt-4 flex flex-wrap gap-2">
-        {CATEGORIES.map((cat) => (
+        {chips.map((cat) => (
           <button
             key={cat.value}
             onClick={() => setCategoryFilter(cat.value)}
@@ -71,11 +69,11 @@ export default function PortalCatalogPage() {
                 />
               ) : null}
               <div className={`h-44 w-full bg-gray-100 flex items-center justify-center img-fallback ${product.mockup_urls.length > 0 ? 'hidden' : ''}`}>
-                <span className="text-sm text-gray-400">{product.category || 'Product'}</span>
+                <span className="text-sm text-gray-400">{humanize(product.category) || 'Product'}</span>
               </div>
               <div className="p-4">
                 <h3 className="text-sm font-semibold text-gray-900">{product.name}</h3>
-                <p className="mt-0.5 text-xs text-gray-500">{product.category}</p>
+                <p className="mt-0.5 text-xs text-gray-500">{humanize(product.category)}</p>
                 {product.pricing_tiers.length > 0 && (
                   <p className="mt-1 text-sm font-medium" style={{ color: primaryColor }}>
                     From ${Number(product.pricing_tiers[0].unit_price).toFixed(2)}

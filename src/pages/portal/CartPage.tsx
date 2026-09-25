@@ -2,11 +2,14 @@ import { Link, useParams } from 'react-router-dom';
 import { useCart } from '../../contexts/CartContext';
 import { usePortalContext } from '../../contexts/PortalContext';
 import Spinner from '../../components/ui/Spinner';
+import { INVOICE_TERMS, FREIGHT_NOTE } from '../../lib/paymentTerms';
 
 export default function CartPage() {
   const { slug } = useParams<{ slug: string }>();
-  const { portal } = usePortalContext();
+  const { portal, products } = usePortalContext();
   const { cart, loading, updateItem, removeItem } = useCart();
+  const productName = (productId: string) =>
+    products.find((p) => p.id === productId)?.name ?? 'Product';
 
   const primaryColor = portal?.brand_config?.primary_color || '#558B2F';
 
@@ -36,7 +39,8 @@ export default function CartPage() {
     );
   }
 
-  const shippingCost = 9.99;
+  // Invoice-terms portals show no freight charge: it is billed at cost later.
+  const shippingCost = INVOICE_TERMS ? 0 : 9.99;
   const total = cart.subtotal + shippingCost;
 
   return (
@@ -51,7 +55,7 @@ export default function CartPage() {
           >
             <div className="flex-1">
               <p className="font-medium text-gray-900">
-                Product
+                {productName(item.product_id)}
               </p>
               <div className="mt-1 flex gap-3 text-xs text-gray-500">
                 {item.size && <span>Size: {item.size}</span>}
@@ -107,8 +111,8 @@ export default function CartPage() {
           <span>${cart.subtotal.toFixed(2)}</span>
         </div>
         <div className="mt-2 flex justify-between text-sm text-gray-600">
-          <span>Shipping</span>
-          <span>${shippingCost.toFixed(2)}</span>
+          <span>{INVOICE_TERMS ? 'Freight' : 'Shipping'}</span>
+          <span>{INVOICE_TERMS ? FREIGHT_NOTE : `$${shippingCost.toFixed(2)}`}</span>
         </div>
         <div className="mt-2 border-t pt-2 flex justify-between font-medium text-gray-900">
           <span>Total</span>

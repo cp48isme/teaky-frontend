@@ -7,6 +7,7 @@ import { createPortalOrder } from "../../api/orders";
 import { getShippingRates } from "../../api/shipping";
 import type { ShippingAddress } from "../../types/order";
 import type { ShippingRate } from "../../types/shipping";
+import { INVOICE_TERMS, FREIGHT_NOTE } from "../../lib/paymentTerms";
 import StripePaymentForm from "../../components/checkout/StripePaymentForm";
 import Spinner from "../../components/ui/Spinner";
 
@@ -14,13 +15,13 @@ import Spinner from "../../components/ui/Spinner";
 // checkout places the order for later invoicing and never shows a payment step.
 // Phase 2 generalises this as a per-portal `payment_mode` (invoice | card) read
 // from the public portal response; the card path below is kept for that.
-const INVOICE_TERMS = true;
-
 export default function CheckoutPage() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
-  const { portal } = usePortalContext();
+  const { portal, products } = usePortalContext();
   const { cart } = useCart();
+  const productName = (productId: string) =>
+    products.find((p) => p.id === productId)?.name ?? "Product";
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -54,6 +55,8 @@ export default function CheckoutPage() {
 
   // Fetch shipping rates when address is sufficiently filled
   useEffect(() => {
+    // Invoice terms: freight is billed at cost later, so no rate is quoted.
+    if (INVOICE_TERMS) return;
     if (!address.city || !address.state || !address.postal_code) {
       return;
     }
@@ -107,7 +110,11 @@ export default function CheckoutPage() {
     );
   }
 
-  const shippingCost = selectedRate ? parseFloat(selectedRate.cost) : 9.99;
+  const shippingCost = INVOICE_TERMS
+    ? 0
+    : selectedRate
+      ? parseFloat(selectedRate.cost)
+      : 9.99;
   const taxAmount = cart.subtotal * 0.0; // Tax calculated server-side on order creation
   const total = cart.subtotal + shippingCost + taxAmount;
 
@@ -345,9 +352,14 @@ export default function CheckoutPage() {
             {/* Shipping Method Selection */}
             <div className="mt-6">
               <h2 className="text-lg font-semibold text-gray-900">
-                Shipping Method
+                {INVOICE_TERMS ? "Freight" : "Shipping Method"}
               </h2>
-              {loadingRates ? (
+              {INVOICE_TERMS ? (
+                <p className="mt-2 text-sm text-gray-600">
+                  Shipped on the printer's carrier account. {FREIGHT_NOTE}; no
+                  freight is charged here.
+                </p>
+              ) : loadingRates ? (
                 <div className="mt-2 flex items-center gap-2 text-sm text-gray-500">
                   <Spinner className="h-4 w-4 text-teak-dark" /> Fetching
                   shipping rates...
@@ -510,7 +522,11 @@ export default function CheckoutPage() {
             {cart.items.map((item) => (
               <div key={item.id} className="flex justify-between text-sm">
                 <span className="text-gray-600">
-                  {item.quantity}x ${Number(item.unit_price).toFixed(2)}
+                  <span className="font-medium text-gray-900">
+                    {productName(item.product_id)}
+                  </span>
+                  {" "}
+                  {item.quantity} × ${Number(item.unit_price).toFixed(2)}
                   {item.size && ` (${item.size})`}
                   {item.color && ` - ${item.color}`}
                 </span>
@@ -527,14 +543,16 @@ export default function CheckoutPage() {
               </div>
               <div className="flex justify-between text-sm text-gray-600">
                 <span>
-                  Shipping
-                  {selectedRate && (
+                  {INVOICE_TERMS ? "Freight" : "Shipping"}
+                  {!INVOICE_TERMS && selectedRate && (
                     <span className="text-xs text-gray-400 ml-1">
                       ({selectedRate.carrier} {selectedRate.service})
                     </span>
                   )}
                 </span>
-                <span>${shippingCost.toFixed(2)}</span>
+                <span>
+                  {INVOICE_TERMS ? FREIGHT_NOTE : `$${shippingCost.toFixed(2)}`}
+                </span>
               </div>
               {taxAmount > 0 && (
                 <div className="flex justify-between text-sm text-gray-600">

@@ -6,6 +6,8 @@ import { useCart } from '../../contexts/CartContext';
 import type { Order } from '../../types/order';
 import type { TrackingInfo } from '../../types/shipping';
 import Spinner from '../../components/ui/Spinner';
+import { humanize } from '../../lib/labels';
+import { isInvoiceOrder, FREIGHT_NOTE } from '../../lib/paymentTerms';
 
 const STATUS_STEPS = [
   'submitted',
@@ -91,9 +93,25 @@ export default function OrderDetailPage() {
               STATUS_COLORS[order.status] || 'bg-gray-100 text-gray-800'
             }`}
           >
-            {order.status.replace(/_/g, ' ')}
+            {humanize(order.status)}
           </span>
         </div>
+      </div>
+
+      {/* Your reference */}
+      <div className="mt-4 rounded-lg border bg-white p-4 text-sm">
+        <div className="flex justify-between">
+          <span className="text-gray-500">PO number or reference</span>
+          <span className={order.po_number ? 'font-medium text-gray-900' : 'text-gray-400'}>
+            {order.po_number || 'none given'}
+          </span>
+        </div>
+        {order.notes && (
+          <div className="mt-2 border-t pt-2">
+            <p className="text-gray-500">Your notes</p>
+            <p className="mt-1 whitespace-pre-line text-gray-900">{order.notes}</p>
+          </div>
+        )}
       </div>
 
       {/* Reorder Button */}
@@ -210,8 +228,12 @@ export default function OrderDetailPage() {
               <span>${Number(order.subtotal).toFixed(2)}</span>
             </div>
             <div className="flex justify-between text-gray-600">
-              <span>Shipping</span>
-              <span>${Number(order.shipping_cost).toFixed(2)}</span>
+              <span>{isInvoiceOrder(order.payment_method) ? 'Freight' : 'Shipping'}</span>
+              <span>
+                {isInvoiceOrder(order.payment_method)
+                  ? FREIGHT_NOTE
+                  : `$${Number(order.shipping_cost).toFixed(2)}`}
+              </span>
             </div>
             {Number(order.tax_amount) > 0 && (
               <div className="flex justify-between text-gray-600">

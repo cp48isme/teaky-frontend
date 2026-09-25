@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { ApiError } from '../api/client';
 import { usePostLoginRedirect } from '../hooks/usePostLoginRedirect';
@@ -7,6 +7,7 @@ import { usePostLoginRedirect } from '../hooks/usePostLoginRedirect';
 export default function LoginPage() {
   const { login } = useAuth();
   const postLoginRedirect = usePostLoginRedirect();
+  const [searchParams] = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -18,7 +19,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await login({ email, password });
-      await postLoginRedirect();
+      await postLoginRedirect(searchParams.get('next'));
     } catch (err) {
       if (err instanceof ApiError) {
         setError(err.message);

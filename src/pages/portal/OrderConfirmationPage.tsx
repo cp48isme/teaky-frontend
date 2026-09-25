@@ -4,6 +4,7 @@ import { getMyOrder } from '../../api/orders';
 import { usePortalContext } from '../../contexts/PortalContext';
 import type { Order } from '../../types/order';
 import Spinner from '../../components/ui/Spinner';
+import { humanize } from '../../lib/labels';
 
 export default function OrderConfirmationPage() {
   const { slug, orderId } = useParams<{ slug: string; orderId: string }>();
@@ -56,7 +57,7 @@ export default function OrderConfirmationPage() {
           <div className="flex justify-between">
             <span className="text-gray-500">Status</span>
             <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800">
-              {order.status.replace(/_/g, ' ')}
+              {humanize(order.status)}
             </span>
           </div>
           <div className="flex justify-between">
@@ -67,6 +68,18 @@ export default function OrderConfirmationPage() {
             <span className="text-gray-500">Total</span>
             <span className="font-medium">${Number(order.total).toFixed(2)}</span>
           </div>
+          <div className="flex justify-between">
+            <span className="text-gray-500">PO number or reference</span>
+            <span className={order.po_number ? 'font-medium' : 'text-gray-400'}>
+              {order.po_number || 'none given'}
+            </span>
+          </div>
+          {order.notes && (
+            <div className="border-t pt-3">
+              <p className="text-gray-500">Your notes</p>
+              <p className="mt-1 whitespace-pre-line text-gray-900">{order.notes}</p>
+            </div>
+          )}
         </div>
       </div>
 

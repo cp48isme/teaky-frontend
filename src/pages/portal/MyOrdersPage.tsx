@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { listMyOrders } from '../../api/orders';
 import type { Order } from '../../types/order';
 import Spinner from '../../components/ui/Spinner';
+import { humanize } from '../../lib/labels';
 
 const STATUS_COLORS: Record<string, string> = {
   submitted: 'bg-blue-100 text-blue-800',
@@ -64,6 +65,12 @@ export default function MyOrdersPage() {
                   <p className="mt-1 text-xs text-gray-500">
                     {new Date(order.placed_at).toLocaleDateString()} &middot;{' '}
                     {order.line_items.length} item{order.line_items.length !== 1 && 's'}
+                    {order.po_number && <> &middot; PO {order.po_number}</>}
+                  </p>
+                  <p className="mt-1 text-sm text-gray-700">
+                    {order.line_items
+                      .map((li) => `${li.product_name} × ${li.quantity}`)
+                      .join(', ')}
                   </p>
                 </div>
                 <div className="text-right">
@@ -72,7 +79,7 @@ export default function MyOrdersPage() {
                       STATUS_COLORS[order.status] || 'bg-gray-100 text-gray-800'
                     }`}
                   >
-                    {order.status.replace(/_/g, ' ')}
+                    {humanize(order.status)}
                   </span>
                   <p className="mt-1 text-sm font-medium text-gray-900">
                     ${Number(order.total).toFixed(2)}

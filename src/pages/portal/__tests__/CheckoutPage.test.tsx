@@ -45,7 +45,8 @@ const cart: Cart = {
   created_at: '2026-09-25T00:00:00Z',
   updated_at: '2026-09-25T00:00:00Z',
 };
-vi.mock('../../../contexts/PortalContext', () => ({ usePortalContext: () => ({ portal, products: [], loading: false }) }));
+const products = [{ id: 'prod-1', name: 'Parking Passes', category: 'parking' }];
+vi.mock('../../../contexts/PortalContext', () => ({ usePortalContext: () => ({ portal, products, loading: false }) }));
 vi.mock('../../../contexts/CartContext', () => ({ useCart: () => ({ cart, loading: false, itemCount: 1 }) }));
 
 import { createPortalOrder } from '../../../api/orders';
@@ -81,6 +82,16 @@ describe('CheckoutPage — invoice-terms buyer path', () => {
     expect(screen.getByRole('button', { name: 'Place order — to be invoiced' })).toBeInTheDocument();
     expect(screen.queryByText('Continue to Payment')).not.toBeInTheDocument();
     expect(screen.getByText(/You will be invoiced for this order/)).toBeInTheDocument();
+  });
+
+  it('names the product in the summary and shows freight as billed later, never $9.99', () => {
+    renderPage();
+    expect(screen.getByText('Parking Passes')).toBeInTheDocument();
+    expect(screen.queryByText(/^Shipping Method$/)).not.toBeInTheDocument();
+    expect(screen.getAllByText('Billed at cost on your invoice').length).toBeGreaterThan(0);
+    expect(screen.queryByText(/9\.99/)).not.toBeInTheDocument();
+    // Line total, subtotal and total all agree because no freight is added.
+    expect(screen.getAllByText('$430.00')).toHaveLength(3);
   });
 
   it('posts shipping, PO and notes to the create-order route with payment_method invoice and routes to confirmation', async () => {
