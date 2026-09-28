@@ -69,6 +69,20 @@ async function refreshAccessToken(): Promise<boolean> {
   }
 }
 
+/** Re-issue the session inside `organizationId` (after accepting an invitation) (S86). */
+export async function switchOrganization(organizationId: string): Promise<boolean> {
+  const refreshToken = getRefreshToken();
+  if (!refreshToken) return false;
+  const response = await fetch(`${API_BASE}/auth/refresh`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ refresh_token: refreshToken, organization_id: organizationId }),
+  });
+  if (!response.ok) return false;
+  setTokens((await response.json()) as TokenPair);
+  return true;
+}
+
 export async function apiRequest<T>(
   path: string,
   options: RequestInit = {},
