@@ -20,7 +20,7 @@ export default function CheckoutPage() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const { portal, products } = usePortalContext();
-  const { cart } = useCart();
+  const { cart, refreshCart } = useCart();
   const productName = (productId: string) =>
     products.find((p) => p.id === productId)?.name ?? "Product";
   const [submitting, setSubmitting] = useState(false);
@@ -169,6 +169,9 @@ export default function CheckoutPage() {
         po_number: poNumber.trim() || undefined,
         notes: notes || undefined,
       });
+      // The cart was checked out server-side; refresh so the header count
+      // does not keep showing the just-ordered quantity.
+      await refreshCart();
       navigate(`/p/${slug}/orders/${order.id}/confirmation`);
     } catch (err) {
       setError(

@@ -5,6 +5,7 @@ import { useCart } from '../../contexts/CartContext';
 import { isAuthenticated } from '../../api/client';
 import { useAuth } from '../../contexts/AuthContext';
 import { rememberPortal, signedInEmail, forgetSignedInEmail } from '../../lib/portalSession';
+import { QUOTES_ENABLED } from '../../lib/paymentTerms';
 import Spinner from '../ui/Spinner';
 
 export default function PortalLayout() {
@@ -95,12 +96,14 @@ export default function PortalLayout() {
               >
                 My Orders
               </Link>
-              <Link
-                to={`/p/${slug}/quotes`}
-                className="text-sm font-medium text-white/80 hover:text-white"
-              >
-                Quotes
-              </Link>
+              {QUOTES_ENABLED && (
+                <Link
+                  to={`/p/${slug}/quotes`}
+                  className="text-sm font-medium text-white/80 hover:text-white"
+                >
+                  Quotes
+                </Link>
+              )}
               <Link
                 to={`/p/${slug}/cart`}
                 className="inline-flex items-center gap-1.5 text-sm font-medium text-white/80 hover:text-white"

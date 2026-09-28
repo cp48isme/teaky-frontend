@@ -47,7 +47,8 @@ const cart: Cart = {
 };
 const products = [{ id: 'prod-1', name: 'Parking Passes', category: 'parking' }];
 vi.mock('../../../contexts/PortalContext', () => ({ usePortalContext: () => ({ portal, products, loading: false }) }));
-vi.mock('../../../contexts/CartContext', () => ({ useCart: () => ({ cart, loading: false, itemCount: 1 }) }));
+const refreshCart = vi.fn().mockResolvedValue(undefined);
+vi.mock('../../../contexts/CartContext', () => ({ useCart: () => ({ cart, loading: false, itemCount: 1, refreshCart }) }));
 
 import { createPortalOrder, listMyOrders } from '../../../api/orders';
 import { createPaymentIntent } from '../../../api/checkout';
@@ -138,6 +139,8 @@ describe('CheckoutPage — invoice-terms buyer path', () => {
       shipping_address: expect.objectContaining({ name: 'Front Desk', line1: '325 Ward Pkwy', city: 'Kansas City', state: 'MO', postal_code: '64112' }),
     });
     expect(createPaymentIntent).not.toHaveBeenCalled();
+    // The header cart count must not keep the just-ordered quantity.
+    expect(refreshCart).toHaveBeenCalled();
     expect(mockNavigate).toHaveBeenCalledWith('/p/raphael/orders/order-9/confirmation');
   });
 

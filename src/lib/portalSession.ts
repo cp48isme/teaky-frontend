@@ -10,6 +10,20 @@ export function rememberPortal(slug: string): void {
   }
 }
 
+export function lastPortalSlug(): string | null {
+  try {
+    return localStorage.getItem(KEY);
+  } catch {
+    return null;
+  }
+}
+
+/** "/p/raphael/cart" → "raphael"; anything else → null. */
+export function portalSlugFromPath(path: string | null | undefined): string | null {
+  const match = /^\/p\/([^/?#]+)/.exec(path ?? '');
+  return match ? match[1]! : null;
+}
+
 export function lastPortalPath(): string | null {
   try {
     const slug = localStorage.getItem(KEY);

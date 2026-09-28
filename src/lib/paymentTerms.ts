@@ -10,3 +10,7 @@ export function isInvoiceOrder(paymentMethod: string | null | undefined): boolea
 }
 
 export const FREIGHT_NOTE = 'Billed at cost on your invoice';
+
+// Phase 1: RGI prices are fixed per hotel and quotes are printer-side
+// (organisation-wide) routes a buyer's session no longer reaches (S86).
+export const QUOTES_ENABLED = false;
