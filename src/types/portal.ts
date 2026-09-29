@@ -54,6 +54,8 @@ export interface PublicPortalResponse {
   brand_config: BrandConfig | null;
   type: string;
   status: string;
+  // S84: whether a PO number or reference is required at checkout (per portal).
+  require_po?: boolean;
 }
 
 export interface DuplicatePortalRequest {
