@@ -1,12 +1,14 @@
 import { useState, type FormEvent } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { ApiError } from '../api/client';
 import { usePostLoginRedirect } from '../hooks/usePostLoginRedirect';
+import { rememberSignedInEmail, portalSlugFromPath, lastPortalSlug } from '../lib/portalSession';
 
 export default function LoginPage() {
   const { login } = useAuth();
   const postLoginRedirect = usePostLoginRedirect();
+  const [searchParams] = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -17,8 +19,11 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
     try {
-      await login({ email, password });
-      await postLoginRedirect();
+      const next = searchParams.get('next');
+      const portalSlug = portalSlugFromPath(next) ?? lastPortalSlug() ?? undefined;
+      await login({ email, password, portal_slug: portalSlug });
+      rememberSignedInEmail(email);
+      await postLoginRedirect(searchParams.get('next'));
     } catch (err) {
       if (err instanceof ApiError) {
         setError(err.message);

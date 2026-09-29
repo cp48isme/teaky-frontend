@@ -235,7 +235,9 @@ export default function PortalDetailPage() {
             </div>
             <div className="flex justify-between">
               <dt className="text-gray-500">Approval</dt>
-              <dd className="text-gray-900">{portal.approval_workflow.replace(/_/g, ' ')}</dd>
+              <dd className="text-gray-900">
+                {portal.approval_workflow === 'none' ? 'None (orders go straight to the printer)' : `${portal.approval_workflow.replace(/_/g, ' ')} — not yet enforced`}
+              </dd>
             </div>
             <div className="flex justify-between">
               <dt className="text-gray-500">Self-Registration</dt>

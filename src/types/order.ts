@@ -6,6 +6,9 @@ export interface ShippingAddress {
   state: string;
   postal_code: string;
   country: string;
+  /** Who receives the parcel at the property (S85 item 8). */
+  attention?: string;
+  phone?: string;
 }
 
 export interface LineItem {

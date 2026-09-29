@@ -2,10 +2,13 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { getMyOrder } from '../../api/orders';
 import { getTrackingInfo } from '../../api/shipping';
-import { useCart } from '../../contexts/CartContext';
+import { useReorder, canReorder } from '../../hooks/useReorder';
+import type { ReorderResult } from '../../hooks/useReorder';
 import type { Order } from '../../types/order';
 import type { TrackingInfo } from '../../types/shipping';
 import Spinner from '../../components/ui/Spinner';
+import { humanize, countryName } from '../../lib/labels';
+import { isInvoiceOrder, FREIGHT_NOTE } from '../../lib/paymentTerms';
 
 const STATUS_STEPS = [
   'submitted',
@@ -28,15 +31,12 @@ const STATUS_COLORS: Record<string, string> = {
   cancelled: 'bg-red-100 text-red-800',
 };
 
-const REORDERABLE = new Set(['completed', 'delivered']);
-
 export default function OrderDetailPage() {
   const { slug, orderId } = useParams<{ slug: string; orderId: string }>();
-  const { addItem } = useCart();
+  const { reorder, reordering } = useReorder();
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
-  const [reordering, setReordering] = useState(false);
-  const [reordered, setReordered] = useState(false);
+  const [reordered, setReordered] = useState<ReorderResult | null>(null);
   const [trackingData, setTrackingData] = useState<TrackingInfo | null>(null);
 
   useEffect(() => {
@@ -83,7 +83,7 @@ export default function OrderDetailPage() {
         <div className="flex items-center gap-2">
           {order.production_status && (
             <span className="rounded-full bg-purple-50 px-3 py-1 text-xs font-medium text-purple-700">
-              {order.production_status.replace(/_/g, ' ')}
+              {humanize(order.production_status)}
             </span>
           )}
           <span
@@ -91,44 +91,57 @@ export default function OrderDetailPage() {
               STATUS_COLORS[order.status] || 'bg-gray-100 text-gray-800'
             }`}
           >
-            {order.status.replace(/_/g, ' ')}
+            {humanize(order.status)}
           </span>
         </div>
       </div>
 
-      {/* Reorder Button */}
-      {REORDERABLE.has(order.status) && (
+      {/* Your reference */}
+      <div className="mt-4 rounded-lg border bg-white p-4 text-sm">
+        <div className="flex justify-between">
+          <span className="text-gray-500">PO number or reference</span>
+          <span className={order.po_number ? 'font-medium text-gray-900' : 'text-gray-400'}>
+            {order.po_number || 'none given'}
+          </span>
+        </div>
+        {order.notes && (
+          <div className="mt-2 border-t pt-2">
+            <p className="text-gray-500">Your notes</p>
+            <p className="mt-1 whitespace-pre-line text-gray-900">{order.notes}</p>
+          </div>
+        )}
+      </div>
+
+      {/* Reorder: any order that was not cancelled, at today's price */}
+      {canReorder(order) && (
         <div className="mt-4">
           {reordered ? (
-            <div className="flex items-center gap-3 rounded-md border border-green-200 bg-green-50 px-4 py-3">
-              <span className="text-sm text-green-700">Items added to your cart!</span>
-              <Link
-                to={`/p/${slug}/cart`}
-                className="text-sm font-medium text-teak-dark hover:text-teak"
-              >
-                View Cart
-              </Link>
+            <div className="rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm">
+              <div className="flex items-center gap-3">
+                <span className="text-green-700">
+                  {reordered.added} item{reordered.added !== 1 && 's'} added to your cart at today's prices.
+                </span>
+                <Link
+                  to={`/p/${slug}/cart`}
+                  className="font-medium text-teak-dark hover:text-teak"
+                >
+                  View Cart
+                </Link>
+              </div>
+              {reordered.skipped.length > 0 && (
+                <p className="mt-1 text-yellow-700">
+                  Not added (no longer in the catalog): {reordered.skipped.join(', ')}
+                </p>
+              )}
             </div>
           ) : (
             <button
               onClick={async () => {
                 if (!order) return;
-                setReordering(true);
                 try {
-                  for (const item of order.line_items) {
-                    await addItem({
-                      product_id: item.product_id,
-                      quantity: item.quantity,
-                      size: item.size || undefined,
-                      color: item.color || undefined,
-                      unit_price: Number(item.unit_price),
-                    });
-                  }
-                  setReordered(true);
+                  setReordered(await reorder(order));
                 } catch {
                   alert('Failed to add items to cart');
-                } finally {
-                  setReordering(false);
                 }
               }}
               disabled={reordering}
@@ -193,12 +206,15 @@ export default function OrderDetailPage() {
           <h3 className="font-medium text-gray-900">Shipping Address</h3>
           <div className="mt-2 text-sm text-gray-600 space-y-1">
             <p>{order.shipping_address.name}</p>
+            {order.shipping_address.attention && <p>Attn: {order.shipping_address.attention}</p>}
             <p>{order.shipping_address.line1}</p>
             {order.shipping_address.line2 && <p>{order.shipping_address.line2}</p>}
             <p>
               {order.shipping_address.city}, {order.shipping_address.state}{' '}
               {order.shipping_address.postal_code}
             </p>
+            <p>{countryName(order.shipping_address.country)}</p>
+            {order.shipping_address.phone && <p>Phone: {order.shipping_address.phone}</p>}
           </div>
         </div>
 
@@ -210,8 +226,12 @@ export default function OrderDetailPage() {
               <span>${Number(order.subtotal).toFixed(2)}</span>
             </div>
             <div className="flex justify-between text-gray-600">
-              <span>Shipping</span>
-              <span>${Number(order.shipping_cost).toFixed(2)}</span>
+              <span>{isInvoiceOrder(order.payment_method) ? 'Freight' : 'Shipping'}</span>
+              <span>
+                {isInvoiceOrder(order.payment_method)
+                  ? FREIGHT_NOTE
+                  : `$${Number(order.shipping_cost).toFixed(2)}`}
+              </span>
             </div>
             {Number(order.tax_amount) > 0 && (
               <div className="flex justify-between text-gray-600">

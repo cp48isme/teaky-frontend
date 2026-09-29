@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { unitPriceFor } from '../../lib/pricing';
+import { QUOTES_ENABLED } from '../../lib/paymentTerms';
 import { useParams, Link } from 'react-router-dom';
 import { getPublicProduct } from '../../api/portals';
 import { checkSafeOrder } from '../../api/orders';
@@ -260,7 +262,7 @@ export default function PortalProductDetailPage() {
                   setAdding(true);
                   setAdded(false);
                   try {
-                    const unitPrice = product.pricing_tiers[0].unit_price;
+                    const unitPrice = unitPriceFor(product, quantity) ?? product.pricing_tiers[0].unit_price;
                     await addItem({
                       product_id: product.id,
                       quantity,
@@ -283,17 +285,19 @@ export default function PortalProductDetailPage() {
                 {adding ? 'Adding...' : added ? 'Added to Cart!' : 'Add to Cart'}
               </button>
 
-              <button
-                onClick={() => setShowQuoteModal(true)}
-                className="w-full rounded-md border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
-              >
-                Request a Quote
-              </button>
+              {QUOTES_ENABLED && (
+                <button
+                  onClick={() => setShowQuoteModal(true)}
+                  className="w-full rounded-md border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                >
+                  Request a Quote
+                </button>
+              )}
             </div>
           )}
 
           {/* Request a Quote — available even without pricing tiers */}
-          {isAuthenticated() && product.pricing_tiers.length === 0 && (
+          {QUOTES_ENABLED && isAuthenticated() && product.pricing_tiers.length === 0 && (
             <div className="border-t pt-4">
               <button
                 onClick={() => setShowQuoteModal(true)}

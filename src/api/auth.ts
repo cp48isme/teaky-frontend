@@ -16,6 +16,8 @@ export interface RegisterPayload {
 export interface LoginPayload {
   email: string;
   password: string;
+  /** The portal the buyer signed in from: the session is scoped to its organisation (S86). */
+  portal_slug?: string;
 }
 
 export async function register(payload: RegisterPayload): Promise<void> {

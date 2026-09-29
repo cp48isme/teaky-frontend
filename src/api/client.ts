@@ -29,6 +29,18 @@ export function isAuthenticated(): boolean {
   return getAccessToken() !== null;
 }
 
+/** The organisation of the current access token, so a refresh keeps the session there (S86). */
+function currentOrganizationId(): string | null {
+  const token = getAccessToken();
+  if (!token) return null;
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]!.replace(/-/g, '+').replace(/_/g, '/')));
+    return typeof payload.org === 'string' ? payload.org : null;
+  } catch {
+    return null;
+  }
+}
+
 async function refreshAccessToken(): Promise<boolean> {
   const refreshToken = getRefreshToken();
   if (!refreshToken) return false;
@@ -37,7 +49,10 @@ async function refreshAccessToken(): Promise<boolean> {
     const response = await fetch(`${API_BASE}/auth/refresh`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ refresh_token: refreshToken }),
+      body: JSON.stringify({
+        refresh_token: refreshToken,
+        organization_id: currentOrganizationId(),
+      }),
     });
 
     if (!response.ok) {
@@ -52,6 +67,20 @@ async function refreshAccessToken(): Promise<boolean> {
     clearTokens();
     return false;
   }
+}
+
+/** Re-issue the session inside `organizationId` (after accepting an invitation) (S86). */
+export async function switchOrganization(organizationId: string): Promise<boolean> {
+  const refreshToken = getRefreshToken();
+  if (!refreshToken) return false;
+  const response = await fetch(`${API_BASE}/auth/refresh`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ refresh_token: refreshToken, organization_id: organizationId }),
+  });
+  if (!response.ok) return false;
+  setTokens((await response.json()) as TokenPair);
+  return true;
 }
 
 export async function apiRequest<T>(

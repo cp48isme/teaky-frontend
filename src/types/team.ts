@@ -39,3 +39,14 @@ export interface Invitation {
   created_at: string;
   updated_at: string;
 }
+
+/** Public preview of an invitation, by its token (S86). */
+export interface InvitationPreview {
+  invited_email: string;
+  organization_name: string;
+  role: string;
+  portal_slug: string | null;
+  portal_name: string | null;
+  state: 'valid' | 'expired' | 'accepted' | 'revoked';
+  account_exists: boolean;
+}

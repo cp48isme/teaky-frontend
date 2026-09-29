@@ -1,5 +1,6 @@
-import { apiRequest } from './client';
+import { apiRequest, setTokens } from './client';
 import type {
+  InvitationPreview,
   TeamMember,
   Invitation,
   InviteTeamMemberRequest,
@@ -53,4 +54,18 @@ export async function acceptInvitation(token: string): Promise<Invitation> {
   return apiRequest<Invitation>(`/team/invitations/${token}/accept`, {
     method: 'POST',
   });
+}
+
+export async function getInvitationPreview(token: string): Promise<InvitationPreview> {
+  return apiRequest<InvitationPreview>(`/team/invitations/${token}`);
+}
+
+/** Set a password and take up the invitation; the returned session is scoped to
+ *  the inviting organisation (S86). */
+export async function registerFromInvitation(token: string, password: string): Promise<void> {
+  const tokens = await apiRequest<{ access_token: string; refresh_token: string; token_type: string; expires_in: number }>(
+    `/team/invitations/${token}/register`,
+    { method: 'POST', body: JSON.stringify({ password }) },
+  );
+  setTokens(tokens);
 }
