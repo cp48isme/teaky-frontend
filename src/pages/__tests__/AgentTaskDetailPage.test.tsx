@@ -146,11 +146,19 @@ describe('AgentTaskDetailPage — draft review UI', () => {
     const approveBtn = screen.getByRole('button', {
       name: 'Approve & Send',
     });
+    // Under parallel-file load the click could land before the typed text had
+    // re-enabled the button, so approveDraft was never called: wait for it.
+    await waitFor(() => expect(approveBtn).toBeEnabled(), { timeout: 5000 });
     await userEvent.click(approveBtn);
-    await waitFor(() => {
-      expect(approveDraft).toHaveBeenCalledWith(TASK_ID, 'edited text');
-    });
-  });
+    // 5 s, not the 1 s default: under parallel-file load this assertion was
+    // landing at ~1.1 s and failing (pre-existing since 2026-05-04; passes alone).
+    await waitFor(
+      () => {
+        expect(approveDraft).toHaveBeenCalledWith(TASK_ID, 'edited text');
+      },
+      { timeout: 5000 },
+    );
+  }, 20000); // per-test ceiling: character-by-character typing under parallel-file load exceeds vitest's 5 s default
 
   it('disables the Approve button when textarea is empty or whitespace-only', async () => {
     vi.mocked(getAgentTask).mockResolvedValue(makeTask());
@@ -159,12 +167,14 @@ describe('AgentTaskDetailPage — draft review UI', () => {
     const approveBtn = screen.getByRole('button', {
       name: 'Approve & Send',
     });
-    expect(approveBtn).toBeEnabled();
+    // Same load flake as the test above: the button's state settles a beat
+    // after the textarea under parallel load, so wait rather than assert.
+    await waitFor(() => expect(approveBtn).toBeEnabled(), { timeout: 5000 });
     await userEvent.clear(textarea);
-    expect(approveBtn).toBeDisabled();
+    await waitFor(() => expect(approveBtn).toBeDisabled(), { timeout: 5000 });
     await userEvent.type(textarea, '   ');
-    expect(approveBtn).toBeDisabled();
-  });
+    await waitFor(() => expect(approveBtn).toBeDisabled(), { timeout: 5000 });
+  }, 20000);
 
   it('calls rejectDraft when the Reject button is clicked', async () => {
     vi.mocked(getAgentTask).mockResolvedValue(makeTask());
