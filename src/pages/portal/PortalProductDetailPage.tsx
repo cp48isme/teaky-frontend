@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { unitPriceFor } from '../../lib/pricing';
+import { packPriceLabel, packQuantityLabel } from '../../lib/pricing';
 import { QUOTES_ENABLED } from '../../lib/paymentTerms';
 import { useParams, Link } from 'react-router-dom';
 import { getPublicProduct } from '../../api/portals';
@@ -72,6 +72,13 @@ export default function PortalProductDetailPage() {
   }
 
   const primaryColor = portal.brand_config?.primary_color || '#558B2F';
+  // With a base price, tiers are quantity breaks above one pack; a product
+  // priced only by tiers (no base price) shows them all, as before.
+  const packSize = product.pack_size ?? 1;
+  const priceBreaks =
+    product.base_price != null
+      ? product.pricing_tiers.filter((t) => t.min_qty > 1)
+      : product.pricing_tiers;
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-8">
@@ -194,45 +201,58 @@ export default function PortalProductDetailPage() {
             </div>
           )}
 
-          {/* Pricing Tiers */}
-          {product.pricing_tiers.length > 0 && (
+          {/* Price — set by the server, per pack */}
+          {product.pack_price != null && (
             <div>
-              <h3 className="text-sm font-medium text-gray-700">Pricing</h3>
-              <div className="mt-2 overflow-hidden rounded-lg border border-gray-200">
-                <table className="min-w-full divide-y divide-gray-200 text-sm">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Quantity</th>
-                      <th className="px-4 py-2 text-right text-xs font-medium text-gray-500">Unit Price</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200">
-                    {product.pricing_tiers.map((tier, i) => (
-                      <tr key={i}>
-                        <td className="px-4 py-2 text-gray-700">
-                          {tier.min_qty}{tier.max_qty ? `\u2013${tier.max_qty}` : '+'}
-                        </td>
-                        <td className="px-4 py-2 text-right font-medium" style={{ color: primaryColor }}>
-                          ${Number(tier.unit_price).toFixed(2)}
-                        </td>
+              <h3 className="text-sm font-medium text-gray-700">Price</h3>
+              <p className="mt-1 text-2xl font-semibold" style={{ color: primaryColor }}>
+                {packPriceLabel(product.pack_price, packSize)}
+              </p>
+              {priceBreaks.length > 0 && (
+                <div className="mt-2 overflow-hidden rounded-lg border border-gray-200">
+                  <table className="min-w-full divide-y divide-gray-200 text-sm">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">
+                          {packSize > 1 ? 'Packs' : 'Quantity'}
+                        </th>
+                        <th className="px-4 py-2 text-right text-xs font-medium text-gray-500">
+                          {packSize > 1 ? 'Price per pack' : 'Unit Price'}
+                        </th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                      {priceBreaks.map((tier, i) => (
+                        <tr key={i}>
+                          <td className="px-4 py-2 text-gray-700">
+                            {tier.min_qty}{tier.max_qty ? `\u2013${tier.max_qty}` : '+'}
+                          </td>
+                          <td className="px-4 py-2 text-right font-medium" style={{ color: primaryColor }}>
+                            ${Number(tier.unit_price).toFixed(2)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           )}
 
           {/* Min Order */}
           <p className="text-xs text-gray-500">
-            Minimum order quantity: {product.min_order_qty}
+            {packSize > 1
+              ? `Sold in packs of ${packSize.toLocaleString('en-US')}. Minimum order: ${product.min_order_qty} pack${product.min_order_qty === 1 ? '' : 's'}.`
+              : `Minimum order quantity: ${product.min_order_qty}`}
           </p>
 
           {/* Quantity + Add to Cart */}
-          {isAuthenticated() && product.pricing_tiers.length > 0 && (
+          {isAuthenticated() && product.pack_price != null && (
             <div className="space-y-3 border-t pt-4">
               <div className="flex items-center gap-3">
-                <label className="text-sm font-medium text-gray-700">Qty</label>
+                <label className="text-sm font-medium text-gray-700">
+                  {packSize > 1 ? 'Packs' : 'Qty'}
+                </label>
                 <div className="flex items-center gap-1">
                   <button
                     onClick={() => setQuantity((q) => Math.max(product.min_order_qty, q - 1))}
@@ -254,6 +274,11 @@ export default function PortalProductDetailPage() {
                     +
                   </button>
                 </div>
+                {packSize > 1 && (
+                  <span className="text-xs text-gray-500">
+                    {packQuantityLabel(quantity, packSize)}
+                  </span>
+                )}
               </div>
 
               <button
@@ -262,13 +287,12 @@ export default function PortalProductDetailPage() {
                   setAdding(true);
                   setAdded(false);
                   try {
-                    const unitPrice = unitPriceFor(product, quantity) ?? product.pricing_tiers[0].unit_price;
+                    // No price is sent: the server prices the line.
                     await addItem({
                       product_id: product.id,
                       quantity,
                       size: selectedSize || undefined,
                       color: selectedColor || undefined,
-                      unit_price: unitPrice,
                     });
                     setAdded(true);
                     setTimeout(() => setAdded(false), 2000);
@@ -296,8 +320,8 @@ export default function PortalProductDetailPage() {
             </div>
           )}
 
-          {/* Request a Quote — available even without pricing tiers */}
-          {QUOTES_ENABLED && isAuthenticated() && product.pricing_tiers.length === 0 && (
+          {/* Request a Quote — available even when the product has no price */}
+          {QUOTES_ENABLED && isAuthenticated() && product.pack_price == null && (
             <div className="border-t pt-4">
               <button
                 onClick={() => setShowQuoteModal(true)}

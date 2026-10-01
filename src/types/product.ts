@@ -27,8 +27,13 @@ export interface Product {
   colors: ColorOption[];
   pricing_tiers: PricingTier[];
   mockup_urls: string[];
+  /** Minimum order, in packs. */
   min_order_qty: number;
-  /** Default retail unit price. JSON number (MoneyDecimal serializes as float). */
+  /** Pieces per pack; the buyer orders packs (1 when absent). */
+  pack_size?: number;
+  /** What a buyer pays per pack at the minimum quantity, priced by the server; null = not for sale. */
+  pack_price?: number | null;
+  /** The price per pack an admin edits — the price a buyer pays. JSON number (MoneyDecimal serializes as float). */
   base_price?: number | null;
   /** Supplier cost at quantity one. */
   base_cost?: number | null;
@@ -59,6 +64,7 @@ export interface CreateProductRequest {
   pricing_tiers?: PricingTier[];
   mockup_urls?: string[];
   min_order_qty?: number;
+  pack_size?: number;
   base_price?: number;
   base_cost?: number;
   margin_percent?: string | number;
@@ -80,6 +86,7 @@ export interface UpdateProductRequest {
   pricing_tiers?: PricingTier[];
   mockup_urls?: string[];
   min_order_qty?: number;
+  pack_size?: number;
   base_price?: number;
   base_cost?: number;
   margin_percent?: string | number;

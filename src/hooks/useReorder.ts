@@ -1,7 +1,6 @@
 import { useCallback, useState } from 'react';
 import { useCart } from '../contexts/CartContext';
 import { usePortalContext } from '../contexts/PortalContext';
-import { unitPriceFor } from '../lib/pricing';
 import type { Order } from '../types/order';
 
 export interface ReorderResult {
@@ -11,9 +10,10 @@ export interface ReorderResult {
 }
 
 /**
- * Re-adds an order's lines to the cart at the product's current price. Works
- * for any order that was not cancelled; the old order's status and its stored
- * unit price play no part (buyer-journey item 6, 2026-09-25).
+ * Re-adds an order's lines (same packs, size, colour) to the cart; the server
+ * prices them at the product's current price. Works for any order that was not
+ * cancelled; the old order's status and stored price play no part
+ * (buyer-journey item 6, 2026-09-25).
  */
 export function useReorder() {
   const { addItem } = useCart();
@@ -27,8 +27,7 @@ export function useReorder() {
       try {
         for (const item of order.line_items) {
           const product = products.find((p) => p.id === item.product_id);
-          const price = product ? unitPriceFor(product, item.quantity) : null;
-          if (!product || price == null) {
+          if (!product || product.pack_price == null) {
             result.skipped.push(item.product_name);
             continue;
           }
@@ -37,7 +36,6 @@ export function useReorder() {
             quantity: item.quantity,
             size: item.size || undefined,
             color: item.color || undefined,
-            unit_price: price,
           });
           result.added += 1;
         }

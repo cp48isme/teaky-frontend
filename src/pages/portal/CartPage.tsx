@@ -3,6 +3,7 @@ import { useCart } from '../../contexts/CartContext';
 import { usePortalContext } from '../../contexts/PortalContext';
 import Spinner from '../../components/ui/Spinner';
 import { INVOICE_TERMS, FREIGHT_NOTE } from '../../lib/paymentTerms';
+import { packPriceLabel, packQuantityLabel } from '../../lib/pricing';
 
 export default function CartPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -62,8 +63,13 @@ export default function CartPage() {
                 {item.color && <span>Color: {item.color}</span>}
               </div>
               <p className="mt-1 text-sm text-gray-600">
-                ${Number(item.unit_price).toFixed(2)} each
+                {packPriceLabel(item.unit_price, item.pack_size ?? 1)}
               </p>
+              {(item.pack_size ?? 1) > 1 && (
+                <p className="text-xs text-gray-500">
+                  {packQuantityLabel(item.quantity, item.pack_size)}
+                </p>
+              )}
             </div>
 
             <div className="flex items-center gap-3">

@@ -17,7 +17,10 @@ export interface LineItem {
   product_id: string;
   product_name: string;
   product_sku: string | null;
+  /** Packs of pack_size pieces; unit_price is per pack; pieces = quantity × pack_size. */
   quantity: number;
+  pack_size?: number;
+  pieces?: number;
   size: string | null;
   color: string | null;
   unit_price: number;

@@ -22,7 +22,7 @@ interface Props {
 
 interface EditingCell {
   productId: string;
-  field: 'name' | 'category' | 'base_price' | 'status';
+  field: 'name' | 'category' | 'base_price' | 'pack_size' | 'status';
   value: string | number;
 }
 
@@ -89,9 +89,12 @@ export default function ProductManagementGrid({ portalId, onProductsChange }: Pr
 
     try {
       const updateData: Partial<CreateProductRequest> = {
-        [editingCell.field]: editingCell.field === 'base_price'
-          ? parseFloat(editingCell.value as string)
-          : editingCell.value,
+        [editingCell.field]:
+          editingCell.field === 'base_price'
+            ? parseFloat(editingCell.value as string)
+            : editingCell.field === 'pack_size'
+              ? Math.max(1, Math.trunc(Number(editingCell.value)) || 1)
+              : editingCell.value,
       };
 
       const updated = await updateProduct(portalId, product.id, updateData);
@@ -481,7 +484,7 @@ interface ProductTableProps {
   onSaveEdit: () => void;
   onCancelEdit: () => void;
   onEditChange: (value: string | number) => void;
-  onSort: (field: EditingCell['field']) => void;
+  onSort: (field: 'name' | 'category' | 'base_price' | 'status') => void;
   sortBy: string;
   sortAsc: boolean;
   portalId: string;
@@ -535,7 +538,10 @@ function ProductTable({
               onClick={() => onSort('base_price')}
               className="cursor-pointer px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase hover:text-gray-700"
             >
-              Base Price {sortBy === 'base_price' && (sortAsc ? '↑' : '↓')}
+              Price / pack {sortBy === 'base_price' && (sortAsc ? '↑' : '↓')}
+            </th>
+            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+              Pack size
             </th>
             <th
               onClick={() => onSort('status')}
@@ -646,6 +652,30 @@ function ProductTable({
                       </span>
                     )}
                   </span>
+                )}
+              </td>
+              <td
+                className="px-4 py-3 text-sm text-gray-900 cursor-pointer hover:bg-gray-50"
+                onClick={() => onStartEdit(product.id, 'pack_size', product.pack_size ?? 1)}
+                title="Pieces per pack: buyers order packs, the price is per pack"
+              >
+                {editingCell?.productId === product.id && editingCell.field === 'pack_size' ? (
+                  <input
+                    type="number"
+                    min={1}
+                    step={1}
+                    value={editingCell.value as number}
+                    onChange={(e) => onEditChange(parseInt(e.target.value, 10) || 1)}
+                    onBlur={onSaveEdit}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') onSaveEdit();
+                      if (e.key === 'Escape') onCancelEdit();
+                    }}
+                    autoFocus
+                    className="w-20 rounded border border-blue-300 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                ) : (
+                  (product.pack_size ?? 1).toLocaleString('en-US')
                 )}
               </td>
               <td

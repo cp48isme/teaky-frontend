@@ -1,6 +1,7 @@
 import { humanize } from '../../lib/labels';
 import { Link, useParams } from 'react-router-dom';
 import { usePortalContext } from '../../contexts/PortalContext';
+import { packPriceLabel } from '../../lib/pricing';
 
 export default function PortalHomePage() {
   const { slug } = useParams<{ slug: string }>();
@@ -74,9 +75,9 @@ export default function PortalHomePage() {
                 <div className="p-4">
                   <h3 className="text-sm font-semibold text-gray-900">{product.name}</h3>
                   <p className="mt-1 text-xs text-gray-500">{humanize(product.category)}</p>
-                  {product.pricing_tiers.length > 0 && (
+                  {product.pack_price != null && (
                     <p className="mt-1 text-sm font-medium" style={{ color: primaryColor }}>
-                      From ${Number(product.pricing_tiers[0].unit_price).toFixed(2)}
+                      {packPriceLabel(product.pack_price, product.pack_size)}
                     </p>
                   )}
                 </div>
