@@ -59,6 +59,7 @@ export default function CartPage() {
                 {productName(item.product_id)}
               </p>
               <div className="mt-1 flex gap-3 text-xs text-gray-500">
+                {item.price_option && <span>{item.price_option}</span>}
                 {item.size && <span>Size: {item.size}</span>}
                 {item.color && <span>Color: {item.color}</span>}
               </div>

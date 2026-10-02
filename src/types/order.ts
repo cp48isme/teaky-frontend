@@ -22,6 +22,7 @@ export interface LineItem {
   pack_size?: number;
   pieces?: number;
   size: string | null;
+  price_option?: string | null;
   color: string | null;
   unit_price: number;
   line_total: number;

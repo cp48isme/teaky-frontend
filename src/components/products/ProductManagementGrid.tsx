@@ -1,6 +1,7 @@
 import { useState, useEffect, type ChangeEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { listProducts, createProduct, updateProduct, deleteProduct } from '../../api/products';
+import { KeepPriceButton, MarkupBadge, PriceOptionsEditor } from './ProductPricingCells';
 import { createProductsFromDescription } from '../../api/portals';
 import { uploadFile } from '../../api/uploads';
 import type { Product, CreateProductRequest } from '../../types/product';
@@ -22,7 +23,7 @@ interface Props {
 
 interface EditingCell {
   productId: string;
-  field: 'name' | 'category' | 'base_price' | 'pack_size' | 'status';
+  field: 'name' | 'category' | 'base_price' | 'base_cost' | 'markup_multiplier' | 'floor_multiplier' | 'pack_size' | 'status';
   value: string | number;
 }
 
@@ -39,6 +40,11 @@ export default function ProductManagementGrid({ portalId, onProductsChange }: Pr
   const [aiCreating, setAiCreating] = useState(false);
   const [uploadingFile, setUploadingFile] = useState(false);
   const [groupByCategory, setGroupByCategory] = useState(false);
+  const [optionsFor, setOptionsFor] = useState<Product | null>(null);
+  const replaceProduct = (updated: Product) => {
+    setProducts((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
+    setOptionsFor((current) => (current && current.id === updated.id ? updated : current));
+  };
 
   // Load products
   useEffect(() => {
@@ -90,11 +96,17 @@ export default function ProductManagementGrid({ portalId, onProductsChange }: Pr
     try {
       const updateData: Partial<CreateProductRequest> = {
         [editingCell.field]:
-          editingCell.field === 'base_price'
+          editingCell.field === 'base_price' ||
+          editingCell.field === 'base_cost' ||
+          editingCell.field === 'markup_multiplier'
             ? parseFloat(editingCell.value as string)
-            : editingCell.field === 'pack_size'
-              ? Math.max(1, Math.trunc(Number(editingCell.value)) || 1)
-              : editingCell.value,
+            : editingCell.field === 'floor_multiplier'
+              ? editingCell.value === '' || editingCell.value == null
+                ? null
+                : parseFloat(editingCell.value as string)
+              : editingCell.field === 'pack_size'
+                ? Math.max(1, Math.trunc(Number(editingCell.value)) || 1)
+                : editingCell.value,
       };
 
       const updated = await updateProduct(portalId, product.id, updateData);
@@ -436,6 +448,8 @@ export default function ProductManagementGrid({ portalId, onProductsChange }: Pr
                 sortBy={sortBy}
                 sortAsc={sortAsc}
                 portalId={portalId}
+                onProductUpdated={replaceProduct}
+                onEditOptions={setOptionsFor}
                 onDelete={async (id) => {
                   await deleteProduct(portalId, id);
                   setProducts((prev) => prev.filter((p) => p.id !== id));
@@ -461,11 +475,21 @@ export default function ProductManagementGrid({ portalId, onProductsChange }: Pr
           sortBy={sortBy}
           sortAsc={sortAsc}
           portalId={portalId}
+          onProductUpdated={replaceProduct}
+          onEditOptions={setOptionsFor}
           onDelete={async (id) => {
             await deleteProduct(portalId, id);
             setProducts((prev) => prev.filter((p) => p.id !== id));
             onProductsChange?.(products.filter((p) => p.id !== id));
           }}
+        />
+      )}
+      {optionsFor && (
+        <PriceOptionsEditor
+          portalId={portalId}
+          product={optionsFor}
+          onClose={() => setOptionsFor(null)}
+          onUpdated={replaceProduct}
         />
       )}
     </div>
@@ -488,6 +512,8 @@ interface ProductTableProps {
   sortBy: string;
   sortAsc: boolean;
   portalId: string;
+  onProductUpdated: (product: Product) => void;
+  onEditOptions: (product: Product) => void;
   onDelete: (id: string) => Promise<void>;
 }
 
@@ -504,6 +530,9 @@ function ProductTable({
   onSort,
   sortBy,
   sortAsc,
+  portalId,
+  onProductUpdated,
+  onEditOptions,
   onDelete,
 }: ProductTableProps) {
   return (
@@ -539,6 +568,15 @@ function ProductTable({
               className="cursor-pointer px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase hover:text-gray-700"
             >
               Price / pack {sortBy === 'base_price' && (sortAsc ? '↑' : '↓')}
+            </th>
+            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase" title="Vendor cost per pack (never shown to buyers)">
+              Cost
+            </th>
+            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase" title="The markup the published price gives today; click to re-price from cost at a multiplier">
+              Markup
+            </th>
+            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase" title="Lowest acceptable markup; below it you are alerted to decide">
+              Floor
             </th>
             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
               Pack size
@@ -656,6 +694,75 @@ function ProductTable({
               </td>
               <td
                 className="px-4 py-3 text-sm text-gray-900 cursor-pointer hover:bg-gray-50"
+                onClick={() => onStartEdit(product.id, 'base_cost', product.base_cost ?? '')}
+                title="Vendor cost per pack"
+              >
+                {editingCell?.productId === product.id && editingCell.field === 'base_cost' ? (
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={editingCell.value as number | string}
+                    onChange={(e) => onEditChange(e.target.value)}
+                    onBlur={onSaveEdit}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') onSaveEdit();
+                      if (e.key === 'Escape') onCancelEdit();
+                    }}
+                    autoFocus
+                    className="w-24 rounded border border-blue-300 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                ) : (
+                  formatMoney(product.base_cost)
+                )}
+              </td>
+              <td
+                className="px-4 py-3 text-sm text-gray-900 cursor-pointer hover:bg-gray-50"
+                onClick={() => onStartEdit(product.id, 'markup_multiplier', product.markup_multiplier ?? '')}
+                title="Enter a multiplier to re-price from cost"
+              >
+                {editingCell?.productId === product.id && editingCell.field === 'markup_multiplier' ? (
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={editingCell.value as number | string}
+                    onChange={(e) => onEditChange(e.target.value)}
+                    onBlur={onSaveEdit}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') onSaveEdit();
+                      if (e.key === 'Escape') onCancelEdit();
+                    }}
+                    autoFocus
+                    className="w-20 rounded border border-blue-300 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                ) : (
+                  <MarkupBadge effective={product.effective_multiplier} floor={product.floor_multiplier} belowFloor={product.below_floor} pending={product.floor_alert_pending} />
+                )}
+              </td>
+              <td
+                className="px-4 py-3 text-sm text-gray-900 cursor-pointer hover:bg-gray-50"
+                onClick={() => onStartEdit(product.id, 'floor_multiplier', product.floor_multiplier ?? '')}
+                title="Lowest acceptable markup (e.g. 1.40)"
+              >
+                {editingCell?.productId === product.id && editingCell.field === 'floor_multiplier' ? (
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={editingCell.value as number | string}
+                    onChange={(e) => onEditChange(e.target.value)}
+                    onBlur={onSaveEdit}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') onSaveEdit();
+                      if (e.key === 'Escape') onCancelEdit();
+                    }}
+                    autoFocus
+                    className="w-20 rounded border border-blue-300 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                ) : (
+                  product.floor_multiplier ? `${Number(product.floor_multiplier).toFixed(2)}×` : '—'
+                )}
+              </td>
+              <td
+                className="px-4 py-3 text-sm text-gray-900 cursor-pointer hover:bg-gray-50"
                 onClick={() => onStartEdit(product.id, 'pack_size', product.pack_size ?? 1)}
                 title="Pieces per pack: buyers order packs, the price is per pack"
               >
@@ -708,7 +815,17 @@ function ProductTable({
                   </span>
                 )}
               </td>
-              <td className="px-4 py-3 text-right">
+              <td className="px-4 py-3 text-right space-x-3 whitespace-nowrap">
+                {product.floor_alert_pending && (
+                  <KeepPriceButton portalId={portalId} product={product} onUpdated={onProductUpdated} />
+                )}
+                <button
+                  onClick={() => onEditOptions(product)}
+                  className="text-sm text-gray-700 hover:text-gray-900"
+                >
+                  Options{product.price_options && product.price_options.length > 0 ? ` (${product.price_options.length})` : ''}
+                  {product.price_options?.some((o) => o.floor_alert_pending) ? ' •' : ''}
+                </button>
                 <button
                   onClick={() => onDelete(product.id)}
                   className="text-sm text-red-600 hover:text-red-800"
