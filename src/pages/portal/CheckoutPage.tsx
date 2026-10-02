@@ -11,6 +11,7 @@ import type { ShippingRate } from "../../types/shipping";
 import { INVOICE_TERMS, FREIGHT_NOTE } from "../../lib/paymentTerms";
 import StripePaymentForm from "../../components/checkout/StripePaymentForm";
 import Spinner from "../../components/ui/Spinner";
+import { packPriceLabel, packQuantityLabel } from '../../lib/pricing';
 
 // S84 / plan §5.5 — Phase 1 hardcode: every RGI portal is invoice-terms, so the
 // checkout places the order for later invoicing and never shows a payment step.
@@ -619,7 +620,9 @@ export default function CheckoutPage() {
                     {productName(item.product_id)}
                   </span>
                   {" "}
-                  {item.quantity} × ${Number(item.unit_price).toFixed(2)}
+                  {(item.pack_size ?? 1) > 1
+                    ? `${packQuantityLabel(item.quantity, item.pack_size)} × ${packPriceLabel(item.unit_price, item.pack_size)}`
+                    : `${item.quantity} × $${Number(item.unit_price).toFixed(2)}`}
                   {item.size && ` (${item.size})`}
                   {item.color && ` - ${item.color}`}
                 </span>

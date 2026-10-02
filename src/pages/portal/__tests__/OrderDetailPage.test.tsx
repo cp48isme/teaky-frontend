@@ -21,7 +21,8 @@ vi.mock('../../../api/orders', () => ({
 vi.mock('../../../api/shipping', () => ({ getTrackingInfo: vi.fn() }));
 vi.mock('../../../contexts/CartContext', () => ({ useCart: () => ({ addItem }) }));
 vi.mock('../../../contexts/PortalContext', () => ({
-  usePortalContext: () => ({ products: [{ id: 'prod-pp', name: 'Parking Passes', pricing_tiers: [{ min_qty: 1, max_qty: null, unit_price: 0.08 }] }] }),
+  // pack_price: the server's current price; the reorder itself sends none (S87).
+  usePortalContext: () => ({ products: [{ id: 'prod-pp', name: 'Parking Passes', pack_size: 1, pack_price: 0.08, pricing_tiers: [{ min_qty: 1, max_qty: null, unit_price: 0.08 }] }] }),
 }));
 
 describe('OrderDetailPage', () => {
@@ -39,7 +40,8 @@ describe('OrderDetailPage', () => {
     expect(screen.getByText('Reprint, no changes')).toBeInTheDocument();
     expect(screen.getByText('Billed at cost on your invoice')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Reorder' }));
-    expect(addItem).toHaveBeenCalledWith(expect.objectContaining({ product_id: 'prod-pp', quantity: 1000, unit_price: 0.08 }));
+    expect(addItem).toHaveBeenCalledWith(expect.objectContaining({ product_id: 'prod-pp', quantity: 1000 }));
+    expect(addItem.mock.calls[0][0]).not.toHaveProperty('unit_price');
     expect(await screen.findByText(/1 item added to your cart at today's prices/)).toBeInTheDocument();
   });
 });

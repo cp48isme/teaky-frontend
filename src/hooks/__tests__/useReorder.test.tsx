@@ -4,12 +4,13 @@ import { useReorder, canReorder } from '../useReorder';
 import type { Order } from '../../types/order';
 import type { Product } from '../../types/product';
 
-// Buyer-journey item 6 (2026-09-25): reorder from any non-cancelled order at the
-// product's current tier price, never the price stored on the old order.
+// Buyer-journey item 6 (2026-09-25): reorder from any non-cancelled order; the
+// old order's stored price plays no part. S87: the client sends no price at
+// all — the server prices the line (pack_price is the server's price).
 
 const addItem = vi.fn().mockResolvedValue(undefined);
 const products = [
-  { id: 'prod-pp', name: 'Parking Passes', pricing_tiers: [{ min_qty: 1, max_qty: 999, unit_price: 0.09 }, { min_qty: 1000, max_qty: null, unit_price: 0.08 }] },
+  { id: 'prod-pp', name: 'Parking Passes', pack_size: 1, pack_price: 0.09, pricing_tiers: [{ min_qty: 1, max_qty: 999, unit_price: 0.09 }, { min_qty: 1000, max_qty: null, unit_price: 0.08 }] },
 ] as unknown as Product[];
 vi.mock('../../contexts/CartContext', () => ({ useCart: () => ({ addItem }) }));
 vi.mock('../../contexts/PortalContext', () => ({ usePortalContext: () => ({ products }) }));
@@ -25,14 +26,15 @@ const order = {
 describe('useReorder', () => {
   beforeEach(() => addItem.mockClear());
 
-  it('adds each line at the current tier price and reports lines no longer in the catalog', async () => {
+  it('adds each line with no price sent and reports lines no longer in the catalog', async () => {
     const { result } = renderHook(() => useReorder());
     let outcome: Awaited<ReturnType<typeof result.current.reorder>> | undefined;
     await act(async () => {
       outcome = await result.current.reorder(order);
     });
     expect(addItem).toHaveBeenCalledTimes(1);
-    expect(addItem).toHaveBeenCalledWith({ product_id: 'prod-pp', quantity: 1000, size: undefined, color: undefined, unit_price: 0.08 });
+    expect(addItem).toHaveBeenCalledWith({ product_id: 'prod-pp', quantity: 1000, size: undefined, color: undefined });
+    expect(addItem.mock.calls[0][0]).not.toHaveProperty('unit_price');
     expect(outcome).toEqual({ added: 1, skipped: ['Old Door Hanger'] });
   });
 

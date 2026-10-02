@@ -1,15 +1,20 @@
-import type { Product } from '../types/product';
-
 /**
- * The product's current unit price for a quantity: the pricing tier whose
- * range contains the quantity, else the first tier. Reorders use this rather
- * than the price stored on the old order (buyer-journey item 6, 2026-09-25).
+ * Price and quantity labels for pack products. The server sets every price
+ * (product.pack_price, cart/order unit_price); nothing here computes one.
+ * A product with pack_size 1 reads as before ("$5.75 each", "3").
  */
-export function unitPriceFor(product: Pick<Product, 'pricing_tiers'>, quantity: number): number | null {
-  const tiers = product.pricing_tiers;
-  if (!tiers || tiers.length === 0) return null;
-  const match = tiers.find(
-    (t) => quantity >= t.min_qty && (t.max_qty == null || quantity <= t.max_qty),
-  );
-  return Number((match ?? tiers[0]).unit_price);
+
+const count = (n: number) => n.toLocaleString('en-US');
+const money = (n: number) => `$${Number(n).toFixed(2)}`;
+
+/** "$420.00 per 2,000" for a pack of 2,000; "$5.75 each" for a pack of one. */
+export function packPriceLabel(price: number, packSize: number = 1): string {
+  return packSize > 1 ? `${money(price)} per ${count(packSize)}` : `${money(price)} each`;
+}
+
+/** "2 × pack of 2,000 (4,000 pcs)" for packs; "3" for a pack of one. */
+export function packQuantityLabel(packs: number, packSize: number = 1): string {
+  return packSize > 1
+    ? `${count(packs)} × pack of ${count(packSize)} (${count(packs * packSize)} pcs)`
+    : count(packs);
 }
