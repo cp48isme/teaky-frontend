@@ -15,6 +15,30 @@ export interface PricingTier {
   unit_price: number;
 }
 
+/**
+ * A buyer-picked spec that changes price (e.g. key cards by locking system).
+ * Buyers receive label, price and price_confirmed_at only; cost, floor and
+ * margin state are admin-only (S87).
+ */
+export interface PriceOption {
+  label: string;
+  /** Published price per pack. */
+  price: number;
+  price_confirmed_at?: string | null;
+  cost?: number | null;
+  floor_multiplier?: string | null;
+  effective_multiplier?: string | null;
+  below_floor?: boolean;
+  floor_alert_pending?: boolean;
+}
+
+export interface PriceOptionInput {
+  label: string;
+  price: number;
+  cost?: number | null;
+  floor_multiplier?: number | null;
+}
+
 export interface Product {
   id: string;
   portal_id: string;
@@ -33,6 +57,18 @@ export interface Product {
   pack_size?: number;
   /** What a buyer pays per pack at the minimum quantity, priced by the server; null = not for sale. */
   pack_price?: number | null;
+  /** When the published price was last set or confirmed; shown to buyers. */
+  price_confirmed_at?: string | null;
+  /** Name of the buyer-picked spec, e.g. "Locking system". */
+  option_set_name?: string | null;
+  price_options?: PriceOption[];
+  /** Admin-only (S87): markup as a multiplier, the markup the price gives today, the floor. */
+  markup_multiplier?: string | null;
+  effective_multiplier?: string | null;
+  floor_multiplier?: string | null;
+  below_floor?: boolean;
+  /** Below the floor and RGI has not decided (raise or keep). */
+  floor_alert_pending?: boolean;
   /** The price per pack an admin edits — the price a buyer pays. JSON number (MoneyDecimal serializes as float). */
   base_price?: number | null;
   /** Supplier cost at quantity one. */
@@ -65,6 +101,10 @@ export interface CreateProductRequest {
   mockup_urls?: string[];
   min_order_qty?: number;
   pack_size?: number;
+  markup_multiplier?: number;
+  floor_multiplier?: number | null;
+  option_set_name?: string | null;
+  price_options?: PriceOptionInput[];
   base_price?: number;
   base_cost?: number;
   margin_percent?: string | number;
@@ -87,6 +127,10 @@ export interface UpdateProductRequest {
   mockup_urls?: string[];
   min_order_qty?: number;
   pack_size?: number;
+  markup_multiplier?: number;
+  floor_multiplier?: number | null;
+  option_set_name?: string | null;
+  price_options?: PriceOptionInput[];
   base_price?: number;
   base_cost?: number;
   margin_percent?: string | number;

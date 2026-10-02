@@ -36,6 +36,7 @@ export function useReorder() {
             quantity: item.quantity,
             size: item.size || undefined,
             color: item.color || undefined,
+            price_option: item.price_option || undefined,
           });
           result.added += 1;
         }

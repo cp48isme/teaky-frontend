@@ -38,6 +38,21 @@ export async function updateProduct(
   );
 }
 
+/** Keep the published price (S87): RGI's answer to a markup-floor alert. */
+export async function confirmProductPrice(
+  portalId: string,
+  productId: string,
+  optionLabel?: string,
+): Promise<Product> {
+  return apiRequest<Product>(
+    `/portals/${portalId}/products/${productId}/confirm-price`,
+    {
+      method: 'POST',
+      body: JSON.stringify(optionLabel ? { option_label: optionLabel } : {}),
+    },
+  );
+}
+
 export async function deleteProduct(
   portalId: string,
   productId: string,
