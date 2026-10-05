@@ -177,7 +177,8 @@ export default function OrderDetailPage() {
                 <p className="font-medium text-gray-900">{item.product_name}</p>
                 <div className="mt-1 flex gap-3 text-xs text-gray-500">
                   <span>Qty: {item.quantity}</span>
-                  {item.size && <span>Size: {item.size}</span>}
+                  {item.price_option && <span>{item.price_option}</span>}
+                {item.size && <span>Size: {item.size}</span>}
                   {item.color && <span>Color: {item.color}</span>}
                   {item.needs_proof && (
                     <span className={

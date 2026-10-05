@@ -623,6 +623,7 @@ export default function CheckoutPage() {
                   {(item.pack_size ?? 1) > 1
                     ? `${packQuantityLabel(item.quantity, item.pack_size)} × ${packPriceLabel(item.unit_price, item.pack_size)}`
                     : `${item.quantity} × $${Number(item.unit_price).toFixed(2)}`}
+                  {item.price_option && ` — ${item.price_option}`}
                   {item.size && ` (${item.size})`}
                   {item.color && ` - ${item.color}`}
                 </span>

@@ -18,3 +18,8 @@ export function packQuantityLabel(packs: number, packSize: number = 1): string {
     ? `${count(packs)} × pack of ${count(packSize)} (${count(packs * packSize)} pcs)`
     : count(packs);
 }
+
+/** "2 Oct 2026" — the buyer-visible price-confirmed date (S87). */
+export function formatConfirmed(iso: string): string {
+  return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+}

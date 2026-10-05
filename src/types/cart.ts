@@ -7,6 +7,8 @@ export interface CartItem {
   /** Pieces per pack (1 when absent). */
   pack_size?: number;
   size: string | null;
+  /** The picked price option (e.g. a locking system), by label. */
+  price_option?: string | null;
   color: string | null;
   /** The server's current price per pack. */
   unit_price: number;
@@ -29,6 +31,7 @@ export interface AddToCartRequest {
   product_id: string;
   quantity: number;
   size?: string;
+  price_option?: string;
   color?: string;
   // No price: the server sets it (a price sent and not matching is refused).
   options?: Record<string, unknown>;

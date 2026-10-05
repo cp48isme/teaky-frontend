@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { packPriceLabel, packQuantityLabel } from '../../lib/pricing';
+import { formatConfirmed, packPriceLabel, packQuantityLabel } from '../../lib/pricing';
 import { QUOTES_ENABLED } from '../../lib/paymentTerms';
 import { useParams, Link } from 'react-router-dom';
 import { getPublicProduct } from '../../api/portals';
@@ -20,6 +20,7 @@ export default function PortalProductDetailPage() {
   const [selectedImage, setSelectedImage] = useState(0);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
+  const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [adding, setAdding] = useState(false);
   const [added, setAdded] = useState(false);
@@ -75,6 +76,12 @@ export default function PortalProductDetailPage() {
   // With a base price, tiers are quantity breaks above one pack; a product
   // priced only by tiers (no base price) shows them all, as before.
   const packSize = product.pack_size ?? 1;
+  // S87: a product sold by option (e.g. key cards by locking system) prices
+  // from the picked option; the buyer must pick one before adding to cart.
+  const options = product.price_options ?? [];
+  const pickedOption = options.find((o) => o.label === selectedOption) ?? null;
+  const shownPrice = pickedOption ? pickedOption.price : product.pack_price;
+  const confirmedOn = pickedOption?.price_confirmed_at ?? product.price_confirmed_at ?? null;
   const priceBreaks =
     product.base_price != null
       ? product.pricing_tiers.filter((t) => t.min_qty > 1)
@@ -206,8 +213,37 @@ export default function PortalProductDetailPage() {
             <div>
               <h3 className="text-sm font-medium text-gray-700">Price</h3>
               <p className="mt-1 text-2xl font-semibold" style={{ color: primaryColor }}>
-                {packPriceLabel(product.pack_price, packSize)}
+                {options.length > 0 && !pickedOption ? 'From ' : ''}
+                {packPriceLabel(shownPrice ?? product.pack_price, packSize)}
               </p>
+              {confirmedOn && (
+                <p className="mt-0.5 text-xs text-gray-500">
+                  Price confirmed {formatConfirmed(confirmedOn)}
+                </p>
+              )}
+              {options.length > 0 && (
+                <fieldset className="mt-3">
+                  <legend className="text-sm font-medium text-gray-700">
+                    {product.option_set_name || 'Option'}
+                  </legend>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {options.map((option) => (
+                      <button
+                        key={option.label}
+                        type="button"
+                        aria-pressed={selectedOption === option.label}
+                        onClick={() => setSelectedOption(option.label)}
+                        className={`rounded-md border px-3 py-1.5 text-sm ${
+                          selectedOption === option.label ? 'text-white' : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                        }`}
+                        style={selectedOption === option.label ? { backgroundColor: primaryColor, borderColor: primaryColor } : undefined}
+                      >
+                        {option.label} · {packPriceLabel(option.price, packSize)}
+                      </button>
+                    ))}
+                  </div>
+                </fieldset>
+              )}
               {priceBreaks.length > 0 && (
                 <div className="mt-2 overflow-hidden rounded-lg border border-gray-200">
                   <table className="min-w-full divide-y divide-gray-200 text-sm">
@@ -293,6 +329,7 @@ export default function PortalProductDetailPage() {
                       quantity,
                       size: selectedSize || undefined,
                       color: selectedColor || undefined,
+                      price_option: selectedOption || undefined,
                     });
                     setAdded(true);
                     setTimeout(() => setAdded(false), 2000);
@@ -302,11 +339,17 @@ export default function PortalProductDetailPage() {
                     setAdding(false);
                   }
                 }}
-                disabled={adding}
+                disabled={adding || (options.length > 0 && !pickedOption)}
                 className="w-full rounded-md px-4 py-2.5 text-sm font-medium text-white transition-colors disabled:opacity-50"
                 style={{ backgroundColor: added ? '#16a34a' : primaryColor }}
               >
-                {adding ? 'Adding...' : added ? 'Added to Cart!' : 'Add to Cart'}
+                {adding
+                  ? 'Adding...'
+                  : added
+                    ? 'Added to Cart!'
+                    : options.length > 0 && !pickedOption
+                      ? `Choose a ${(product.option_set_name || 'option').toLowerCase()}`
+                      : 'Add to Cart'}
               </button>
 
               {QUOTES_ENABLED && (
