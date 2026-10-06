@@ -104,6 +104,17 @@ export default function OrderDetailPage() {
             {order.po_number || 'none given'}
           </span>
         </div>
+        {order.proof_email && (
+          <div className="mt-2 flex justify-between border-t pt-2">
+            <span className="text-gray-500">Proofs go to</span>
+            <span className="font-medium text-gray-900">
+              {order.proof_email}
+              {order.proof_cc_email && (
+                <span className="font-normal text-gray-500"> (copy to {order.proof_cc_email})</span>
+              )}
+            </span>
+          </div>
+        )}
         {order.notes && (
           <div className="mt-2 border-t pt-2">
             <p className="text-gray-500">Your notes</p>
@@ -192,6 +203,15 @@ export default function OrderDetailPage() {
                     </span>
                   )}
                 </div>
+                {item.artwork_disposition === 'reuse_unchanged' && (
+                  <p className="mt-1 text-xs text-gray-600">Artwork: reprint unchanged — no proof</p>
+                )}
+                {item.artwork_disposition === 'changes_new_proof' && (
+                  <p className="mt-1 text-xs text-gray-600">
+                    Artwork: changes — new proof required
+                    {item.artwork_change_note ? `: ${item.artwork_change_note}` : ''}
+                  </p>
+                )}
               </div>
               <p className="font-medium text-gray-900">
                 ${Number(item.line_total).toFixed(2)}

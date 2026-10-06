@@ -4,6 +4,7 @@ import { usePortalContext } from '../../contexts/PortalContext';
 import Spinner from '../../components/ui/Spinner';
 import { INVOICE_TERMS, FREIGHT_NOTE } from '../../lib/paymentTerms';
 import { packPriceLabel, packQuantityLabel } from '../../lib/pricing';
+import ArtworkDeclaration from '../../components/portal/ArtworkDeclaration';
 
 export default function CartPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -11,6 +12,8 @@ export default function CartPage() {
   const { cart, loading, updateItem, removeItem } = useCart();
   const productName = (productId: string) =>
     products.find((p) => p.id === productId)?.name ?? 'Product';
+  const needsProof = (productId: string) =>
+    products.find((p) => p.id === productId)?.proof_required === true;
 
   const primaryColor = portal?.brand_config?.primary_color || '#558B2F';
 
@@ -70,6 +73,25 @@ export default function CartPage() {
                 <p className="text-xs text-gray-500">
                   {packQuantityLabel(item.quantity, item.pack_size)}
                 </p>
+              )}
+              {needsProof(item.product_id) && (
+                <ArtworkDeclaration
+                  compact
+                  idPrefix={`cart-${item.id}`}
+                  value={{
+                    disposition: item.artwork_disposition ?? null,
+                    note: item.artwork_change_note ?? '',
+                    uploadUrl: item.artwork_upload_url ?? null,
+                  }}
+                  onChange={(next) =>
+                    updateItem(item.id, {
+                      quantity: item.quantity,
+                      artwork_disposition: next.disposition ?? undefined,
+                      artwork_change_note: next.note,
+                      artwork_upload_url: next.uploadUrl ?? undefined,
+                    })
+                  }
+                />
               )}
             </div>
 

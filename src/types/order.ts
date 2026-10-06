@@ -1,3 +1,4 @@
+import type { ArtworkDisposition } from './cart';
 export interface ShippingAddress {
   name: string;
   line1: string;
@@ -28,6 +29,10 @@ export interface LineItem {
   line_total: number;
   needs_proof: boolean;
   proof_status: string | null;
+  /** The buyer's artwork declaration the line was placed with (S88). */
+  artwork_disposition?: ArtworkDisposition;
+  artwork_change_note?: string | null;
+  artwork_upload_url?: string | null;
   created_at: string;
 }
 
@@ -49,6 +54,9 @@ export interface Order {
   po_number: string | null;
   notes: string | null;
   tags: string[];
+  /** Where proofs go (the portal's support contact by default) and the buyer's copy. */
+  proof_email?: string | null;
+  proof_cc_email?: string | null;
   line_items: LineItem[];
   placed_by_id: string | null;
   placed_at: string;
@@ -71,6 +79,8 @@ export interface CreateOrderFromCartRequest {
   payment_method?: string;
   po_number?: string;
   notes?: string;
+  /** "Send proofs to"; blank means the portal's support contact. */
+  proof_email?: string;
 }
 
 export interface UpdateOrderRequest {

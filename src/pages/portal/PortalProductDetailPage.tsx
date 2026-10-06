@@ -4,6 +4,7 @@ import { QUOTES_ENABLED } from '../../lib/paymentTerms';
 import { useParams, Link } from 'react-router-dom';
 import { getPublicProduct } from '../../api/portals';
 import { checkSafeOrder } from '../../api/orders';
+import ArtworkDeclaration, { type ArtworkDeclarationValue } from '../../components/portal/ArtworkDeclaration';
 import { createPortalQuote } from '../../api/quotes';
 import { usePortalContext } from '../../contexts/PortalContext';
 import { useCart } from '../../contexts/CartContext';
@@ -22,6 +23,11 @@ export default function PortalProductDetailPage() {
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
+  const [artwork, setArtwork] = useState<ArtworkDeclarationValue>({
+    disposition: null,
+    note: '',
+    uploadUrl: null,
+  });
   const [adding, setAdding] = useState(false);
   const [added, setAdded] = useState(false);
   const [isSafeOrder, setIsSafeOrder] = useState(false);
@@ -317,6 +323,10 @@ export default function PortalProductDetailPage() {
                 )}
               </div>
 
+              {product.proof_required && (
+                <ArtworkDeclaration value={artwork} onChange={setArtwork} idPrefix="product" />
+              )}
+
               <button
                 onClick={async () => {
                   if (!product) return;
@@ -330,6 +340,19 @@ export default function PortalProductDetailPage() {
                       size: selectedSize || undefined,
                       color: selectedColor || undefined,
                       price_option: selectedOption || undefined,
+                      ...(product.proof_required && artwork.disposition
+                        ? { artwork_disposition: artwork.disposition }
+                        : {}),
+                      ...(product.proof_required &&
+                      artwork.disposition === 'changes_new_proof' &&
+                      artwork.note.trim()
+                        ? { artwork_change_note: artwork.note.trim() }
+                        : {}),
+                      ...(product.proof_required &&
+                      artwork.disposition === 'changes_new_proof' &&
+                      artwork.uploadUrl
+                        ? { artwork_upload_url: artwork.uploadUrl }
+                        : {}),
                     });
                     setAdded(true);
                     setTimeout(() => setAdded(false), 2000);
