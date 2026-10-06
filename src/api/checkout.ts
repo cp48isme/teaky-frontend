@@ -18,6 +18,8 @@ interface ConfirmCheckoutRequest {
   payment_method?: string;
   po_number?: string;
   notes?: string;
+  /** "Send proofs to"; blank means the portal's support contact (S88). */
+  proof_email?: string;
 }
 
 export async function createPaymentIntent(

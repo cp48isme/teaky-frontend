@@ -76,6 +76,13 @@ export default function CheckoutPage() {
   }, [portal?.name]);
   const [poNumber, setPoNumber] = useState("");
   const [notes, setNotes] = useState("");
+  // S88 "Send proofs to": blank means the portal's support contact (RGI's
+  // operations manager); the buyer's own address is copied either way.
+  const [proofEmail, setProofEmail] = useState("");
+  const anyProofRequired =
+    cart?.items.some(
+      (item) => products.find((p) => p.id === item.product_id)?.proof_required === true,
+    ) ?? false;
 
   // Shipping rates state
   const [shippingRates, setShippingRates] = useState<ShippingRate[]>([]);
@@ -169,6 +176,7 @@ export default function CheckoutPage() {
         payment_method: "invoice",
         po_number: poNumber.trim() || undefined,
         notes: notes || undefined,
+        proof_email: proofEmail.trim() || undefined,
       });
       // The cart was checked out server-side; refresh so the header count
       // does not keep showing the just-ordered quantity.
@@ -229,6 +237,7 @@ export default function CheckoutPage() {
         payment_method: "stripe",
         po_number: poNumber || undefined,
         notes: notes || undefined,
+        proof_email: proofEmail.trim() || undefined,
       });
       navigate(`/p/${slug}/orders/${order.id}/confirmation`);
     } catch (err) {
@@ -531,6 +540,33 @@ export default function CheckoutPage() {
                   className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-teak focus:ring-1 focus:ring-teak disabled:bg-gray-50 disabled:text-gray-500"
                 />
               </div>
+
+              {anyProofRequired && (
+                <div>
+                  <label
+                    htmlFor="proof-email"
+                    className="block text-sm font-medium text-gray-900"
+                  >
+                    Send proofs to (optional)
+                  </label>
+                  <p className="mt-0.5 text-xs text-gray-600">
+                    Leave blank and proofs go to{" "}
+                    {portal?.brand_config?.support_email
+                      ? portal.brand_config.support_email
+                      : "your account manager"}
+                    ; you are copied either way.
+                  </p>
+                  <input
+                    id="proof-email"
+                    type="email"
+                    value={proofEmail}
+                    onChange={(e) => setProofEmail(e.target.value)}
+                    placeholder={portal?.brand_config?.support_email ?? ""}
+                    disabled={showPayment}
+                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-teak focus:ring-1 focus:ring-teak disabled:bg-gray-50 disabled:text-gray-500"
+                  />
+                </div>
+              )}
 
               <div>
                 <label
