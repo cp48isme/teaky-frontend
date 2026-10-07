@@ -21,6 +21,7 @@ import type { TrackingInfo } from '../types/shipping';
 import SignatureCapture from '../components/proofs/SignatureCapture';
 import Spinner from '../components/ui/Spinner';
 import OrderFilesSection from '../components/orders/OrderFilesSection';
+import OrderCostsPanel from '../components/orders/OrderCostsPanel';
 import Breadcrumbs from '../components/ui/Breadcrumbs';
 
 const STATUS_COLORS: Record<string, string> = {
@@ -421,6 +422,11 @@ export default function PrinterOrderDetailPage() {
           </div>
         </div>
       )}
+
+      {/* Costs and gross profit (plan §5.3): printer-side only */}
+      <div className="mt-6">
+        <OrderCostsPanel orderId={order.id} subtotal={Number(order.subtotal)} />
+      </div>
 
       {/* Production Status Update */}
       {showProductionStatus && (
