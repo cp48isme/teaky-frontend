@@ -6,17 +6,27 @@ import {
   invitePortalUser,
   listPortalInvitations,
   duplicatePortal,
+  updatePortal,
 } from '../api/portals';
-import type { Portal } from '../types/portal';
+import type { Portal, CustomerClassification } from '../types/portal';
 import type { Invitation } from '../types/team';
 import Spinner from '../components/ui/Spinner';
 import Breadcrumbs from '../components/ui/Breadcrumbs';
 import SplitScreenLayout from '../components/layout/SplitScreenLayout';
 
+const CLASSIFICATION_LABELS: Record<CustomerClassification, string> = {
+  existing: 'Existing (RGI account before Teaky)',
+  teaky_sold: 'Teaky-sold',
+  rgi_sold: 'RGI-sold',
+};
+
 export default function PortalDetailPage() {
   const { portalId } = useParams<{ portalId: string }>();
   const navigate = useNavigate();
   const [portal, setPortal] = useState<Portal | null>(null);
+  const [classification, setClassification] = useState<CustomerClassification | ''>('');
+  const [shareRate, setShareRate] = useState('');
+  const [classifyError, setClassifyError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [publishing, setPublishing] = useState(false);
   const [error, setError] = useState('');
@@ -247,7 +257,82 @@ export default function PortalDetailPage() {
               <dt className="text-gray-500">Require PO</dt>
               <dd className="text-gray-900">{portal.require_po ? 'Yes' : 'No'}</dd>
             </div>
+            <div className="flex justify-between">
+              <dt className="text-gray-500">Customer classification</dt>
+              <dd className="text-gray-900">
+                {portal.customer_classification
+                  ? CLASSIFICATION_LABELS[portal.customer_classification]
+                  : 'not set'}
+              </dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-gray-500">Revenue share rate</dt>
+              <dd className="text-gray-900">
+                {portal.revenue_share_rate != null
+                  ? `${(Number(portal.revenue_share_rate) * 100).toFixed(0)}%`
+                  : 'not set'}
+              </dd>
+            </div>
           </dl>
+          {(!portal.customer_classification || portal.revenue_share_rate == null) && (
+            <form
+              className="mt-3 flex flex-wrap items-end gap-2 border-t pt-3"
+              onSubmit={async (e) => {
+                e.preventDefault();
+                setClassifyError(null);
+                try {
+                  const updated = await updatePortal(portal.id, {
+                    ...(classification && !portal.customer_classification
+                      ? { customer_classification: classification }
+                      : {}),
+                    ...(shareRate !== '' && portal.revenue_share_rate == null
+                      ? { revenue_share_rate: Number(shareRate) / 100 }
+                      : {}),
+                  });
+                  setPortal(updated);
+                } catch (err) {
+                  setClassifyError(err instanceof Error ? err.message : 'Could not save');
+                }
+              }}
+            >
+              {!portal.customer_classification && (
+                <label className="text-xs font-medium text-gray-500">
+                  Classification
+                  <select
+                    value={classification}
+                    onChange={(e) => setClassification(e.target.value as CustomerClassification | '')}
+                    className="mt-1 block rounded border border-gray-300 px-2 py-1 text-sm"
+                  >
+                    <option value="">Choose…</option>
+                    <option value="existing">Existing (RGI's before Teaky)</option>
+                    <option value="teaky_sold">Teaky-sold</option>
+                    <option value="rgi_sold">RGI-sold</option>
+                  </select>
+                </label>
+              )}
+              {portal.revenue_share_rate == null && (
+                <label className="text-xs font-medium text-gray-500">
+                  Share rate (%)
+                  <input
+                    inputMode="decimal"
+                    value={shareRate}
+                    onChange={(e) => setShareRate(e.target.value)}
+                    className="mt-1 block w-24 rounded border border-gray-300 px-2 py-1 text-sm"
+                  />
+                </label>
+              )}
+              <button
+                type="submit"
+                className="rounded-md bg-teak-dark px-3 py-1.5 text-sm font-medium text-white hover:bg-teak"
+              >
+                Set once
+              </button>
+              <span className="text-xs text-gray-500">
+                These cannot be changed in place afterwards.
+              </span>
+              {classifyError && <span className="text-xs text-red-600">{classifyError}</span>}
+            </form>
+          )}
         </div>
 
         {/* Branding */}

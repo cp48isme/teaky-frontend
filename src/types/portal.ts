@@ -1,3 +1,5 @@
+export type CustomerClassification = 'existing' | 'teaky_sold' | 'rgi_sold';
+
 export interface BrandConfig {
   logo_url: string | null;
   favicon_url: string | null;
@@ -25,6 +27,9 @@ export interface Portal {
   approval_workflow: string;
   require_po: boolean;
   self_registration: boolean;
+  /** Set once (plan §5.3); the API refuses an in-place change. */
+  customer_classification?: CustomerClassification | null;
+  revenue_share_rate?: number | null;
   is_template: boolean;
   template_portal_id: string | null;
   duplication_count: number;
@@ -49,6 +54,8 @@ export interface UpdatePortalRequest {
   approval_workflow?: string;
   require_po?: boolean;
   self_registration?: boolean;
+  customer_classification?: CustomerClassification;
+  revenue_share_rate?: number;
   is_template?: boolean;
 }
 
