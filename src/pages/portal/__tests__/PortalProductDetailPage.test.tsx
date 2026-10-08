@@ -25,11 +25,10 @@ const keyCards = {
   pack_size: 1,
   pack_price: 0.3,
   base_price: null,
-  price_confirmed_at: '2026-10-02T15:00:00Z',
   option_set_name: 'Locking system',
   price_options: [
-    { label: 'Magnetic', price: 0.3, price_confirmed_at: '2026-10-02T15:00:00Z' },
-    { label: 'RFID', price: 0.95, price_confirmed_at: '2026-09-28T15:00:00Z' },
+    { label: 'Magnetic', price: 0.3 },
+    { label: 'RFID', price: 0.95 },
   ],
   proof_required: false,
   status: 'active',
@@ -67,7 +66,8 @@ describe('PortalProductDetailPage — price options', () => {
 
     await user.click(screen.getByRole('button', { name: /RFID/ }));
     expect(screen.getByText('$0.95 each')).toBeInTheDocument();
-    expect(screen.getByText('Price confirmed 28 Sept 2026')).toBeInTheDocument();
+    // 2026-10-08 (walkthrough N4): the pricing-review date is staff metadata and is not shown.
+    expect(screen.queryByText(/Price confirmed/)).toBeNull();
 
     await user.click(screen.getByRole('button', { name: 'Add to Cart' }));
     expect(addItem).toHaveBeenCalledWith(expect.objectContaining({ product_id: 'prod-kc', price_option: 'RFID' }));

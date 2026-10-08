@@ -48,7 +48,10 @@ describe('OrderConfirmationPage', () => {
       </MemoryRouter>,
     );
     expect(await screen.findByText('What happens next')).toBeInTheDocument();
-    expect(screen.getByText(/No proof is needed: this is a reprint/)).toBeInTheDocument();
+    // 2026-10-08 (walkthrough N1): the sentence states the declared disposition per line; the
+    // fixture line carries no disposition (no_artwork), so no proof and no 'approved reprint' claim.
+    expect(screen.getByText(/no artwork is involved, so no proof is needed/)).toBeInTheDocument();
+    expect(screen.queryByText(/reprint of artwork already approved/)).toBeNull();
     expect(screen.getByText(/You will be invoiced after it ships/)).toBeInTheDocument();
     expect(screen.getByText('RGI orders · orders@example.com')).toBeInTheDocument();
   });

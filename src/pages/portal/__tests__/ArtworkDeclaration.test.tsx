@@ -26,7 +26,6 @@ const doorHangers = {
   pack_size: 1000,
   pack_price: 420,
   base_price: 420,
-  price_confirmed_at: '2026-10-01T15:00:00Z',
   option_set_name: null,
   price_options: [],
   proof_required: true,
