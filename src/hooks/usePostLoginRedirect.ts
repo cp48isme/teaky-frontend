@@ -1,6 +1,8 @@
 import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getCompanyProfileByOrg } from '../api/companyProfiles';
+import { getMyOrganization } from '../api/organizations';
+import { listPortals } from '../api/portals';
 import { isBuyerUser, isPrinterUser, lastPortalPath, safeNextPath } from '../lib/portalSession';
 
 interface TokenClaims {
@@ -31,8 +33,11 @@ function readClaims(token: string): TokenClaims | null {
  *    sees the printer onboarding wizard, and the company-profile lookup that
  *    used to 404 for them is not made. A buyer may also hold printer_admin
  *    (see isBuyerUser); the remembered portal decides.
- * 3. A printer-side role → the existing rule: /get-started until the wizard is
- *    complete, /dashboard afterwards.
+ * 3. A printer-side role: a managed account (set up by Teaky; RGI first) goes
+ *    to /dashboard and never sees the wizard; an organisation that already has
+ *    a portal goes to /dashboard regardless, so the wizard cannot recur through
+ *    a route nobody thought of; otherwise the existing rule — /get-started
+ *    until the wizard is complete, /dashboard afterwards (8 Oct 2026 ruling).
  * 4. A buyer with no known portal → the site root.
  */
 export function usePostLoginRedirect() {
@@ -69,6 +74,24 @@ export function usePostLoginRedirect() {
         return;
       }
 
+      try {
+        const org = await getMyOrganization();
+        if (org.is_managed) {
+          navigate('/dashboard');
+          return;
+        }
+      } catch {
+        // Not knowable — fall through to the portal and profile rules.
+      }
+      try {
+        const portals = await listPortals();
+        if (portals.length > 0) {
+          navigate('/dashboard');
+          return;
+        }
+      } catch {
+        // Not knowable — fall through to the profile rule.
+      }
       try {
         const profile = await getCompanyProfileByOrg(claims.org);
         navigate(profile.is_wizard_complete ? '/dashboard' : '/get-started');

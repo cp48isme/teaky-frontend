@@ -7,6 +7,7 @@ export interface PortalAssignment {
 export interface TeamMember {
   user_id: string;
   email: string;
+  display_name: string | null;
   roles: string[];
   portal_assignments: PortalAssignment[];
   reports_to: string | null;
@@ -21,6 +22,7 @@ export interface InviteTeamMemberRequest {
 
 export interface UpdateTeamMemberRequest {
   role?: string;
+  display_name?: string;
   portal_ids?: string[];
   reports_to?: string;
 }
