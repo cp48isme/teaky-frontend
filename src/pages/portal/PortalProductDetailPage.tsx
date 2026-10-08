@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { formatConfirmed, packPriceLabel, packQuantityLabel } from '../../lib/pricing';
+import { packPriceLabel, packQuantityLabel } from '../../lib/pricing';
 import { QUOTES_ENABLED } from '../../lib/paymentTerms';
 import { useParams, Link } from 'react-router-dom';
 import { getPublicProduct } from '../../api/portals';
@@ -87,7 +87,6 @@ export default function PortalProductDetailPage() {
   const options = product.price_options ?? [];
   const pickedOption = options.find((o) => o.label === selectedOption) ?? null;
   const shownPrice = pickedOption ? pickedOption.price : product.pack_price;
-  const confirmedOn = pickedOption?.price_confirmed_at ?? product.price_confirmed_at ?? null;
   const priceBreaks =
     product.base_price != null
       ? product.pricing_tiers.filter((t) => t.min_qty > 1)
@@ -222,11 +221,6 @@ export default function PortalProductDetailPage() {
                 {options.length > 0 && !pickedOption ? 'From ' : ''}
                 {packPriceLabel(shownPrice ?? product.pack_price, packSize)}
               </p>
-              {confirmedOn && (
-                <p className="mt-0.5 text-xs text-gray-500">
-                  Price confirmed {formatConfirmed(confirmedOn)}
-                </p>
-              )}
               {options.length > 0 && (
                 <fieldset className="mt-3">
                   <legend className="text-sm font-medium text-gray-700">

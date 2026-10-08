@@ -8,6 +8,7 @@ import type { Order } from '../../types/order';
 import type { TrackingInfo } from '../../types/shipping';
 import Spinner from '../../components/ui/Spinner';
 import { humanize, countryName } from '../../lib/labels';
+import { packQuantityLabel } from '../../lib/pricing';
 import { isInvoiceOrder, FREIGHT_NOTE } from '../../lib/paymentTerms';
 
 const STATUS_STEPS = [
@@ -187,7 +188,7 @@ export default function OrderDetailPage() {
               <div>
                 <p className="font-medium text-gray-900">{item.product_name}</p>
                 <div className="mt-1 flex gap-3 text-xs text-gray-500">
-                  <span>Qty: {item.quantity}</span>
+                  <span>{packQuantityLabel(item.quantity, item.pack_size ?? 1)}</span>
                   {item.price_option && <span>{item.price_option}</span>}
                 {item.size && <span>Size: {item.size}</span>}
                   {item.color && <span>Color: {item.color}</span>}

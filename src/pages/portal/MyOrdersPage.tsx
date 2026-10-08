@@ -4,6 +4,7 @@ import { listMyOrders } from '../../api/orders';
 import type { Order } from '../../types/order';
 import Spinner from '../../components/ui/Spinner';
 import { humanize } from '../../lib/labels';
+import { packQuantityLabel } from '../../lib/pricing';
 import { useReorder, canReorder } from '../../hooks/useReorder';
 
 const STATUS_COLORS: Record<string, string> = {
@@ -89,7 +90,7 @@ export default function MyOrdersPage() {
                   </p>
                   <p className="mt-1 text-sm text-gray-700">
                     {order.line_items
-                      .map((li) => `${li.product_name} × ${li.quantity}`)
+                      .map((li) => `${li.product_name} × ${packQuantityLabel(li.quantity, li.pack_size ?? 1)}`)
                       .join(', ')}
                   </p>
                 </div>

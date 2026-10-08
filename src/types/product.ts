@@ -17,14 +17,13 @@ export interface PricingTier {
 
 /**
  * A buyer-picked spec that changes price (e.g. key cards by locking system).
- * Buyers receive label, price and price_confirmed_at only; cost, floor and
+ * Buyers receive label and price only; cost, floor and
  * margin state are admin-only (S87).
  */
 export interface PriceOption {
   label: string;
   /** Published price per pack. */
   price: number;
-  price_confirmed_at?: string | null;
   cost?: number | null;
   floor_multiplier?: string | null;
   effective_multiplier?: string | null;
@@ -58,7 +57,6 @@ export interface Product {
   /** What a buyer pays per pack at the minimum quantity, priced by the server; null = not for sale. */
   pack_price?: number | null;
   /** When the published price was last set or confirmed; shown to buyers. */
-  price_confirmed_at?: string | null;
   /** Name of the buyer-picked spec, e.g. "Locking system". */
   option_set_name?: string | null;
   price_options?: PriceOption[];
