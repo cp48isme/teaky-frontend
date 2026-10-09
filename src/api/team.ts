@@ -62,10 +62,14 @@ export async function getInvitationPreview(token: string): Promise<InvitationPre
 
 /** Set a password and take up the invitation; the returned session is scoped to
  *  the inviting organisation (S86). */
-export async function registerFromInvitation(token: string, password: string): Promise<void> {
+export async function registerFromInvitation(
+  token: string,
+  password: string,
+  displayName?: string,
+): Promise<void> {
   const tokens = await apiRequest<{ access_token: string; refresh_token: string; token_type: string; expires_in: number }>(
     `/team/invitations/${token}/register`,
-    { method: 'POST', body: JSON.stringify({ password }) },
+    { method: 'POST', body: JSON.stringify({ password, display_name: displayName || undefined }) },
   );
   setTokens(tokens);
 }

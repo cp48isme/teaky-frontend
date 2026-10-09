@@ -17,6 +17,7 @@ export default function AcceptInvitationPage() {
   const [preview, setPreview] = useState<InvitationPreview | null>(null);
   const [loading, setLoading] = useState(true);
   const [password, setPassword] = useState('');
+  const [displayName, setDisplayName] = useState('');
   const [working, setWorking] = useState(false);
   const [error, setError] = useState('');
   const authed = isAuthenticated();
@@ -43,7 +44,7 @@ export default function AcceptInvitationPage() {
     setWorking(true);
     setError('');
     try {
-      await registerFromInvitation(token, password);
+      await registerFromInvitation(token, password, displayName.trim());
       if (preview) rememberSignedInEmail(preview.invited_email);
       finish();
     } catch (err) {
@@ -160,6 +161,21 @@ export default function AcceptInvitationPage() {
         you'll go straight to {destinationName}.
       </p>
       <form onSubmit={handleRegister} className="mt-6 space-y-4">
+        <div>
+          <label htmlFor="invite-name" className="block text-sm font-medium text-gray-700">
+            Your name
+          </label>
+          <input
+            id="invite-name"
+            type="text"
+            maxLength={120}
+            autoComplete="name"
+            value={displayName}
+            onChange={(e) => setDisplayName(e.target.value)}
+            placeholder="So your printer knows who is ordering"
+            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-teak focus:ring-1 focus:ring-teak"
+          />
+        </div>
         <div>
           <label htmlFor="invite-password" className="block text-sm font-medium text-gray-700">
             Password

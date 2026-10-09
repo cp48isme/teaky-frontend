@@ -58,7 +58,7 @@ describe('AcceptInvitationPage', () => {
     expect(screen.queryByText(/Create Account/)).not.toBeInTheDocument();
     await user.type(screen.getByLabelText('Password'), 'Walkthrough-2026!x');
     await user.click(screen.getByRole('button', { name: 'Set password and go to The Raphael Hotel' }));
-    await waitFor(() => expect(registerFromInvitation).toHaveBeenCalledWith('tok-123', 'Walkthrough-2026!x'));
+    await waitFor(() => expect(registerFromInvitation).toHaveBeenCalledWith('tok-123', 'Walkthrough-2026!x', ''));
     expect(mockNavigate).toHaveBeenCalledWith('/p/raphael', { replace: true });
   });
 

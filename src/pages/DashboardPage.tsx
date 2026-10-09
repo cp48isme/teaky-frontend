@@ -14,9 +14,12 @@ import CompanyProfileCard from '../components/dashboard/CompanyProfileCard';
 import EquipmentSummary from '../components/dashboard/EquipmentSummary';
 import CreatePortalCTA from '../components/dashboard/CreatePortalCTA';
 import Spinner from '../components/ui/Spinner';
+import { useMyOrganization } from '../hooks/useMyOrganization';
 
 export default function DashboardPage() {
   const orgId = useOrganizationId();
+  const { organization } = useMyOrganization();
+  const managed = organization?.is_managed ?? false;
   const [profile, setProfile] = useState<CompanyProfile | null>(null);
   const [equipment, setEquipment] = useState<OrganizationEquipment[]>([]);
   const [portals, setPortals] = useState<Portal[]>([]);
@@ -56,7 +59,7 @@ export default function DashboardPage() {
         <StatCard
           label="Active Portals"
           value={activePortalCount}
-          subtitle={activePortalCount === 0 ? 'Create your first' : undefined}
+          subtitle={activePortalCount === 0 && !managed ? 'Create your first' : undefined}
         />
         <StatCard label="Orders" value={summary?.order_count ?? 0} />
         <StatCard
@@ -77,13 +80,14 @@ export default function DashboardPage() {
         View detailed analytics &rarr;
       </Link>
 
-      {/* Create Portal CTA */}
-      <CreatePortalCTA />
+      {/* Create Portal CTA: self-serve accounts with no portal yet. A managed
+          account never sees it, and nobody with a portal does (8 Oct 2026). */}
+      {!managed && portals.length === 0 && <CreatePortalCTA />}
 
       {/* Profile + Equipment */}
       <div className="grid gap-6 lg:grid-cols-2">
-        <CompanyProfileCard profile={profile} />
-        <EquipmentSummary equipment={equipment} />
+        <CompanyProfileCard profile={profile} managed={managed} />
+        {!managed && <EquipmentSummary equipment={equipment} />}
       </div>
     </div>
   );

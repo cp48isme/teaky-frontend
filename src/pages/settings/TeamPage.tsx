@@ -29,6 +29,7 @@ export default function TeamPage() {
   const [inviting, setInviting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editRole, setEditRole] = useState('');
+  const [editName, setEditName] = useState('');
   const [error, setError] = useState('');
 
   const loadData = async () => {
@@ -83,7 +84,7 @@ export default function TeamPage() {
 
   const handleUpdateRole = async (userId: string) => {
     try {
-      await updateMember(userId, { role: editRole });
+      await updateMember(userId, { role: editRole, display_name: editName.trim() });
       setEditingId(null);
       await loadData();
     } catch {
@@ -183,6 +184,9 @@ export default function TeamPage() {
             <thead>
               <tr>
                 <th className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">
+                  Name
+                </th>
+                <th className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">
                   Email
                 </th>
                 <th className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">
@@ -199,6 +203,20 @@ export default function TeamPage() {
             <tbody className="divide-y divide-gray-200">
               {members.map((m) => (
                 <tr key={m.user_id}>
+                  <td className="px-4 py-3 text-sm text-gray-900">
+                    {editingId === m.user_id ? (
+                      <input
+                        type="text"
+                        value={editName}
+                        maxLength={120}
+                        onChange={(e) => setEditName(e.target.value)}
+                        placeholder="Shown on invitations they send"
+                        className="w-44 rounded border border-gray-300 px-2 py-1 text-sm"
+                      />
+                    ) : (
+                      m.display_name || <span className="text-gray-400">—</span>
+                    )}
+                  </td>
                   <td className="px-4 py-3 text-sm text-gray-900">{m.email}</td>
                   <td className="px-4 py-3 text-sm">
                     {editingId === m.user_id ? (
@@ -250,6 +268,7 @@ export default function TeamPage() {
                       onClick={() => {
                         setEditingId(m.user_id);
                         setEditRole(m.roles[0] || 'sales_rep');
+                        setEditName(m.display_name ?? '');
                       }}
                       className="mr-3 text-teak-dark hover:text-teak"
                     >

@@ -1,4 +1,5 @@
 import { NavLink, useLocation } from 'react-router-dom';
+import { useMyOrganization } from '../../hooks/useMyOrganization';
 import type { ReactNode } from 'react';
 
 interface NavItem {
@@ -96,11 +97,14 @@ const NAV_ITEMS: NavItem[] = [
 
 export default function Sidebar() {
   const { pathname } = useLocation();
+  const { organization } = useMyOrganization();
+  // Equipment is a self-serve surface; a managed account never sees it (8 Oct 2026).
+  const items = organization?.is_managed ? NAV_ITEMS.filter((i) => i.to !== '/equipment') : NAV_ITEMS;
 
   return (
     <aside className="hidden w-56 shrink-0 border-r border-gray-100 bg-white lg:block">
       <nav className="flex flex-col gap-0.5 p-3">
-        {NAV_ITEMS.map((item) => {
+        {items.map((item) => {
           const active = item.matchPrefix
             ? pathname.startsWith(item.matchPrefix)
             : pathname === item.to || pathname.startsWith(item.to + '/');

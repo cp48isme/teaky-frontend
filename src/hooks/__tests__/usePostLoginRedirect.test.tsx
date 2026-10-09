@@ -12,7 +12,11 @@ vi.mock('react-router-dom', async () => {
   return { ...actual, useNavigate: () => mockNavigate };
 });
 vi.mock('../../api/companyProfiles', () => ({ getCompanyProfileByOrg: vi.fn() }));
+vi.mock('../../api/organizations', () => ({ getMyOrganization: vi.fn() }));
+vi.mock('../../api/portals', () => ({ listPortals: vi.fn() }));
 import { getCompanyProfileByOrg } from '../../api/companyProfiles';
+import { getMyOrganization } from '../../api/organizations';
+import { listPortals } from '../../api/portals';
 
 function fakeJwt(claims: Record<string, unknown>): string {
   const b64 = (o: unknown) => btoa(JSON.stringify(o)).replace(/=+$/, '');
@@ -36,6 +40,8 @@ describe('usePostLoginRedirect', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.stubGlobal('localStorage', memoryStorage());
+    vi.mocked(getMyOrganization).mockResolvedValue({ id: 'org-print', name: 'Print', is_managed: false });
+    vi.mocked(listPortals).mockResolvedValue([]);
   });
 
   it('sends a buyer back to the portal they were on and never asks for a company profile', async () => {
@@ -78,6 +84,24 @@ describe('usePostLoginRedirect', () => {
     await result.current();
     expect(getCompanyProfileByOrg).toHaveBeenCalledWith('org-print');
     expect(mockNavigate).toHaveBeenCalledWith('/get-started');
+  });
+
+  it('never sends a managed account to the wizard, profile or not (8 Oct 2026 ruling)', async () => {
+    localStorage.setItem('access_token', fakeJwt({ org: 'org-rgi', roles: ['printer_admin'] }));
+    vi.mocked(getMyOrganization).mockResolvedValueOnce({ id: 'org-rgi', name: 'RGI Publications', is_managed: true });
+    const { result } = renderHook(() => usePostLoginRedirect());
+    await result.current();
+    expect(mockNavigate).toHaveBeenCalledWith('/dashboard');
+    expect(getCompanyProfileByOrg).not.toHaveBeenCalled();
+  });
+
+  it('never sends an organisation that already has a portal to the wizard', async () => {
+    localStorage.setItem('access_token', fakeJwt({ org: 'org-print', roles: ['printer_admin'] }));
+    vi.mocked(listPortals).mockResolvedValueOnce([{ id: 'p1' } as never]);
+    const { result } = renderHook(() => usePostLoginRedirect());
+    await result.current();
+    expect(mockNavigate).toHaveBeenCalledWith('/dashboard');
+    expect(getCompanyProfileByOrg).not.toHaveBeenCalled();
   });
 
   it('sends a printer user with a complete profile to the dashboard', async () => {

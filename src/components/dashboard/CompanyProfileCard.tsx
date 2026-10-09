@@ -2,18 +2,26 @@ import type { CompanyProfile } from '../../types/companyProfile';
 
 interface Props {
   profile: CompanyProfile | null;
+  /** A managed account is set up by Teaky: no wizard link, ever. */
+  managed?: boolean;
 }
 
-export default function CompanyProfileCard({ profile }: Props) {
+export default function CompanyProfileCard({ profile, managed = false }: Props) {
   if (!profile) {
     return (
       <div className="rounded-lg border border-gray-200 bg-white p-6">
         <h3 className="font-heading text-sm font-semibold text-brand-dark">Company Profile</h3>
         <p className="mt-2 text-sm text-gray-500">
-          No profile set up yet.{' '}
-          <a href="/get-started" className="text-teak-dark hover:text-teak">
-            Complete the wizard
-          </a>
+          {managed ? (
+            'Your profile is set up by Teaky. To change it, reply to any Teaky email.'
+          ) : (
+            <>
+              No profile set up yet.{' '}
+              <a href="/get-started" className="text-teak-dark hover:text-teak">
+                Complete the wizard
+              </a>
+            </>
+          )}
         </p>
       </div>
     );
@@ -23,12 +31,14 @@ export default function CompanyProfileCard({ profile }: Props) {
     <div className="rounded-lg border border-gray-200 bg-white p-6">
       <div className="flex items-start justify-between">
         <h3 className="font-heading text-sm font-semibold text-brand-dark">Company Profile</h3>
-        <a
-          href="/get-started"
-          className="text-xs text-teak-dark hover:text-teak"
-        >
-          Edit
-        </a>
+        {!managed && (
+          <a
+            href="/get-started"
+            className="text-xs text-teak-dark hover:text-teak"
+          >
+            Edit
+          </a>
+        )}
       </div>
 
       <div className="mt-4 flex items-start gap-4">
