@@ -42,6 +42,7 @@ import QuotesPage from './pages/QuotesPage';
 import MessageCenterPage from './pages/MessageCenterPage';
 import EquipmentPage from './pages/EquipmentPage';
 import PlaceholderPage from './pages/PlaceholderPage';
+import PortalLegalPage from './pages/portal/PortalLegalPage';
 
 function App() {
   return (
@@ -252,6 +253,8 @@ function App() {
             <Route path="quotes" element={<MyQuotesPage />} />
             <Route path="orders" element={<MyOrdersPage />} />
             <Route path="orders/:orderId" element={<OrderDetailPage />} />
+            <Route path="privacy" element={<PortalLegalPage kind="privacy" />} />
+            <Route path="terms" element={<PortalLegalPage kind="terms" />} />
           </Route>
           {/* Footer placeholder pages */}
           <Route path="/about" element={<PlaceholderPage page="about" />} />
