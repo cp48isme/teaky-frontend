@@ -124,7 +124,7 @@ export default function PortalDetailPage() {
           <h2 className="font-heading text-xl font-bold text-brand-dark">{portal.name}</h2>
         </div>
         <div className="flex items-center gap-3">
-          {/* View Live Store Button */}
+          {/* View Portal Button */}
           <a
             href={`/p/${portal.slug}`}
             target="_blank"
@@ -132,7 +132,7 @@ export default function PortalDetailPage() {
             className="inline-flex items-center gap-2 rounded-md bg-gradient-to-r from-teak to-teak-dark px-4 py-2 text-sm font-medium text-white shadow-sm hover:shadow-md transition"
           >
             <span>🌐</span>
-            View Live Store
+            View Portal
           </a>
 
           {portal.is_template && (
@@ -186,7 +186,7 @@ export default function PortalDetailPage() {
                   Custom Subdomain <span className="text-gray-400">(optional)</span>
                 </label>
                 <div className="mt-1 flex items-center gap-1">
-                  <span className="text-sm text-gray-500">teaky.com/p/</span>
+                  <span className="text-sm text-gray-500">app.teakygrove.com/p/</span>
                   <input
                     type="text"
                     value={duplicateSubdomain}
@@ -304,7 +304,7 @@ export default function PortalDetailPage() {
                     className="mt-1 block rounded border border-gray-300 px-2 py-1 text-sm"
                   >
                     <option value="">Choose…</option>
-                    <option value="existing">Existing (RGI's before Teaky)</option>
+                    <option value="existing">Existing (RGI account before Teaky)</option>
                     <option value="teaky_sold">Teaky-sold</option>
                     <option value="rgi_sold">RGI-sold</option>
                   </select>

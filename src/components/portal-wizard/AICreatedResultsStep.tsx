@@ -211,7 +211,7 @@ export default function AICreatedResultsStep({ result, onCreateNew }: Props) {
 
       {/* Action Buttons */}
       <div className="flex flex-col gap-3 sm:flex-row border-t pt-6">
-        {/* View Live Store */}
+        {/* View Portal */}
         <a
           href={result.portal_url}
           target="_blank"
@@ -219,7 +219,7 @@ export default function AICreatedResultsStep({ result, onCreateNew }: Props) {
           className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-teak to-teak-dark px-6 py-3 text-base font-semibold text-white shadow-md transition hover:shadow-lg"
         >
           <span>🌐</span>
-          View Live Store
+          View Portal
         </a>
 
         {/* Edit Products */}

@@ -79,13 +79,13 @@ export default function PortalsListPage() {
                     )}
                     {portal.template_portal_id && (
                       <span className="inline-flex rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
-                        Franchise
+                        Multi-location
                       </span>
                     )}
                   </div>
                 </div>
               </div>
-              <p className="mt-3 text-sm text-gray-500 font-mono">{portal.slug}.teaky.com</p>
+              <p className="mt-3 text-sm text-gray-500 font-mono">app.teakygrove.com/p/{portal.slug}</p>
               <div className="mt-3 flex items-center gap-3 text-xs text-gray-400">
                 <span>{portal.type}</span>
                 <span>&middot;</span>

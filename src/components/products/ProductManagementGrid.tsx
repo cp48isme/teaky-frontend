@@ -9,11 +9,18 @@ import Spinner from '../ui/Spinner';
 import { formatMoney } from '../../lib/money';
 
 const CATEGORIES = [
-  { value: 'apparel', label: 'Apparel' },
+  { value: 'print', label: 'Print' },
+  { value: 'stationery', label: 'Stationery' },
+  { value: 'door_hangers', label: 'Door Hangers' },
+  { value: 'guest_collateral', label: 'Guest Collateral' },
+  { value: 'coupons_tickets', label: 'Coupons & Tickets' },
+  { value: 'key_cards', label: 'Key Cards' },
+  { value: 'parking', label: 'Parking' },
   { value: 'business_cards', label: 'Business Cards' },
   { value: 'signage', label: 'Signage' },
-  { value: 'promotional', label: 'Promotional' },
   { value: 'packaging', label: 'Packaging' },
+  { value: 'promotional', label: 'Promotional' },
+  { value: 'apparel', label: 'Apparel' },
 ];
 
 interface Props {
@@ -139,7 +146,7 @@ export default function ProductManagementGrid({ portalId, onProductsChange }: Pr
 
   const bulkChangeCategory = async () => {
     if (selectedIds.size === 0) return;
-    const newCategory = prompt('Enter new category:', 'apparel');
+    const newCategory = prompt('Enter new category:', 'print');
     if (!newCategory) return;
 
     try {
@@ -225,7 +232,7 @@ export default function ProductManagementGrid({ portalId, onProductsChange }: Pr
     try {
       const newProduct = await createProduct(portalId, {
         name: 'New Product',
-        category: 'apparel',
+        category: 'print',
         description: '',
         sizes: [],
         colors: [],
@@ -367,7 +374,7 @@ export default function ProductManagementGrid({ portalId, onProductsChange }: Pr
           <textarea
             value={aiPrompt}
             onChange={(e) => setAiPrompt(e.target.value)}
-            placeholder="e.g., Add polo shirts in navy, red, and white with sizes S-3XL priced at $25 each"
+            placeholder="e.g., Add #10 window envelopes, pack of 1,000 at $252 per pack, and parking passes, pack of 1,000 at $215"
             rows={3}
             className="mt-2 w-full rounded-md border border-purple-200 px-3 py-2 text-sm focus:border-purple-400 focus:outline-none focus:ring-purple-400"
           />

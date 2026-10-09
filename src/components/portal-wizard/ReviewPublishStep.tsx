@@ -52,7 +52,7 @@ export default function ReviewPublishStep({
                 </p>
                 <p className="text-sm">
                   <span className="font-medium text-gray-700">URL:</span>{' '}
-                  <span className="font-mono text-teak-dark">{slug}.teaky.com</span>
+                  <span className="font-mono text-teak-dark">app.teakygrove.com/p/{slug}</span>
                 </p>
               </div>
             </div>
@@ -155,7 +155,7 @@ export default function ReviewPublishStep({
                   <div className="h-2.5 w-2.5 rounded-full bg-green-400" />
                 </div>
                 <div className="flex-1 rounded-md bg-white px-3 py-1 text-[10px] text-gray-400 font-mono truncate">
-                  {slug || 'your-portal'}.teaky.com
+                  app.teakygrove.com/p/{slug || 'your-portal'}
                 </div>
               </div>
 
@@ -207,8 +207,8 @@ export default function ReviewPublishStep({
                 {/* Sample product grid */}
                 <div className="grid grid-cols-2 gap-2">
                   {(products.length > 0 ? products.slice(0, 4) : [
-                    { _tempId: '1', name: 'Sample Product', category: 'apparel' },
-                    { _tempId: '2', name: 'Another Item', category: 'signage' },
+                    { _tempId: '1', name: 'Sample Product', category: 'print' },
+                    { _tempId: '2', name: 'Another Item', category: 'stationery' },
                   ]).map((p) => (
                     <div
                       key={p._tempId}

@@ -119,7 +119,7 @@ export default function AddLocationsStep({ templatePortal, onComplete, onSkip }:
                     Custom Subdomain <span className="text-gray-400">(optional)</span>
                   </label>
                   <div className="mt-1 flex items-center gap-1">
-                    <span className="text-xs text-gray-500">teaky.com/p/</span>
+                    <span className="text-xs text-gray-500">app.teakygrove.com/p/</span>
                     <input
                       type="text"
                       value={location.custom_subdomain || ''}

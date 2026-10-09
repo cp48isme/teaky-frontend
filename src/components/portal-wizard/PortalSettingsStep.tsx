@@ -34,9 +34,8 @@ export default function PortalSettingsStep({ slug, data, onUpdate, onNext, onBac
       <div className="rounded-lg border border-teak/30 bg-teak/10 p-4">
         <p className="text-sm font-medium text-brand-dark">Portal URL</p>
         <p className="mt-1 text-sm text-teak-dark">
-          <span className="font-mono">{slug}.teaky.com</span>
+          <span className="font-mono">app.teakygrove.com/p/{slug}</span>
           <span className="ml-2 text-xs text-teak">
-            (also accessible at teaky.com/p/{slug})
           </span>
         </p>
       </div>
@@ -45,7 +44,7 @@ export default function PortalSettingsStep({ slug, data, onUpdate, onNext, onBac
       <div>
         <label className="block text-sm font-medium text-gray-700">Custom Domain</label>
         <p className="mt-0.5 text-xs text-gray-500">
-          Use your own domain (e.g. orders.acme.com). You'll need to add a CNAME record pointing to teaky.com.
+          Use your own domain (e.g. orders.acme.com). You'll need to add a CNAME record pointing to app.teakygrove.com.
         </p>
         <input
           type="text"

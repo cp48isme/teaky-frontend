@@ -154,7 +154,7 @@ export default function SpreadsheetImport({ onImport, onCancel }: SpreadsheetImp
     const products: WizardProduct[] = parsedRows.map((row) => ({
       _tempId: crypto.randomUUID(),
       name: row.name,
-      category: row.category || 'apparel',
+      category: row.category || 'print',
       sku: row.sku || undefined,
       description: row.description || undefined,
       min_order_qty: parseInt(row.min_qty) || 1,

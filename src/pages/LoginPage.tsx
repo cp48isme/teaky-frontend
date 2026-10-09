@@ -57,7 +57,7 @@ export default function LoginPage() {
           <div className="h-1 bg-gradient-to-r from-teak-dark via-teak to-teak-light" />
           <div className="p-8">
             <h2 className="font-heading text-2xl font-bold text-brand-dark">Sign in to Teaky</h2>
-            <p className="mt-1 text-sm text-wood">Access your portals, orders, and AI agents</p>
+            <p className="mt-1 text-sm text-wood">Sign in to your portals and orders</p>
 
             <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
               {error && (
@@ -77,7 +77,7 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="mt-1.5 block w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-brand-dark placeholder-gray-400 transition focus:border-teak focus:outline-none focus:ring-1 focus:ring-teak"
-                  placeholder="you@yourshop.com"
+                  placeholder="you@company.com"
                 />
               </div>
 
@@ -92,7 +92,7 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="mt-1.5 block w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-brand-dark placeholder-gray-400 transition focus:border-teak focus:outline-none focus:ring-1 focus:ring-teak"
-                  placeholder="Min 8 characters"
+                  placeholder="Your password"
                 />
               </div>
 

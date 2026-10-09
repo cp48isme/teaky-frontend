@@ -87,7 +87,7 @@ export default function AuditTrailPage() {
               type="text"
               value={actionFilter}
               onChange={(e) => setActionFilter(e.target.value)}
-              placeholder="e.g. user.registered"
+              placeholder="e.g. user_logged_in"
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm shadow-sm focus:border-teak focus:ring-teak"
             />
           </div>

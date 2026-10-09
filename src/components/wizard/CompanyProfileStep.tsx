@@ -321,7 +321,7 @@ export default function CompanyProfileStep({ data, onUpdate, onNext }: Props) {
                 type="text"
                 value={data.industry}
                 onChange={(e) => onUpdate({ industry: e.target.value })}
-                placeholder="e.g., Custom Apparel Printing"
+                placeholder="e.g., Commercial printing"
                 className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-teak focus:outline-none focus:ring-teak sm:text-sm"
               />
             </div>

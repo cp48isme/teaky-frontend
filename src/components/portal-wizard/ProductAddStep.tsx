@@ -9,11 +9,18 @@ import type {
 } from '../../types/product';
 
 const CATEGORIES = [
-  { value: 'apparel', label: 'Apparel' },
+  { value: 'print', label: 'Print' },
+  { value: 'stationery', label: 'Stationery' },
+  { value: 'door_hangers', label: 'Door Hangers' },
+  { value: 'guest_collateral', label: 'Guest Collateral' },
+  { value: 'coupons_tickets', label: 'Coupons & Tickets' },
+  { value: 'key_cards', label: 'Key Cards' },
+  { value: 'parking', label: 'Parking' },
   { value: 'business_cards', label: 'Business Cards' },
   { value: 'signage', label: 'Signage' },
-  { value: 'promotional', label: 'Promotional' },
   { value: 'packaging', label: 'Packaging' },
+  { value: 'promotional', label: 'Promotional' },
+  { value: 'apparel', label: 'Apparel' },
 ];
 
 export interface WizardProduct extends CreateProductRequest {
@@ -31,7 +38,7 @@ function emptyProduct(): WizardProduct {
   return {
     _tempId: crypto.randomUUID(),
     name: '',
-    category: 'apparel',
+    category: 'print',
     description: '',
     sizes: [],
     colors: [],
@@ -464,7 +471,7 @@ function ProductForm({ product, onChange, onSave, onCancel }: ProductFormProps) 
 
       {/* Mockup Images */}
       <div>
-        <label className="block text-sm font-medium text-gray-700">Mockup Images</label>
+        <label className="block text-sm font-medium text-gray-700">Product images</label>
         {(product.mockup_urls ?? []).length > 0 && (
           <div className="mt-1 flex gap-2 flex-wrap">
             {(product.mockup_urls ?? []).map((url, i) => (
