@@ -335,7 +335,7 @@ export default function IntegrationsPage() {
                   type="url"
                   value={accountUrl}
                   onChange={(e) => setAccountUrl(e.target.value)}
-                  placeholder="https://yourcompany.dfrnt.com"
+                  placeholder="https://yourcompany.docketmanager.net"
                   className="mt-1 w-full max-w-md rounded-md border border-gray-300 px-3 py-2 text-sm"
                 />
               </div>
@@ -425,7 +425,7 @@ export default function IntegrationsPage() {
                 type="email"
                 value={csvNotificationEmail}
                 onChange={(e) => setCsvNotificationEmail(e.target.value)}
-                placeholder="production@yourshop.com"
+                placeholder="production@yourcompany.com"
                 className="mt-1 w-full max-w-md rounded-md border border-gray-300 px-3 py-2 text-sm"
               />
             </div>
@@ -751,7 +751,7 @@ export default function IntegrationsPage() {
           {qbStatus?.connected && (
             <p className="text-xs text-gray-500">
               Invoices are automatically created in QuickBooks when orders are placed.
-              Use the "Sync to QB" button on individual orders to manually sync.
+              Use the "Sync to QuickBooks" button on individual orders to manually sync.
             </p>
           )}
         </div>

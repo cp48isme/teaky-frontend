@@ -151,7 +151,7 @@ export default function ClientInfoStep({ data, onUpdate, onNext }: Props) {
           required
           value={data.clientName}
           onChange={(e) => onUpdate({ clientName: e.target.value })}
-          placeholder="e.g., Ace Hardware"
+          placeholder="e.g., The Raphael Hotel"
           className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-teak focus:outline-none focus:ring-teak sm:text-sm"
         />
       </div>
@@ -231,7 +231,7 @@ export default function ClientInfoStep({ data, onUpdate, onNext }: Props) {
           Portal URL <span className="text-red-500">*</span>
         </label>
         <div className="mt-1 flex items-center gap-1">
-          <span className="text-sm text-gray-500">teaky.com/p/</span>
+          <span className="text-sm text-gray-500">app.teakygrove.com/p/</span>
           <input
             id="portal-slug"
             type="text"
@@ -261,11 +261,11 @@ export default function ClientInfoStep({ data, onUpdate, onNext }: Props) {
           />
           <div className="flex-1">
             <span className="text-sm font-medium text-gray-900">
-              This is a franchise or multi-location business
+              This client has several locations
             </span>
             <p className="mt-1 text-xs text-gray-600">
               Enable this if you need to create the same portal for multiple locations
-              (e.g., franchise stores, regional offices). You'll be able to add locations
+              (e.g., a hotel group, a restaurant group, regional offices). You'll be able to add locations
               after the portal is created.
             </p>
           </div>

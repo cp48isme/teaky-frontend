@@ -88,17 +88,17 @@ export default function DescribePortalStep({ onSuccess, onBuildManually }: Props
   };
 
   const EXAMPLE_DESCRIPTIONS = [
-    "Employee uniforms and branded apparel for a corporate client — need polo shirts, t-shirts, and hoodies in company colors with bulk order discounts",
-    "Golf tournament merchandise package for 200 attendees — golf balls, hats, towels, and custom tees with embroidery or printing",
-    "New auto dealership opening — business cards, signage, window vinyl, vehicle wraps, and dealer uniforms in their brand colors",
-    "School spirit wear store — t-shirts, hoodies, and accessories for students with school logo and various sizes/colors",
+    "Guest collateral for a boutique hotel — door hangers, in-room menus, key card folders, notecards and envelopes, each sold by the pack of 50 to 1,000",
+    "Office stationery for a law firm — letterhead, #10 envelopes, business cards per person, and notepads, reordered monthly",
+    "New auto dealership opening — business cards, signage, window vinyl, and welcome folders in their brand colors",
+    "Restaurant group with four locations — menus, table tents, comment cards and gift certificates, each location ordering its own",
   ];
 
   return (
     <form onSubmit={handleCreate} className="space-y-6">
       {/* Header */}
       <div>
-        <h2 className="font-heading text-3xl font-extrabold text-brand-dark lg:text-4xl">Let's Create Your Store</h2>
+        <h2 className="font-heading text-3xl font-extrabold text-brand-dark lg:text-4xl">Let's Create the Portal</h2>
         <p className="mt-2 text-base text-gray-600">
           Describe your client and what they need. Our AI will instantly create a professional portal with products, categories, and branding.
         </p>
@@ -132,7 +132,7 @@ export default function DescribePortalStep({ onSuccess, onBuildManually }: Props
           required
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          placeholder="Describe your client: their name, industry, what products they need, quantities, colors, and any special requirements..."
+          placeholder="Describe your client: their name, industry, what products they need, quantities and pack sizes, and any special requirements..."
           rows={5}
           className="mt-2 block w-full rounded-lg border border-gray-300 px-4 py-3 shadow-sm focus:border-teak focus:outline-none focus:ring-2 focus:ring-teak/20 sm:text-sm"
         />

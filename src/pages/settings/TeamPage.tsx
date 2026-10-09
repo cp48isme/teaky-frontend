@@ -12,7 +12,7 @@ import Spinner from '../../components/ui/Spinner';
 
 const ROLE_OPTIONS = [
   { value: 'printer_admin', label: 'Printer Admin' },
-  { value: 'store_creator', label: 'Store Creator' },
+  { value: 'store_creator', label: 'Portal Creator' },
   { value: 'sales_rep', label: 'Sales Rep' },
   { value: 'sales_team_lead', label: 'Sales Team Lead' },
   { value: 'billing_contact', label: 'Billing Contact' },

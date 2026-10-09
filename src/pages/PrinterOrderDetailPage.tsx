@@ -584,7 +584,7 @@ export default function PrinterOrderDetailPage() {
               disabled={syncingQB}
               className="rounded border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
             >
-              {syncingQB ? 'Syncing...' : 'Sync to QB'}
+              {syncingQB ? 'Syncing...' : 'Sync to QuickBooks'}
             </button>
           </div>
         </div>
@@ -764,7 +764,7 @@ export default function PrinterOrderDetailPage() {
                           onClick={() => setSigningProofId(signingProofId === proof.id ? null : proof.id)}
                           className="rounded bg-green-600 px-2 py-1 text-xs text-white hover:bg-green-700"
                         >
-                          {signingProofId === proof.id ? 'Cancel Approve' : 'Approve with Signature'}
+                          {signingProofId === proof.id ? 'Cancel' : 'Approve with Signature'}
                         </button>
                         <div className="flex gap-1">
                           <input

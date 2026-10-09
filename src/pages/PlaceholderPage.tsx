@@ -4,7 +4,7 @@ const PAGES: Record<string, { title: string; description: string }> = {
   about: {
     title: 'About Teaky',
     description:
-      'Teaky is the AI-powered operating system for branded merchandise and print commerce. We help print shops, event planners, marketing firms, and anyone who needs custom products streamline their workflow with smart agents and branded portals.',
+      'Teaky gives commercial printers a branded ordering portal for each of their customers: the customer picks a product and a quantity, and the order arrives at the printer ready to produce.',
   },
   privacy: {
     title: 'Privacy Policy',
