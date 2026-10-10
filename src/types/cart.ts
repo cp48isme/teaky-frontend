@@ -1,6 +1,12 @@
 /** What the buyer declared about a line's artwork (S88). */
 export type ArtworkDisposition = 'reuse_unchanged' | 'changes_new_proof' | 'no_artwork';
 
+/** A person named on a variable-data item, one per pack (s89_02). */
+export interface Recipient {
+  name: string;
+  title?: string | null;
+}
+
 export interface CartItem {
   id: string;
   cart_id: string;
@@ -20,6 +26,7 @@ export interface CartItem {
   artwork_disposition?: ArtworkDisposition | null;
   artwork_change_note?: string | null;
   artwork_upload_url?: string | null;
+  recipients?: Recipient[];
   created_at: string;
 }
 
@@ -45,6 +52,7 @@ export interface AddToCartRequest {
   artwork_disposition?: ArtworkDisposition;
   artwork_change_note?: string;
   artwork_upload_url?: string;
+  recipients?: Recipient[];
 }
 
 export interface UpdateCartItemRequest {
@@ -52,4 +60,5 @@ export interface UpdateCartItemRequest {
   artwork_disposition?: ArtworkDisposition;
   artwork_change_note?: string;
   artwork_upload_url?: string;
+  recipients?: Recipient[];
 }

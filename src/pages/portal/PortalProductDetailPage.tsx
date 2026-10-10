@@ -29,6 +29,8 @@ export default function PortalProductDetailPage() {
     uploadUrl: null,
   });
   const [adding, setAdding] = useState(false);
+  // Variable-data items: one name (and title) per pack ordered (s89_02).
+  const [recipients, setRecipients] = useState<{ name: string; title: string }[]>([]);
   const [added, setAdded] = useState(false);
   const [isSafeOrder, setIsSafeOrder] = useState(false);
   const [showQuoteModal, setShowQuoteModal] = useState(false);
@@ -321,6 +323,51 @@ export default function PortalProductDetailPage() {
                 <ArtworkDeclaration value={artwork} onChange={setArtwork} idPrefix="product" />
               )}
 
+              {product.collects_recipients && (
+                <fieldset className="rounded-md border border-gray-200 p-3">
+                  <legend className="px-1 text-sm font-medium text-gray-700">
+                    Who is each {packSize > 1 ? 'pack' : 'one'} for?
+                  </legend>
+                  <p className="mb-2 text-xs text-gray-500">
+                    Name and title as they should appear, one per {packSize > 1 ? 'pack' : 'item'}.
+                  </p>
+                  {Array.from({ length: quantity }, (_, i) => (
+                    <div key={i} className="mb-2 grid grid-cols-2 gap-2">
+                      <input
+                        id={`recipient-name-${i}`}
+                        type="text"
+                        maxLength={120}
+                        placeholder={`Name ${i + 1}`}
+                        value={recipients[i]?.name ?? ''}
+                        onChange={(e) =>
+                          setRecipients((prev) => {
+                            const next = [...prev];
+                            next[i] = { name: e.target.value, title: next[i]?.title ?? '' };
+                            return next;
+                          })
+                        }
+                        className="rounded-md border border-gray-300 px-3 py-2 text-sm"
+                      />
+                      <input
+                        id={`recipient-title-${i}`}
+                        type="text"
+                        maxLength={120}
+                        placeholder="Title (optional)"
+                        value={recipients[i]?.title ?? ''}
+                        onChange={(e) =>
+                          setRecipients((prev) => {
+                            const next = [...prev];
+                            next[i] = { name: next[i]?.name ?? '', title: e.target.value };
+                            return next;
+                          })
+                        }
+                        className="rounded-md border border-gray-300 px-3 py-2 text-sm"
+                      />
+                    </div>
+                  ))}
+                </fieldset>
+              )}
+
               <button
                 onClick={async () => {
                   if (!product) return;
@@ -347,6 +394,14 @@ export default function PortalProductDetailPage() {
                       artwork.uploadUrl
                         ? { artwork_upload_url: artwork.uploadUrl }
                         : {}),
+                      ...(product.collects_recipients
+                        ? {
+                            recipients: Array.from({ length: quantity }, (_, i) => ({
+                              name: (recipients[i]?.name ?? '').trim(),
+                              title: (recipients[i]?.title ?? '').trim() || null,
+                            })),
+                          }
+                        : {}),
                     });
                     setAdded(true);
                     setTimeout(() => setAdded(false), 2000);
@@ -356,7 +411,12 @@ export default function PortalProductDetailPage() {
                     setAdding(false);
                   }
                 }}
-                disabled={adding || (options.length > 0 && !pickedOption)}
+                disabled={
+                  adding ||
+                  (options.length > 0 && !pickedOption) ||
+                  (product.collects_recipients === true &&
+                    Array.from({ length: quantity }, (_, i) => (recipients[i]?.name ?? '').trim()).some((n) => !n))
+                }
                 className="w-full rounded-md px-4 py-2.5 text-sm font-medium text-white transition-colors disabled:opacity-50"
                 style={{ backgroundColor: added ? '#16a34a' : primaryColor }}
               >

@@ -66,6 +66,11 @@ export default function CartPage() {
                 {item.size && <span>Size: {item.size}</span>}
                 {item.color && <span>Color: {item.color}</span>}
               </div>
+              {item.recipients && item.recipients.length > 0 && (
+                <p className="mt-1 text-xs text-gray-600">
+                  For: {item.recipients.map((r) => (r.title ? `${r.name} (${r.title})` : r.name)).join('; ')}
+                </p>
+              )}
               <p className="mt-1 text-sm text-gray-600">
                 {packPriceLabel(item.unit_price, item.pack_size ?? 1)}
               </p>
