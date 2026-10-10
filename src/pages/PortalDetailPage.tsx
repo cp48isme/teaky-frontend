@@ -478,6 +478,7 @@ export default function PortalDetailPage() {
         </div>
       }
       previewUrl={`/p/${portal.slug}`}
+      portalSlug={portal.slug}
     />
   );
 }

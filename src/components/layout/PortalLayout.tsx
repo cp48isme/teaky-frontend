@@ -7,6 +7,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { rememberPortal, signedInEmail, forgetSignedInEmail } from '../../lib/portalSession';
 import { QUOTES_ENABLED } from '../../lib/paymentTerms';
 import Spinner from '../ui/Spinner';
+import PortalLegalLinks from '../portal/PortalLegalLinks';
 
 export default function PortalLayout() {
   const { slug } = useParams<{ slug: string }>();
@@ -150,8 +151,9 @@ export default function PortalLayout() {
 
       {/* Footer */}
       <footer className="border-t bg-white px-6 py-4 text-center">
+        {slug && <PortalLegalLinks slug={slug} />}
         {portal.brand_config?.powered_by_teaky !== false && (
-          <p className="text-xs text-gray-400">
+          <p className="mt-2 text-xs text-gray-400">
             Powered by <span className="font-medium text-teak-dark">Teaky</span>
           </p>
         )}

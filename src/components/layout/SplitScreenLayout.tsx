@@ -1,9 +1,12 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
+import PortalLegalLinks from '../portal/PortalLegalLinks';
 import { usePreview, type ViewportSize } from '../../context/PreviewContext';
 
 interface Props {
   leftContent: React.ReactNode;
   previewUrl: string;
+  /** The portal these staff pages are about; its Privacy and Terms links go in the footer. */
+  portalSlug?: string;
   onRefresh?: () => void; // Optional callback for auto-refresh
 }
 
@@ -13,7 +16,7 @@ const VIEWPORT_WIDTHS: Record<ViewportSize, number> = {
   mobile: 375,
 };
 
-export default function SplitScreenLayout({ leftContent, previewUrl, onRefresh }: Props) {
+export default function SplitScreenLayout({ leftContent, previewUrl, onRefresh, portalSlug }: Props) {
   const { splitMode, splitRatio, viewportSize, setSplitMode, setSplitRatio, setViewportSize, toggleSplitMode, refreshTrigger } = usePreview();
   const [isResizing, setIsResizing] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -90,6 +93,7 @@ export default function SplitScreenLayout({ leftContent, previewUrl, onRefresh }
     return (
       <div className="w-full">
         {leftContent}
+        {portalSlug && <PortalLegalLinks slug={portalSlug} className="mt-8 justify-start" />}
 
         {/* Mobile: "View Portal" button only */}
         <div className="fixed bottom-4 right-4 z-50">
