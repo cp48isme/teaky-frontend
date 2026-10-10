@@ -80,6 +80,8 @@ export interface Product {
   cost_updated_at?: string | null;
   source_tier?: string | null;
   proof_required: boolean;
+  /** Variable-data item: the buyer names the person for each pack (s89_02). */
+  collects_recipients?: boolean;
   safe_order_eligible: boolean;
   dm_external_id: string | null;
   status: string;

@@ -480,6 +480,11 @@ export default function PrinterOrderDetailPage() {
                   {item.size && ` | Size: ${item.size}`}
                   {item.color && ` | Color: ${item.color}`}
                 </p>
+                {item.recipients && item.recipients.length > 0 && (
+                  <p className="text-xs text-gray-700">
+                    For: {item.recipients.map((r) => (r.title ? `${r.name} (${r.title})` : r.name)).join('; ')}
+                  </p>
+                )}
                 {item.needs_proof && (
                   <span className={`mt-1 inline-block text-xs font-medium ${
                     item.proof_status === 'approved' ? 'text-green-600' :
