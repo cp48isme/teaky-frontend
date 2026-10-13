@@ -7,6 +7,22 @@ import type { LineItem } from '../types/order';
  * called every non-proof line "a reprint of artwork already approved", which
  * was false for no-artwork products and for a first order.
  */
+/**
+ * The same declaration for the printer's order page, in order-entry terms: it
+ * is the field that decides whether the job is proofed before press (13 Oct 2026).
+ */
+export function staffArtworkLine(li: LineItem): string {
+  switch (li.artwork_disposition) {
+    case 'changes_new_proof':
+      return 'ART CHANGES — new proof required before press';
+    case 'reuse_unchanged':
+      return 'Exact reprint of the approved art — no proof';
+    case 'no_artwork':
+    default:
+      return 'No artwork — no proof';
+  }
+}
+
 export function artworkSentence(li: LineItem, proofEmail: string | null): string {
   const name = li.product_name;
   switch (li.artwork_disposition) {
