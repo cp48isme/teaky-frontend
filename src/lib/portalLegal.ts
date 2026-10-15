@@ -4,7 +4,8 @@
  * Routed per portal from the start; the content is one shared default for now
  * (operator dispatch 2026-10-09). The second printer gets its own text through
  * BY_SLUG without re-plumbing. The default is placeholder content only — the
- * real notice and terms are drafts that RGI has not seen (bead printer-agent2-71le)
+ * real notice and terms are drafts that Single Source Concierge (formerly RGI Publications,
+ * rebranded 2026-10-15) has not seen (bead printer-agent2-71le)
  * and nothing here reads as a commitment.
  */
 
@@ -18,14 +19,14 @@ export interface LegalPage {
 }
 
 /** Blanks the operator supplies; until then the placeholders are shown verbatim. */
-export const LEGAL_CONTACT = '[RGI contact — operator to supply]';
+export const LEGAL_CONTACT = '[Single Source Concierge contact — operator to supply]';
 export const LEGAL_UPDATED = '[date]';
 
 const DEFAULT: Record<LegalKind, LegalPage> = {
   privacy: {
     title: 'Privacy notice',
     paragraphs: [
-      'RGI Publications is preparing the privacy notice for this ordering portal. It will be published here.',
+      'Single Source Concierge is preparing the privacy notice for this ordering portal. It will be published here.',
       'In the meantime, if you have a question about information held about you, contact',
     ],
     contact: LEGAL_CONTACT,
@@ -34,8 +35,8 @@ const DEFAULT: Record<LegalKind, LegalPage> = {
   terms: {
     title: 'Terms of use',
     paragraphs: [
-      'RGI Publications is preparing the terms of use for this ordering portal. They will be published here.',
-      "Your property's existing arrangements with RGI continue to apply.",
+      'Single Source Concierge is preparing the terms of use for this ordering portal. They will be published here.',
+      "Your property's existing arrangements with Single Source Concierge continue to apply.",
       'Contact',
     ],
     contact: LEGAL_CONTACT,

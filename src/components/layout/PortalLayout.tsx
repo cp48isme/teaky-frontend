@@ -63,14 +63,22 @@ export default function PortalLayout() {
       >
         <div className="flex items-center gap-3">
           {portal.brand_config?.logo_url && (
-            <img
-              src={portal.brand_config.logo_url}
-              alt=""
-              className="h-8 w-auto object-contain"
-              onError={(e) => {
-                (e.target as HTMLImageElement).style.display = 'none';
-              }}
-            />
+            // The logo sits on its own explicit white ground (not inherited, no
+            // prefers-color-scheme query): the header is the portal's primary
+            // colour and a dark-on-transparent wordmark would vanish on it.
+            <span
+              className="inline-flex items-center rounded px-2 py-1"
+              style={{ backgroundColor: '#ffffff' }}
+            >
+              <img
+                src={portal.brand_config.logo_url}
+                alt=""
+                className="h-8 w-auto object-contain"
+                onError={(e) => {
+                  (e.target as HTMLElement).parentElement!.style.display = 'none';
+                }}
+              />
+            </span>
           )}
           <Link to={`/p/${slug}`} className="text-lg font-semibold text-white">
             {portal.name}
