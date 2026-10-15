@@ -112,6 +112,8 @@ export interface CreateProductRequest {
   cost_source?: string;
   cost_source_url?: string;
   proof_required?: boolean;
+  /** Born draft unless a pipeline supplies a price and says active. */
+  status?: string;
   safe_order_eligible?: boolean;
 }
 

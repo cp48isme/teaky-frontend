@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { listProducts, createProduct, updateProduct, deleteProduct } from '../../api/products';
 import { KeepPriceButton, MarkupBadge, PriceOptionsEditor } from './ProductPricingCells';
 import { createProductsFromDescription } from '../../api/portals';
+import { ApiError } from '../../api/client';
 import { uploadFile } from '../../api/uploads';
 import type { Product, CreateProductRequest } from '../../types/product';
 import Spinner from '../ui/Spinner';
@@ -120,7 +121,9 @@ export default function ProductManagementGrid({ portalId, onProductsChange }: Pr
       setProducts((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
       onProductsChange?.(products.map((p) => (p.id === updated.id ? updated : p)));
       setEditingCell(null);
-    } catch {
+    } catch (err) {
+      // A draft cannot be activated without a price: say so (13 Oct 2026).
+      alert(err instanceof ApiError ? err.message : 'Could not save the change');
       setEditingCell(null);
     }
   };
@@ -804,8 +807,8 @@ function ProductTable({
                     autoFocus
                     className="rounded border border-blue-300 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
-                    <option value="active">Active</option>
-                    <option value="draft">Draft</option>
+                    <option value="draft">Draft (not for sale)</option>
+                    <option value="active">Active (on the storefront)</option>
                     <option value="archived">Archived</option>
                   </select>
                 ) : (
