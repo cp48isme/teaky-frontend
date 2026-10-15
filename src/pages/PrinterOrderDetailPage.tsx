@@ -23,6 +23,9 @@ import Spinner from '../components/ui/Spinner';
 import OrderFilesSection from '../components/orders/OrderFilesSection';
 import OrderCostsPanel from '../components/orders/OrderCostsPanel';
 import Breadcrumbs from '../components/ui/Breadcrumbs';
+import { getPortal } from '../api/portals';
+import { listMembers } from '../api/team';
+import { staffArtworkLine } from '../lib/artworkCopy';
 
 const STATUS_COLORS: Record<string, string> = {
   submitted: 'bg-blue-100 text-blue-800',
@@ -98,6 +101,9 @@ export default function PrinterOrderDetailPage() {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
   const [cancelling, setCancelling] = useState(false);
+  // Who and where (13 Oct 2026): the portal, the person who placed it, the PO.
+  const [portalName, setPortalName] = useState('');
+  const [placedBy, setPlacedBy] = useState('');
 
   const fetchData = async () => {
     if (!orderId) return;
@@ -110,6 +116,13 @@ export default function PrinterOrderDetailPage() {
       setOrder(o);
       setProofs(p);
       setOrderFiles(files);
+      getPortal(o.portal_id).then((portal) => setPortalName(portal.name)).catch(() => {});
+      listMembers()
+        .then((members) => {
+          const who = members.find((m) => m.user_id === (o.placed_by_id ?? o.user_id));
+          setPlacedBy(who ? (who.display_name ? `${who.display_name} (${who.email})` : who.email) : '');
+        })
+        .catch(() => {});
       setTrackingNumber(o.tracking_number || '');
       setNotes(o.notes || '');
       // Fetch sync status (best-effort)
@@ -466,6 +479,26 @@ export default function PrinterOrderDetailPage() {
         </div>
       )}
 
+      {/* Order: who, where, PO (13 Oct 2026) */}
+      <div className="rounded-lg border bg-white p-4">
+        <h3 className="font-medium text-gray-900">Order</h3>
+        <dl className="mt-2 grid gap-x-6 gap-y-1 text-sm sm:grid-cols-2">
+          <dt className="text-gray-500">Portal</dt>
+          <dd className="text-gray-900">{portalName || '—'}</dd>
+          <dt className="text-gray-500">Placed by</dt>
+          <dd className="text-gray-900">{placedBy || '—'}</dd>
+          <dt className="text-gray-500">Customer PO</dt>
+          <dd className="text-gray-900">{order.po_number || '—'}</dd>
+          <dt className="text-gray-500">Proofs go to</dt>
+          <dd className="text-gray-900">
+            {order.proof_email || '—'}
+            {order.proof_cc_email && ` (cc ${order.proof_cc_email})`}
+          </dd>
+          <dt className="text-gray-500">Placed</dt>
+          <dd className="text-gray-900">{new Date(order.placed_at).toLocaleString()}</dd>
+        </dl>
+      </div>
+
       {/* Line Items */}
       <div className="rounded-lg border bg-white p-4">
         <h3 className="font-medium text-gray-900">Line Items</h3>
@@ -484,6 +517,21 @@ export default function PrinterOrderDetailPage() {
                   <p className="text-xs text-gray-700">
                     For: {item.recipients.map((r) => (r.title ? `${r.name} (${r.title})` : r.name)).join('; ')}
                   </p>
+                )}
+                <p
+                  className={`mt-1 text-xs font-medium ${
+                    item.artwork_disposition === 'changes_new_proof' ? 'text-amber-700' : 'text-gray-700'
+                  }`}
+                >
+                  {staffArtworkLine(item)}
+                </p>
+                {item.artwork_change_note && (
+                  <p className="text-xs text-gray-700">Changes: {item.artwork_change_note}</p>
+                )}
+                {item.artwork_upload_url && (
+                  <a href={item.artwork_upload_url} className="text-xs text-teak-dark hover:text-teak" target="_blank" rel="noreferrer">
+                    New art uploaded by the buyer
+                  </a>
                 )}
                 {item.needs_proof && (
                   <span className={`mt-1 inline-block text-xs font-medium ${
@@ -533,6 +581,8 @@ export default function PrinterOrderDetailPage() {
               {order.shipping_address.city}, {order.shipping_address.state}{' '}
               {order.shipping_address.postal_code}
             </p>
+            {order.shipping_address.attention && <p>Attention: {order.shipping_address.attention}</p>}
+            {order.shipping_address.phone && <p>Phone: {order.shipping_address.phone}</p>}
           </div>
 
           {/* Tracking Info */}
