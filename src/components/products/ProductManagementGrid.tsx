@@ -1,3 +1,4 @@
+import { PRODUCT_CATEGORIES as CATEGORIES, DEFAULT_PRODUCT_CATEGORY } from '../../lib/productCategories';
 import { useState, useEffect, type ChangeEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { listProducts, createProduct, updateProduct, deleteProduct } from '../../api/products';
@@ -9,20 +10,6 @@ import type { Product, CreateProductRequest } from '../../types/product';
 import Spinner from '../ui/Spinner';
 import { formatMoney } from '../../lib/money';
 
-const CATEGORIES = [
-  { value: 'print', label: 'Print' },
-  { value: 'stationery', label: 'Stationery' },
-  { value: 'door_hangers', label: 'Door Hangers' },
-  { value: 'guest_collateral', label: 'Guest Collateral' },
-  { value: 'coupons_tickets', label: 'Coupons & Tickets' },
-  { value: 'key_cards', label: 'Key Cards' },
-  { value: 'parking', label: 'Parking' },
-  { value: 'business_cards', label: 'Business Cards' },
-  { value: 'signage', label: 'Signage' },
-  { value: 'packaging', label: 'Packaging' },
-  { value: 'promotional', label: 'Promotional' },
-  { value: 'apparel', label: 'Apparel' },
-];
 
 interface Props {
   portalId: string;
@@ -149,7 +136,7 @@ export default function ProductManagementGrid({ portalId, onProductsChange }: Pr
 
   const bulkChangeCategory = async () => {
     if (selectedIds.size === 0) return;
-    const newCategory = prompt('Enter new category:', 'print');
+    const newCategory = prompt('Enter new category:', DEFAULT_PRODUCT_CATEGORY);
     if (!newCategory) return;
 
     try {
@@ -235,7 +222,7 @@ export default function ProductManagementGrid({ portalId, onProductsChange }: Pr
     try {
       const newProduct = await createProduct(portalId, {
         name: 'New Product',
-        category: 'print',
+        category: DEFAULT_PRODUCT_CATEGORY,
         description: '',
         sizes: [],
         colors: [],
@@ -350,13 +337,6 @@ export default function ProductManagementGrid({ portalId, onProductsChange }: Pr
           >
             Bulk reprice
           </Link>
-
-          <button
-            onClick={() => alert('Master Catalog Browser coming soon!')}
-            className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-          >
-            Browse Master Catalog
-          </button>
 
           <label className="flex items-center gap-2 text-sm text-gray-600">
             <input

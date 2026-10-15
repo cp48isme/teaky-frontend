@@ -1,3 +1,4 @@
+import { DEFAULT_PRODUCT_CATEGORY } from '../../lib/productCategories';
 import type { BrandConfig } from '../../types/portal';
 import type { WizardProduct } from './ProductAddStep';
 import type { PortalSettingsData } from './PortalSettingsStep';
@@ -207,7 +208,7 @@ export default function ReviewPublishStep({
                 {/* Sample product grid */}
                 <div className="grid grid-cols-2 gap-2">
                   {(products.length > 0 ? products.slice(0, 4) : [
-                    { _tempId: '1', name: 'Sample Product', category: 'print' },
+                    { _tempId: '1', name: 'Sample Product', category: DEFAULT_PRODUCT_CATEGORY },
                     { _tempId: '2', name: 'Another Item', category: 'stationery' },
                   ]).map((p) => (
                     <div

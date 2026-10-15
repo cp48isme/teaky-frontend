@@ -1,3 +1,4 @@
+import { PRODUCT_CATEGORIES as CATEGORIES, DEFAULT_PRODUCT_CATEGORY } from '../../lib/productCategories';
 import { useState, type FormEvent } from 'react';
 import { uploadFile } from '../../api/uploads';
 import SpreadsheetImport from './SpreadsheetImport';
@@ -8,20 +9,6 @@ import type {
   PricingTier,
 } from '../../types/product';
 
-const CATEGORIES = [
-  { value: 'print', label: 'Print' },
-  { value: 'stationery', label: 'Stationery' },
-  { value: 'door_hangers', label: 'Door Hangers' },
-  { value: 'guest_collateral', label: 'Guest Collateral' },
-  { value: 'coupons_tickets', label: 'Coupons & Tickets' },
-  { value: 'key_cards', label: 'Key Cards' },
-  { value: 'parking', label: 'Parking' },
-  { value: 'business_cards', label: 'Business Cards' },
-  { value: 'signage', label: 'Signage' },
-  { value: 'packaging', label: 'Packaging' },
-  { value: 'promotional', label: 'Promotional' },
-  { value: 'apparel', label: 'Apparel' },
-];
 
 export interface WizardProduct extends CreateProductRequest {
   _tempId: string;
@@ -38,7 +25,7 @@ function emptyProduct(): WizardProduct {
   return {
     _tempId: crypto.randomUUID(),
     name: '',
-    category: 'print',
+    category: DEFAULT_PRODUCT_CATEGORY,
     description: '',
     sizes: [],
     colors: [],
