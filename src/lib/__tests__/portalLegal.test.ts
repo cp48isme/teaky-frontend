@@ -16,10 +16,10 @@ describe('portal legal pages (placeholder content, routed per portal)', () => {
     const terms = portalLegalPage('raphael', 'terms');
     expect(privacy.title).toBe('Privacy notice');
     expect(privacy.paragraphs[0]).toBe(
-      'RGI Publications is preparing the privacy notice for this ordering portal. It will be published here.',
+      'Single Source Concierge is preparing the privacy notice for this ordering portal. It will be published here.',
     );
     expect(terms.title).toBe('Terms of use');
-    expect(terms.paragraphs).toContain("Your property's existing arrangements with RGI continue to apply.");
+    expect(terms.paragraphs).toContain("Your property's existing arrangements with Single Source Concierge continue to apply.");
     expect(privacy.contact).toBe(LEGAL_CONTACT);
     expect(privacy.updated).toBe(LEGAL_UPDATED);
     const all = [...privacy.paragraphs, ...terms.paragraphs].join(' ').toLowerCase();
