@@ -144,6 +144,30 @@ describe('CheckoutPage — invoice-terms buyer path', () => {
     expect(mockNavigate).toHaveBeenCalledWith('/p/raphael/orders/order-9/confirmation');
   });
 
+  it('offers "When do you need these by?" as optional, posts it as needed_by, and omits it when blank', async () => {
+    const user = userEvent.setup();
+    renderPage();
+    await fillAddress(user);
+    const dateInput = screen.getByLabelText('When do you need these by?');
+    expect(dateInput).toHaveAttribute('type', 'date');
+    expect(dateInput).not.toBeRequired();
+    expect(screen.getByText('Optional')).toBeInTheDocument();
+    expect(screen.queryByText(/in-hands/i)).not.toBeInTheDocument();
+    await user.type(dateInput, '2027-03-01');
+    await user.click(screen.getByRole('button', { name: 'Place order — to be invoiced' }));
+    await waitFor(() => expect(createPortalOrder).toHaveBeenCalledTimes(1));
+    expect(vi.mocked(createPortalOrder).mock.calls[0][1]).toMatchObject({ needed_by: '2027-03-01' });
+  });
+
+  it('sends no needed_by at all when the buyer leaves the date blank', async () => {
+    const user = userEvent.setup();
+    renderPage();
+    await fillAddress(user);
+    await user.click(screen.getByRole('button', { name: 'Place order — to be invoiced' }));
+    await waitFor(() => expect(createPortalOrder).toHaveBeenCalledTimes(1));
+    expect(vi.mocked(createPortalOrder).mock.calls[0][1]).not.toHaveProperty('needed_by');
+  });
+
   it('blocks before placing when the portal requires a PO and none is given', async () => {
     portal = { ...portal, require_po: true };
     const user = userEvent.setup();

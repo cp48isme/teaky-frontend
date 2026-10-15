@@ -53,6 +53,8 @@ export interface Order {
   total: number;
   shipping_address: ShippingAddress;
   po_number: string | null;
+  /** The buyer's wanted-by date (YYYY-MM-DD), optional; information only. */
+  needed_by?: string | null;
   notes: string | null;
   tags: string[];
   /** Where proofs go (the portal's support contact by default) and the buyer's copy. */
@@ -79,6 +81,8 @@ export interface CreateOrderFromCartRequest {
   shipping_address: ShippingAddress;
   payment_method?: string;
   po_number?: string;
+  /** "When do you need these by?" (YYYY-MM-DD), optional. */
+  needed_by?: string;
   notes?: string;
   /** "Send proofs to"; blank means the portal's support contact. */
   proof_email?: string;
