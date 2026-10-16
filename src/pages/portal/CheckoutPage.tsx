@@ -9,6 +9,7 @@ import { getShippingRates } from "../../api/shipping";
 import type { ShippingAddress } from "../../types/order";
 import type { ShippingRate } from "../../types/shipping";
 import { INVOICE_TERMS, FREIGHT_NOTE } from "../../lib/paymentTerms";
+import { todayIsoDate } from "../../lib/neededBy";
 import StripePaymentForm from "../../components/checkout/StripePaymentForm";
 import Spinner from "../../components/ui/Spinner";
 import { packPriceLabel, packQuantityLabel } from '../../lib/pricing';
@@ -75,6 +76,8 @@ export default function CheckoutPage() {
     if (portal?.name) setAddress((current) => (current.name ? current : { ...current, name: portal.name }));
   }, [portal?.name]);
   const [poNumber, setPoNumber] = useState("");
+  // "When do you need these by?" — optional; sent as YYYY-MM-DD (2026-10-15).
+  const [neededBy, setNeededBy] = useState("");
   const [notes, setNotes] = useState("");
   // S88 "Send proofs to": blank means the portal's support contact (RGI's
   // operations manager); the buyer's own address is copied either way.
@@ -175,6 +178,7 @@ export default function CheckoutPage() {
         shipping_address: address,
         payment_method: "invoice",
         po_number: poNumber.trim() || undefined,
+        needed_by: neededBy || undefined,
         notes: notes || undefined,
         proof_email: proofEmail.trim() || undefined,
       });
@@ -236,6 +240,7 @@ export default function CheckoutPage() {
         shipping_address: address,
         payment_method: "stripe",
         po_number: poNumber || undefined,
+        needed_by: neededBy || undefined,
         notes: notes || undefined,
         proof_email: proofEmail.trim() || undefined,
       });
@@ -538,6 +543,25 @@ export default function CheckoutPage() {
                   placeholder="e.g. 5118824933 or the name your accounts payable will recognise"
                   disabled={showPayment}
                   className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-teak focus:ring-1 focus:ring-teak disabled:bg-gray-50 disabled:text-gray-500"
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="needed-by"
+                  className="block text-sm font-medium text-gray-900"
+                >
+                  When do you need these by?
+                </label>
+                <p className="mt-0.5 text-xs text-gray-600">Optional</p>
+                <input
+                  id="needed-by"
+                  type="date"
+                  value={neededBy}
+                  min={todayIsoDate()}
+                  onChange={(e) => setNeededBy(e.target.value)}
+                  disabled={showPayment}
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-teak focus:ring-1 focus:ring-teak disabled:bg-gray-50 disabled:text-gray-500 sm:w-60"
                 />
               </div>
 

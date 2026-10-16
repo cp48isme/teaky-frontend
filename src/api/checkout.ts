@@ -17,6 +17,7 @@ interface ConfirmCheckoutRequest {
   shipping_address: ShippingAddress;
   payment_method?: string;
   po_number?: string;
+  needed_by?: string;
   notes?: string;
   /** "Send proofs to"; blank means the portal's support contact (S88). */
   proof_email?: string;

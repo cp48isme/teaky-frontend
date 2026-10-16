@@ -144,6 +144,37 @@ describe('CheckoutPage — invoice-terms buyer path', () => {
     expect(mockNavigate).toHaveBeenCalledWith('/p/raphael/orders/order-9/confirmation');
   });
 
+  it('offers "When do you need these by?" as optional, posts it as needed_by, and omits it when blank', async () => {
+    const user = userEvent.setup();
+    renderPage();
+    await fillAddress(user);
+    const dateInput = screen.getByLabelText('When do you need these by?');
+    expect(dateInput).toHaveAttribute('type', 'date');
+    expect(dateInput).not.toBeRequired();
+    expect(screen.getByText('Optional')).toBeInTheDocument();
+    expect(screen.queryByText(/in-hands/i)).not.toBeInTheDocument();
+    await user.type(dateInput, '2027-03-01');
+    await user.click(screen.getByRole('button', { name: 'Place order — to be invoiced' }));
+    await waitFor(() => expect(createPortalOrder).toHaveBeenCalledTimes(1));
+    expect(vi.mocked(createPortalOrder).mock.calls[0][1]).toMatchObject({ needed_by: '2027-03-01' });
+  });
+
+  it('sends no needed_by at all when the buyer leaves the date blank', async () => {
+    const user = userEvent.setup();
+    renderPage();
+    await fillAddress(user);
+    await user.click(screen.getByRole('button', { name: 'Place order — to be invoiced' }));
+    await waitFor(() => expect(createPortalOrder).toHaveBeenCalledTimes(1));
+    // The page sets needed_by to undefined when the field is blank — the same
+    // idiom po_number uses — so the request object carries the key with an
+    // undefined value, and toHaveProperty would see it. JSON serialisation drops
+    // undefined keys, and the serialised body is what the API actually receives,
+    // so the assertion is made on the round-tripped object. Do not remove the
+    // round-trip as redundant: without it this test fails again.
+    const wire = JSON.parse(JSON.stringify(vi.mocked(createPortalOrder).mock.calls[0][1]));
+    expect(wire).not.toHaveProperty('needed_by');
+  });
+
   it('blocks before placing when the portal requires a PO and none is given', async () => {
     portal = { ...portal, require_po: true };
     const user = userEvent.setup();

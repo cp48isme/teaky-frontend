@@ -27,6 +27,7 @@ import Breadcrumbs from '../components/ui/Breadcrumbs';
 import { getPortal } from '../api/portals';
 import { listMembers } from '../api/team';
 import { staffArtworkLine } from '../lib/artworkCopy';
+import { formatNeededBy } from '../lib/neededBy';
 
 const STATUS_COLORS: Record<string, string> = {
   submitted: 'bg-blue-100 text-blue-800',
@@ -477,6 +478,8 @@ export default function PrinterOrderDetailPage() {
           <dd className="text-gray-900">{placedBy || '—'}</dd>
           <dt className="text-gray-500">Customer PO</dt>
           <dd className="text-gray-900">{order.po_number || '—'}</dd>
+          <dt className="text-gray-500">Needed by</dt>
+          <dd className="text-gray-900">{formatNeededBy(order.needed_by) || '—'}</dd>
           <dt className="text-gray-500">Proofs go to</dt>
           <dd className="text-gray-900">
             {order.proof_email || '—'}
