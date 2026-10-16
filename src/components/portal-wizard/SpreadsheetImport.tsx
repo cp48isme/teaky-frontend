@@ -1,3 +1,4 @@
+import { DEFAULT_PRODUCT_CATEGORY } from '../../lib/productCategories';
 import { useState, useRef, useCallback } from 'react';
 import type { WizardProduct } from './ProductAddStep';
 
@@ -154,7 +155,7 @@ export default function SpreadsheetImport({ onImport, onCancel }: SpreadsheetImp
     const products: WizardProduct[] = parsedRows.map((row) => ({
       _tempId: crypto.randomUUID(),
       name: row.name,
-      category: row.category || 'print',
+      category: row.category || DEFAULT_PRODUCT_CATEGORY,
       sku: row.sku || undefined,
       description: row.description || undefined,
       min_order_qty: parseInt(row.min_qty) || 1,

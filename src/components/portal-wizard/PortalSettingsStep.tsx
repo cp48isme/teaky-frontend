@@ -57,7 +57,7 @@ export default function PortalSettingsStep({ slug, data, onUpdate, onNext, onBac
           <div className="mt-2 rounded-md border border-amber-200 bg-amber-50 p-3">
             <p className="text-xs font-medium text-amber-800">DNS Configuration Required</p>
             <p className="mt-1 text-xs text-amber-700">
-              Add a CNAME record for <span className="font-mono">{data.customDomain}</span> pointing to <span className="font-mono">teaky.com</span>
+              Add a CNAME record for <span className="font-mono">{data.customDomain}</span> pointing to <span className="font-mono">app.teakygrove.com</span>
             </p>
           </div>
         )}

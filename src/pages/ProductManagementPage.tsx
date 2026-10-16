@@ -49,7 +49,7 @@ export default function ProductManagementPage() {
             ]}
           />
 
-          {/* Header with View Portal button */}
+          {/* Header with Open storefront button */}
           <div className="flex items-center justify-between">
         <h2 className="font-heading text-xl font-bold text-brand-dark">Products</h2>
         <a
@@ -59,7 +59,7 @@ export default function ProductManagementPage() {
           className="inline-flex items-center gap-2 rounded-md bg-gradient-to-r from-teak to-teak-dark px-4 py-2 text-sm font-medium text-white shadow-sm hover:shadow-md transition"
         >
           <span>🌐</span>
-          View Portal
+          Open storefront
         </a>
       </div>
 

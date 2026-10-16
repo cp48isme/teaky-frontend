@@ -8,12 +8,13 @@ import {
   updateProductionStatus,
   downloadOrderInvoicePdf,
 } from '../api/orders';
-import { listOrderFiles, uploadOrderFile, deleteOrderFile } from '../api/orderFiles';
 import { listProofs, submitProof, approveProof, rejectProof } from '../api/proofs';
 import { getOrderSyncStatus, manualPushOrder } from '../api/mis';
+import { getProduct } from '../api/products';
+import { describeSync } from '../lib/misSyncCopy';
 import { getTrackingInfo } from '../api/shipping';
 import { syncOrderToQuickBooks } from '../api/quickbooks';
-import type { Order, OrderFile } from '../types/order';
+import type { Order } from '../types/order';
 import { PRODUCTION_STATUSES } from '../types/order';
 import type { Proof } from '../types/proof';
 import type { OrderSyncStatus } from '../types/mis';
@@ -93,10 +94,6 @@ export default function PrinterOrderDetailPage() {
   const [rejectReason, setRejectReason] = useState('');
   const [signingProofId, setSigningProofId] = useState<string | null>(null);
 
-  // Order files state
-  const [orderFiles, setOrderFiles] = useState<OrderFile[]>([]);
-  const [uploading, setUploading] = useState(false);
-
   // Cancel state
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
@@ -105,17 +102,35 @@ export default function PrinterOrderDetailPage() {
   const [portalName, setPortalName] = useState('');
   const [placedBy, setPlacedBy] = useState('');
 
+  const sync = describeSync(syncStatus);
+  // A price_needed hold stands until every product on the order has a cost per
+  // pack; the log entry alone cannot tell us that, so the products are read.
+  const [priceHoldStands, setPriceHoldStands] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    if (!order || sync.reason !== 'price_needed') {
+      setPriceHoldStands(false);
+      return;
+    }
+    const ids = Array.from(new Set(order.line_items.map((li) => li.product_id)));
+    Promise.all(ids.map((id) => getProduct(order.portal_id, id)))
+      .then((products) => {
+        if (!cancelled) setPriceHoldStands(products.some((p) => p.base_cost == null));
+      })
+      .catch(() => {
+        if (!cancelled) setPriceHoldStands(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [order, sync.reason]);
+
   const fetchData = async () => {
     if (!orderId) return;
     try {
-      const [o, p, files] = await Promise.all([
-        getPrinterOrder(orderId),
-        listProofs(orderId),
-        listOrderFiles(orderId).catch(() => []),
-      ]);
+      const [o, p] = await Promise.all([getPrinterOrder(orderId), listProofs(orderId)]);
       setOrder(o);
       setProofs(p);
-      setOrderFiles(files);
       getPortal(o.portal_id).then((portal) => setPortalName(portal.name)).catch(() => {});
       listMembers()
         .then((members) => {
@@ -208,33 +223,6 @@ export default function PrinterOrderDetailPage() {
       alert(err instanceof Error ? err.message : 'Failed to cancel order');
     } finally {
       setCancelling(false);
-    }
-  };
-
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!orderId || !e.target.files?.length) return;
-    setUploading(true);
-    try {
-      for (const file of Array.from(e.target.files)) {
-        await uploadOrderFile(orderId, file);
-      }
-      const files = await listOrderFiles(orderId);
-      setOrderFiles(files);
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'Upload failed');
-    } finally {
-      setUploading(false);
-      e.target.value = '';
-    }
-  };
-
-  const handleDeleteFile = async (fileId: string) => {
-    if (!orderId) return;
-    try {
-      await deleteOrderFile(orderId, fileId);
-      setOrderFiles((prev) => prev.filter((f) => f.id !== fileId));
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to delete file');
     }
   };
 
@@ -645,104 +633,46 @@ export default function PrinterOrderDetailPage() {
         </div>
       </div>
 
-      {/* Order Files */}
-      <div className="rounded-lg border bg-white p-4 space-y-3">
-        <div className="flex items-center justify-between">
-          <h3 className="font-medium text-gray-900">
-            Files {orderFiles.length > 0 && <span className="text-xs text-gray-500">({orderFiles.length})</span>}
-          </h3>
-          <label className="cursor-pointer rounded bg-teak-dark px-3 py-1.5 text-xs font-medium text-white hover:bg-teak">
-            {uploading ? 'Uploading...' : 'Upload File'}
-            <input
-              type="file"
-              className="hidden"
-              multiple
-              accept=".ai,.psd,.pdf,.eps,.svg,.png,.jpg,.jpeg,.tiff,.tif,.dst,.pes"
-              onChange={handleFileUpload}
-              disabled={uploading}
-            />
-          </label>
-        </div>
-        {orderFiles.length === 0 ? (
-          <p className="text-sm text-gray-400">No files uploaded yet.</p>
-        ) : (
-          <div className="divide-y">
-            {orderFiles.map((f) => (
-              <div key={f.id} className="flex items-center justify-between py-2">
-                <div>
-                  <p className="text-sm font-medium text-gray-900">{f.filename}</p>
-                  <p className="text-xs text-gray-500">
-                    {(f.file_size_bytes / 1024).toFixed(1)} KB &middot; {f.file_category} &middot;{' '}
-                    {new Date(f.created_at).toLocaleDateString()}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <a
-                    href={f.file_url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-xs text-teak-dark hover:underline"
-                  >
-                    Download
-                  </a>
-                  <button
-                    onClick={() => handleDeleteFile(f.id)}
-                    className="text-xs text-red-500 hover:text-red-700"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      {/* Order Files (one section; the inline duplicate was removed 2026-10-15) */}
+      <OrderFilesSection orderId={orderId!} />
 
-      {/* MIS Sync */}
+      {/* DocketManager (plain language; hold-aware) */}
       {syncStatus && (
         <div className="rounded-lg border bg-white p-4 space-y-3">
-          <h3 className="font-medium text-gray-900">MIS Sync</h3>
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <div>
-              <span className="text-gray-500">External ID:</span>{' '}
-              <span className="font-mono">{syncStatus.dm_order_id ?? 'Not synced'}</span>
-            </div>
-            <div>
-              <span className="text-gray-500">Last Sync:</span>{' '}
-              {syncStatus.last_sync_at
-                ? new Date(syncStatus.last_sync_at).toLocaleString()
-                : 'Never'}
-            </div>
-            {syncStatus.last_sync_status && (
-              <div>
-                <span className="text-gray-500">Status:</span>{' '}
-                <span
-                  className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
-                    syncStatus.last_sync_status === 'success'
-                      ? 'bg-green-100 text-green-800'
-                      : syncStatus.last_sync_status === 'failed'
-                        ? 'bg-red-100 text-red-800'
-                        : 'bg-yellow-100 text-yellow-800'
-                  }`}
-                >
-                  {syncStatus.last_sync_status}
-                </span>
-              </div>
-            )}
-            {syncStatus.error_message && (
-              <div className="col-span-2">
-                <span className="text-gray-500">Error:</span>{' '}
-                <span className="text-red-600 text-xs">{syncStatus.error_message}</span>
-              </div>
-            )}
-          </div>
-          <button
-            onClick={handleManualPush}
-            disabled={pushing}
-            className="rounded bg-teak-dark px-3 py-1.5 text-xs font-medium text-white hover:bg-teak disabled:opacity-50"
+          <h3 className="font-medium text-gray-900">DocketManager</h3>
+          <p
+            className={`text-sm ${
+              sync.tone === 'ok'
+                ? 'text-green-800'
+                : sync.tone === 'hold'
+                  ? 'text-amber-800'
+                  : sync.tone === 'failed'
+                    ? 'text-red-700'
+                    : 'text-gray-700'
+            }`}
           >
-            {pushing ? 'Pushing...' : 'Push to MIS'}
-          </button>
+            {sync.headline}
+          </p>
+          {sync.next && <p className="text-sm text-gray-700">{sync.next}</p>}
+          <p className="text-xs text-gray-500">
+            {syncStatus.last_sync_at
+              ? `Last attempt ${new Date(syncStatus.last_sync_at).toLocaleString()}`
+              : 'No attempt yet'}
+            {syncStatus.dm_order_id && ` · DocketManager #${syncStatus.dm_order_id}`}
+          </p>
+          {priceHoldStands ? (
+            <p className="text-xs text-amber-800">
+              Push is unavailable until every product on this order has a cost per pack.
+            </p>
+          ) : (
+            <button
+              onClick={handleManualPush}
+              disabled={pushing}
+              className="rounded bg-teak-dark px-3 py-1.5 text-xs font-medium text-white hover:bg-teak disabled:opacity-50"
+            >
+              {pushing ? 'Pushing…' : 'Push to DocketManager'}
+            </button>
+          )}
         </div>
       )}
 
@@ -854,8 +784,6 @@ export default function PrinterOrderDetailPage() {
         </div>
       )}
 
-      {/* Order Files */}
-      <OrderFilesSection orderId={orderId!} />
     </div>
   );
 }

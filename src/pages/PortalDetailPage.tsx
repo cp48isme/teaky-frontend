@@ -124,7 +124,7 @@ export default function PortalDetailPage() {
           <h2 className="font-heading text-xl font-bold text-brand-dark">{portal.name}</h2>
         </div>
         <div className="flex items-center gap-3">
-          {/* View Portal Button */}
+          {/* Open storefront button */}
           <a
             href={`/p/${portal.slug}`}
             target="_blank"
@@ -132,7 +132,7 @@ export default function PortalDetailPage() {
             className="inline-flex items-center gap-2 rounded-md bg-gradient-to-r from-teak to-teak-dark px-4 py-2 text-sm font-medium text-white shadow-sm hover:shadow-md transition"
           >
             <span>🌐</span>
-            View Portal
+            Open storefront
           </a>
 
           {portal.is_template && (
@@ -396,7 +396,7 @@ export default function PortalDetailPage() {
             target="_blank"
             className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
           >
-            View Public Portal &rarr;
+            Open storefront &rarr;
           </Link>
         )}
       </div>
