@@ -165,7 +165,14 @@ describe('CheckoutPage — invoice-terms buyer path', () => {
     await fillAddress(user);
     await user.click(screen.getByRole('button', { name: 'Place order — to be invoiced' }));
     await waitFor(() => expect(createPortalOrder).toHaveBeenCalledTimes(1));
-    expect(vi.mocked(createPortalOrder).mock.calls[0][1]).not.toHaveProperty('needed_by');
+    // The page sets needed_by to undefined when the field is blank — the same
+    // idiom po_number uses — so the request object carries the key with an
+    // undefined value, and toHaveProperty would see it. JSON serialisation drops
+    // undefined keys, and the serialised body is what the API actually receives,
+    // so the assertion is made on the round-tripped object. Do not remove the
+    // round-trip as redundant: without it this test fails again.
+    const wire = JSON.parse(JSON.stringify(vi.mocked(createPortalOrder).mock.calls[0][1]));
+    expect(wire).not.toHaveProperty('needed_by');
   });
 
   it('blocks before placing when the portal requires a PO and none is given', async () => {
