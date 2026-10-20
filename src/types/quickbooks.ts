@@ -8,8 +8,3 @@ export interface QuickBooksConnectResponse {
   authorization_url: string;
 }
 
-export interface QuickBooksSyncResponse {
-  status: string;
-  qbo_invoice_id: string | null;
-  error: string | null;
-}
