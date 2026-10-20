@@ -52,6 +52,15 @@ export function describeSync(status: OrderSyncStatus | null | undefined): SyncDe
   if (s === 'pending') {
     return { tone: 'pending', headline: 'Sending to DocketManager…', next: null, reason: null };
   }
+  if (s === 'held') {
+    // Not a failure (ruling 2026-10-20): the order is held in Teaky on purpose.
+    return {
+      tone: 'hold',
+      headline: 'Held in Teaky: nothing has been sent to DocketManager.',
+      next: 'A changed order reaches DocketManager only when a person releases it, after the buyer approves the proof.',
+      reason: null,
+    };
+  }
   if (s === 'needs_template') {
     return {
       tone: 'hold',

@@ -84,6 +84,8 @@ export interface Product {
   collects_recipients?: boolean;
   safe_order_eligible: boolean;
   dm_external_id: string | null;
+  /** The DocketManager order number of this product's last confirmed import (ruling 2026-10-20): the exact-reorder note names it. Seeded by the desk; overwritten by every confirmed push. */
+  previous_dm_order_number?: string | null;
   status: string;
   sort_order: number;
   created_at: string;
@@ -142,6 +144,7 @@ export interface UpdateProductRequest {
   proof_required?: boolean;
   safe_order_eligible?: boolean;
   dm_external_id?: string | null;
+  previous_dm_order_number?: string | null;
   status?: string;
   sort_order?: number;
 }

@@ -1,4 +1,6 @@
 import type { ArtworkDisposition } from './cart';
+
+export type ReleaseState = 'held_for_proof' | 'releasing' | 'released' | 'retryable' | 'needs_human';
 export interface ShippingAddress {
   name: string;
   line1: string;
@@ -70,6 +72,17 @@ export interface Order {
   cancellation_reason: string | null;
   tracking_number: string | null;
   dm_order_id: string | null;
+  /**
+   * Hold-and-release (ruling 2026-10-20). null: the order went to DocketManager
+   * at placement. held_for_proof: a changed order waiting on the buyer's proof
+   * approval; released by a person from the order page. releasing: the push is
+   * in flight. released: in DocketManager. retryable: the release failed before
+   * DocketManager made the job; release again. needs_human: the outcome is
+   * unknown; someone checks DocketManager and links the job or marks it absent.
+   */
+  release_state?: ReleaseState | null;
+  released_at?: string | null;
+  release_attempts?: number;
   production_status: string | null;
   production_notes: string | null;
   created_at: string;
@@ -115,6 +128,11 @@ export interface CreateOrderOnBehalfRequest {
   payment_method: 'invoice_later' | 'stripe';
   po_number?: string;
   notes?: string;
+}
+
+export interface LinkDocketManagerOrderRequest {
+  /** The DocketManager order number a person found after an unknown release outcome. */
+  dm_order_number: string;
 }
 
 export interface CancelOrderRequest {
