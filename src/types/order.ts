@@ -72,6 +72,8 @@ export interface Order {
   cancellation_reason: string | null;
   tracking_number: string | null;
   dm_order_id: string | null;
+  /** RGI's own order number for this job (ruling 2026-10-20); set by printer staff. */
+  rgi_order_number?: string | null;
   /**
    * Hold-and-release (ruling 2026-10-20). null: the order went to DocketManager
    * at placement. held_for_proof: a changed order waiting on the buyer's proof
@@ -105,6 +107,7 @@ export interface UpdateOrderRequest {
   notes?: string;
   tags?: string[];
   tracking_number?: string;
+  rgi_order_number?: string | null;
 }
 
 export interface UpdateOrderStatusRequest {

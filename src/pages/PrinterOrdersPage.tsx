@@ -7,6 +7,8 @@ import Spinner from '../components/ui/Spinner';
 
 const STATUS_FILTERS = [
   { label: 'All', value: '' },
+  // Client-side: orders nobody has given an RGI order number yet (ruling 2026-10-20).
+  { label: 'Missing RGI order #', value: 'missing_rgi' },
   // Client-side: orders held in Teaky (ruling 2026-10-20), whatever their status.
   { label: 'Held for proof', value: 'held' },
   { label: 'Submitted', value: 'submitted' },
@@ -40,8 +42,17 @@ export default function PrinterOrdersPage() {
   useEffect(() => {
     setLoading(true);
     const held = statusFilter === 'held';
-    listPrinterOrders(held ? undefined : statusFilter || undefined)
-      .then((all) => setOrders(held ? all.filter(isHeld) : all))
+    const missingRgi = statusFilter === 'missing_rgi';
+    listPrinterOrders(held || missingRgi ? undefined : statusFilter || undefined)
+      .then((all) =>
+        setOrders(
+          held
+            ? all.filter(isHeld)
+            : missingRgi
+              ? all.filter((o) => !o.rgi_order_number && o.status !== 'cancelled')
+              : all,
+        ),
+      )
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [statusFilter]);
@@ -87,6 +98,7 @@ export default function PrinterOrdersPage() {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">Order</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500" title="RGI's own order number for the job">RGI #</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">Date</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">Items</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">Total</th>
@@ -103,6 +115,13 @@ export default function PrinterOrdersPage() {
                     >
                       {order.order_number}
                     </Link>
+                  </td>
+                  <td className="px-4 py-3 font-mono text-xs">
+                    {order.rgi_order_number ? (
+                      order.rgi_order_number
+                    ) : (
+                      <span className="font-sans text-amber-700">none</span>
+                    )}
                   </td>
                   <td className="px-4 py-3 text-gray-500">
                     {new Date(order.placed_at).toLocaleDateString()}

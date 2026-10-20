@@ -74,6 +74,7 @@ export default function PrinterOrderDetailPage() {
   const [proofs, setProofs] = useState<Proof[]>([]);
   const [loading, setLoading] = useState(true);
   const [trackingNumber, setTrackingNumber] = useState('');
+  const [rgiOrderNumber, setRgiOrderNumber] = useState('');
   const [notes, setNotes] = useState('');
 
   // MIS sync state
@@ -148,6 +149,7 @@ export default function PrinterOrderDetailPage() {
         })
         .catch(() => {});
       setTrackingNumber(o.tracking_number || '');
+      setRgiOrderNumber(o.rgi_order_number || '');
       setNotes(o.notes || '');
       // Fetch sync status (best-effort)
       getOrderSyncStatus(orderId).then(setSyncStatus).catch(() => {});
@@ -198,6 +200,7 @@ export default function PrinterOrderDetailPage() {
     try {
       const updated = await updateOrder(orderId, {
         tracking_number: trackingNumber || undefined,
+        rgi_order_number: rgiOrderNumber.trim() || null,
         notes: notes || undefined,
       });
       setOrder(updated);
@@ -709,6 +712,19 @@ export default function PrinterOrderDetailPage() {
 
         <div className="rounded-lg border bg-white p-4 space-y-3">
           <h3 className="font-medium text-gray-900">Details</h3>
+          <div>
+            <label className="block text-xs font-medium text-gray-500" title="RGI's own order number for this job. Orders without one are listed under “Missing RGI order #”.">
+              RGI order #
+            </label>
+            <input
+              type="text"
+              value={rgiOrderNumber}
+              onChange={(e) => setRgiOrderNumber(e.target.value)}
+              maxLength={100}
+              placeholder="not yet assigned"
+              className="mt-1 block w-full rounded border border-gray-300 px-2 py-1.5 text-sm"
+            />
+          </div>
           <div>
             <label className="block text-xs font-medium text-gray-500">Tracking Number</label>
             <input
