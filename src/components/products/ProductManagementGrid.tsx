@@ -18,7 +18,7 @@ interface Props {
 
 interface EditingCell {
   productId: string;
-  field: 'name' | 'category' | 'base_price' | 'base_cost' | 'markup_multiplier' | 'floor_multiplier' | 'pack_size' | 'status';
+  field: 'name' | 'category' | 'base_price' | 'base_cost' | 'markup_multiplier' | 'floor_multiplier' | 'pack_size' | 'status' | 'previous_dm_order_number';
   value: string | number;
 }
 
@@ -35,6 +35,9 @@ export default function ProductManagementGrid({ portalId, onProductsChange }: Pr
   const [aiCreating, setAiCreating] = useState(false);
   const [uploadingFile, setUploadingFile] = useState(false);
   const [groupByCategory, setGroupByCategory] = useState(false);
+  // The missing-number view (ruling 2026-10-20): products whose exact-reorder
+  // note cannot name a DocketManager order yet.
+  const [onlyMissingNumber, setOnlyMissingNumber] = useState(false);
   const [optionsFor, setOptionsFor] = useState<Product | null>(null);
   const replaceProduct = (updated: Product) => {
     setProducts((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
@@ -101,7 +104,9 @@ export default function ProductManagementGrid({ portalId, onProductsChange }: Pr
                 : parseFloat(editingCell.value as string)
               : editingCell.field === 'pack_size'
                 ? Math.max(1, Math.trunc(Number(editingCell.value)) || 1)
-                : editingCell.value,
+                : editingCell.field === 'previous_dm_order_number'
+                  ? String(editingCell.value).trim() || null
+                  : editingCell.value,
       };
 
       const updated = await updateProduct(portalId, product.id, updateData);
@@ -249,6 +254,7 @@ export default function ProductManagementGrid({ portalId, onProductsChange }: Pr
 
   // Filter and sort
   const filteredProducts = products
+    .filter((p) => !onlyMissingNumber || !p.previous_dm_order_number)
     .filter((p) => {
       if (!searchQuery) return true;
       const q = searchQuery.toLowerCase();
@@ -303,6 +309,18 @@ export default function ProductManagementGrid({ portalId, onProductsChange }: Pr
           placeholder="Search products..."
           className="w-64 rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-teak focus:outline-none focus:ring-teak"
         />
+        <label className="flex items-center gap-2 text-sm text-gray-700" title="Products whose exact-reorder note cannot name a DocketManager order yet">
+          <input
+            type="checkbox"
+            checked={onlyMissingNumber}
+            onChange={(e) => setOnlyMissingNumber(e.target.checked)}
+            className="rounded border-gray-300 text-teak focus:ring-teak"
+          />
+          Missing DocketManager order #
+          {onlyMissingNumber && (
+            <span className="text-xs text-gray-500">({filteredProducts.length})</span>
+          )}
+        </label>
 
         {/* Action Buttons */}
         <div className="flex items-center gap-2">
@@ -571,6 +589,9 @@ function ProductTable({
             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
               Pack size
             </th>
+            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase" title="The DocketManager order number of this product's last job; an exact reorder's note says “Print as DocketManager order #…”. Filled in by every push Teaky makes; enter it by hand for history.">
+              Prev. DM order #
+            </th>
             <th
               onClick={() => onSort('status')}
               className="cursor-pointer px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase hover:text-gray-700"
@@ -773,6 +794,30 @@ function ProductTable({
                   />
                 ) : (
                   (product.pack_size ?? 1).toLocaleString('en-US')
+                )}
+              </td>
+              <td
+                className="px-4 py-3 text-sm text-gray-700 cursor-pointer hover:bg-gray-50"
+                onClick={() => onStartEdit(product.id, 'previous_dm_order_number', product.previous_dm_order_number ?? '')}
+              >
+                {editingCell?.productId === product.id && editingCell.field === 'previous_dm_order_number' ? (
+                  <input
+                    type="text"
+                    value={editingCell.value as string}
+                    onChange={(e) => onEditChange(e.target.value)}
+                    onBlur={onSaveEdit}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') onSaveEdit();
+                      if (e.key === 'Escape') onCancelEdit();
+                    }}
+                    autoFocus
+                    maxLength={100}
+                    className="w-24 rounded border border-blue-300 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                ) : product.previous_dm_order_number ? (
+                  <span className="font-mono">#{product.previous_dm_order_number}</span>
+                ) : (
+                  <span className="text-amber-700">none on file</span>
                 )}
               </td>
               <td

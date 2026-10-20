@@ -1,6 +1,7 @@
 import { apiRequest } from './client';
 import type {
   CancelOrderRequest,
+  LinkDocketManagerOrderRequest,
   CreateOrderFromCartRequest,
   CreateOrderOnBehalfRequest,
   Order,
@@ -118,4 +119,24 @@ export async function downloadOrderInvoicePdf(orderId: string): Promise<Blob> {
   });
   if (!response.ok) throw new Error('Failed to download invoice');
   return response.blob();
+}
+
+// Hold-and-release (ruling 2026-10-20): the explicit act that sends a changed
+// order to DocketManager, and the two human actions after an unknown outcome.
+export async function releaseOrder(orderId: string): Promise<Order> {
+  return apiRequest<Order>(`/orders/${orderId}/release`, { method: 'POST' });
+}
+
+export async function linkReleasedOrder(
+  orderId: string,
+  data: LinkDocketManagerOrderRequest,
+): Promise<Order> {
+  return apiRequest<Order>(`/orders/${orderId}/release/link`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function confirmReleaseNotFound(orderId: string): Promise<Order> {
+  return apiRequest<Order>(`/orders/${orderId}/release/not-found`, { method: 'POST' });
 }

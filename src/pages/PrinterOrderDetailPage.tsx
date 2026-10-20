@@ -7,6 +7,9 @@ import {
   cancelOrder,
   updateProductionStatus,
   downloadOrderInvoicePdf,
+  releaseOrder,
+  linkReleasedOrder,
+  confirmReleaseNotFound,
 } from '../api/orders';
 import { listProofs, submitProof, approveProof, rejectProof } from '../api/proofs';
 import { getOrderSyncStatus, manualPushOrder } from '../api/mis';
@@ -28,6 +31,7 @@ import { getPortal } from '../api/portals';
 import { listMembers } from '../api/team';
 import { staffArtworkLine } from '../lib/artworkCopy';
 import { formatNeededBy } from '../lib/neededBy';
+import { describeRelease } from '../lib/releaseCopy';
 
 const STATUS_COLORS: Record<string, string> = {
   submitted: 'bg-blue-100 text-blue-800',
@@ -94,6 +98,10 @@ export default function PrinterOrderDetailPage() {
   const [selectedLineItem, setSelectedLineItem] = useState('');
   const [rejectReason, setRejectReason] = useState('');
   const [signingProofId, setSigningProofId] = useState<string | null>(null);
+
+  // Hold-and-release state (ruling 2026-10-20)
+  const [releasing, setReleasing] = useState(false);
+  const [linkNumber, setLinkNumber] = useState('');
 
   // Cancel state
   const [showCancelModal, setShowCancelModal] = useState(false);
@@ -212,6 +220,53 @@ export default function PrinterOrderDetailPage() {
     }
   };
 
+  // After any release action the order and the DocketManager block both change.
+  const afterRelease = async (updated: Order) => {
+    setOrder(updated);
+    if (orderId) {
+      getOrderSyncStatus(orderId).then(setSyncStatus).catch(() => {});
+    }
+  };
+
+  const handleRelease = async () => {
+    if (!orderId || releasing) return;
+    setReleasing(true);
+    try {
+      await afterRelease(await releaseOrder(orderId));
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'The release did not go through');
+      fetchData();
+    } finally {
+      setReleasing(false);
+    }
+  };
+
+  const handleLinkRelease = async () => {
+    if (!orderId || !linkNumber.trim() || releasing) return;
+    setReleasing(true);
+    try {
+      await afterRelease(await linkReleasedOrder(orderId, { dm_order_number: linkNumber.trim() }));
+      setLinkNumber('');
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Could not record the DocketManager order');
+    } finally {
+      setReleasing(false);
+    }
+  };
+
+  const handleReleaseNotFound = async () => {
+    if (!orderId || releasing) return;
+    if (!confirm('You checked DocketManager and the job is not there? The order can then be released again.')) return;
+    setReleasing(true);
+    try {
+      await afterRelease(await confirmReleaseNotFound(orderId));
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Could not update the order');
+    } finally {
+      setReleasing(false);
+    }
+  };
+
   const handleCancel = async () => {
     if (!orderId || !cancelReason.trim()) return;
     setCancelling(true);
@@ -320,6 +375,15 @@ export default function PrinterOrderDetailPage() {
 
   const nextStatuses = VALID_TRANSITIONS[order.status] || [];
   const showProductionStatus = ['approved', 'in_production'].includes(order.status);
+  const release = describeRelease(order);
+  const releaseTone =
+    release?.tone === 'ok'
+      ? 'border-green-200 bg-green-50 text-green-900'
+      : release?.tone === 'ready'
+        ? 'border-teak bg-teak/10 text-teak-dark'
+        : release?.tone === 'human' || release?.tone === 'retry'
+          ? 'border-red-200 bg-red-50 text-red-900'
+          : 'border-amber-200 bg-amber-50 text-amber-900';
 
   return (
     <div className="space-y-6">
@@ -348,8 +412,60 @@ export default function PrinterOrderDetailPage() {
           >
             {order.status.replace(/_/g, ' ')}
           </span>
+          {release && release.state !== 'released' && (
+            <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-800">
+              {release.label}
+            </span>
+          )}
         </div>
       </div>
+
+      {/* Hold-and-release (ruling 2026-10-20): a changed order reaches
+          DocketManager only through this block. */}
+      {release && (
+        <div className={`rounded-lg border p-4 space-y-3 ${releaseTone}`}>
+          <h3 className="font-medium">Release to production</h3>
+          <p className="text-sm">{release.headline}</p>
+          {release.next && <p className="text-sm">{release.next}</p>}
+          {release.canRelease && (
+            <button
+              onClick={handleRelease}
+              disabled={releasing}
+              className="rounded bg-teak-dark px-3 py-1.5 text-xs font-medium text-white hover:bg-teak disabled:opacity-50"
+            >
+              {releasing ? 'Releasing…' : release.state === 'retryable' ? 'Release again' : 'Release to production'}
+            </button>
+          )}
+          {release.needsHuman && (
+            <div className="flex flex-wrap items-end gap-2">
+              <div>
+                <label className="block text-xs font-medium">DocketManager order number</label>
+                <input
+                  type="text"
+                  value={linkNumber}
+                  onChange={(e) => setLinkNumber(e.target.value)}
+                  placeholder="e.g. 85954"
+                  className="rounded border border-gray-300 px-2 py-1 text-sm"
+                />
+              </div>
+              <button
+                onClick={handleLinkRelease}
+                disabled={releasing || !linkNumber.trim()}
+                className="rounded bg-teak-dark px-3 py-1.5 text-xs font-medium text-white hover:bg-teak disabled:opacity-50"
+              >
+                It is there — record the number
+              </button>
+              <button
+                onClick={handleReleaseNotFound}
+                disabled={releasing}
+                className="rounded border border-red-300 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50 disabled:opacity-50"
+              >
+                Not there — allow a new release
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Placed By badge */}
       {order.placed_by_id && (
@@ -663,7 +779,11 @@ export default function PrinterOrderDetailPage() {
               : 'No attempt yet'}
             {syncStatus.dm_order_id && ` · DocketManager #${syncStatus.dm_order_id}`}
           </p>
-          {priceHoldStands ? (
+          {release && release.state !== 'released' ? (
+            <p className="text-xs text-amber-800">
+              This order reaches DocketManager only through “Release to production” above.
+            </p>
+          ) : priceHoldStands ? (
             <p className="text-xs text-amber-800">
               Push is unavailable until every product on this order has a cost per pack.
             </p>

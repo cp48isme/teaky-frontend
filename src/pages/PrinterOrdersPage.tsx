@@ -2,10 +2,13 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { listPrinterOrders } from '../api/orders';
 import type { Order } from '../types/order';
+import { describeRelease, isHeld } from '../lib/releaseCopy';
 import Spinner from '../components/ui/Spinner';
 
 const STATUS_FILTERS = [
   { label: 'All', value: '' },
+  // Client-side: orders held in Teaky (ruling 2026-10-20), whatever their status.
+  { label: 'Held for proof', value: 'held' },
   { label: 'Submitted', value: 'submitted' },
   { label: 'Pending Approval', value: 'pending_approval' },
   { label: 'Approved', value: 'approved' },
@@ -36,8 +39,9 @@ export default function PrinterOrdersPage() {
 
   useEffect(() => {
     setLoading(true);
-    listPrinterOrders(statusFilter || undefined)
-      .then(setOrders)
+    const held = statusFilter === 'held';
+    listPrinterOrders(held ? undefined : statusFilter || undefined)
+      .then((all) => setOrders(held ? all.filter(isHeld) : all))
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [statusFilter]);
@@ -113,6 +117,11 @@ export default function PrinterOrdersPage() {
                     >
                       {order.status.replace(/_/g, ' ')}
                     </span>
+                    {isHeld(order) && (
+                      <span className="ml-1 inline-block rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
+                        {describeRelease(order)?.label}
+                      </span>
+                    )}
                   </td>
                 </tr>
               ))}

@@ -12,6 +12,9 @@ export interface SummaryMetrics {
   orders_by_status: OrderStatusBreakdown[];
   active_portal_count: number;
   pending_proof_count: number;
+  /** Orders held in Teaky (waiting on a proof, a retry or a person), and how many of those are approved and ready to release. */
+  held_order_count?: number;
+  ready_to_release_count?: number;
 }
 
 export interface RevenueDataPoint {

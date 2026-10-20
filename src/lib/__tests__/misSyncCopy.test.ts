@@ -34,4 +34,12 @@ describe('DocketManager block copy', () => {
     const dup = describeSync({ ...base, error_message: 'imported_not_recorded: Order #85730' });
     expect(dup.next).toMatch(/Do not enter it again/);
   });
+
+  it('treats a held order as a hold in Teaky, not a failed push (ruling 2026-10-20)', () => {
+    const held = describeSync({ ...base, last_sync_status: 'held', error_message: null });
+    expect(held.tone).toBe('hold');
+    expect(held.headline).toMatch(/nothing has been sent to DocketManager/i);
+    expect(held.next).toMatch(/releases it/);
+    expect(held.reason).toBeNull();
+  });
 });
