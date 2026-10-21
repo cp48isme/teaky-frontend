@@ -16,7 +16,6 @@ import { getOrderSyncStatus, manualPushOrder } from '../api/mis';
 import { getProduct } from '../api/products';
 import { describeSync } from '../lib/misSyncCopy';
 import { getTrackingInfo } from '../api/shipping';
-import { syncOrderToQuickBooks } from '../api/quickbooks';
 import type { Order } from '../types/order';
 import { PRODUCTION_STATUSES } from '../types/order';
 import type { Proof } from '../types/proof';
@@ -86,9 +85,6 @@ export default function PrinterOrderDetailPage() {
 
   // Tracking info state
   const [trackingInfo, setTrackingInfo] = useState<TrackingInfo | null>(null);
-
-  // QuickBooks sync state
-  const [syncingQB, setSyncingQB] = useState(false);
 
   // Invoice state
   const [downloadingInvoice, setDownloadingInvoice] = useState(false);
@@ -279,23 +275,6 @@ export default function PrinterOrderDetailPage() {
       alert(err instanceof Error ? err.message : 'Failed to cancel order');
     } finally {
       setCancelling(false);
-    }
-  };
-
-  const handleSyncToQuickBooks = async () => {
-    if (!orderId) return;
-    setSyncingQB(true);
-    try {
-      const result = await syncOrderToQuickBooks(orderId);
-      if (result.error) {
-        alert(`QuickBooks sync error: ${result.error}`);
-      } else {
-        alert(`Synced to QuickBooks (Invoice: ${result.qbo_invoice_id || 'pending'})`);
-      }
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to sync to QuickBooks');
-    } finally {
-      setSyncingQB(false);
     }
   };
 
@@ -740,13 +719,6 @@ export default function PrinterOrderDetailPage() {
               className="rounded border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
             >
               {downloadingInvoice ? 'Downloading...' : 'Download Invoice'}
-            </button>
-            <button
-              onClick={handleSyncToQuickBooks}
-              disabled={syncingQB}
-              className="rounded border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-            >
-              {syncingQB ? 'Syncing...' : 'Sync to QuickBooks'}
             </button>
           </div>
         </div>

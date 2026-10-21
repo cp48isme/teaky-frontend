@@ -2,7 +2,6 @@ import { apiRequest } from './client';
 import type {
   QuickBooksStatus,
   QuickBooksConnectResponse,
-  QuickBooksSyncResponse,
 } from '../types/quickbooks';
 
 export async function getQuickBooksStatus(): Promise<QuickBooksStatus> {
@@ -13,20 +12,5 @@ export async function getQuickBooksConnectUrl(): Promise<QuickBooksConnectRespon
   return apiRequest<QuickBooksConnectResponse>('/integrations/quickbooks/connect');
 }
 
-export async function syncOrderToQuickBooks(
-  orderId: string,
-): Promise<QuickBooksSyncResponse> {
-  return apiRequest<QuickBooksSyncResponse>(
-    `/integrations/quickbooks/sync/${orderId}`,
-    { method: 'POST' },
-  );
-}
-
-export async function recordQuickBooksPayment(
-  orderId: string,
-): Promise<QuickBooksSyncResponse> {
-  return apiRequest<QuickBooksSyncResponse>(
-    `/integrations/quickbooks/sync/${orderId}/payment`,
-    { method: 'POST' },
-  );
-}
+// The invoice sync and payment calls were removed 2026-10-20 by ruling:
+// Teaky never creates, sends or pays a QuickBooks Invoice.
