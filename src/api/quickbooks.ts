@@ -5,7 +5,7 @@ import type {
 } from '../types/quickbooks';
 
 export async function getQuickBooksStatus(): Promise<QuickBooksStatus> {
-  return apiRequest<QuickBooksStatus>('/integrations/quickbooks/status');
+  return apiRequest<QuickBooksStatus>('/integrations/quickbooks/connection');
 }
 
 export async function getQuickBooksConnectUrl(): Promise<QuickBooksConnectResponse> {
