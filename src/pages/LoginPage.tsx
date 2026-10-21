@@ -36,9 +36,9 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-brand-light">
-      {/* Soft background washes */}
-      <div className="pointer-events-none absolute inset-0">
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-brand-light">
+      {/* Soft background washes — clipped by the container so a phone never scrolls sideways (ruling 2026-10-21) */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute top-1/4 left-1/3 h-[400px] w-[400px] rounded-full bg-teak/8 blur-[120px]" />
         <div className="absolute bottom-1/4 right-1/3 h-[300px] w-[300px] rounded-full bg-teak-light/6 blur-[120px]" />
       </div>
@@ -56,8 +56,8 @@ export default function LoginPage() {
         <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-xl shadow-black/5">
           <div className="h-1 bg-gradient-to-r from-teak-dark via-teak to-teak-light" />
           <div className="p-8">
-            <h2 className="font-heading text-2xl font-bold text-brand-dark">Sign in to Teaky</h2>
-            <p className="mt-1 text-sm text-wood">Sign in to your portals and orders</p>
+            <h2 className="font-heading text-2xl font-bold text-brand-dark">Sign in</h2>
+            <p className="mt-1 text-sm text-wood">Your ordering portal and orders</p>
 
             <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
               {error && (

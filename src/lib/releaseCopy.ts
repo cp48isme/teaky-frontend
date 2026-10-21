@@ -36,6 +36,8 @@ export function describeRelease(
 ): ReleaseDescription | null {
   const state = order.release_state;
   if (!state) return null;
+  // A cancelled order is never released (ruling 2026-10-21); say nothing rather than offer it.
+  if (order.status === 'cancelled') return null;
   const proofApproved =
     order.status === 'approved' ||
     (order.line_items.length > 0 &&
