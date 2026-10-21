@@ -15,6 +15,8 @@ export interface CartItem {
   quantity: number;
   /** Pieces per pack (1 when absent). */
   pack_size?: number;
+  /** The product's quantity cap in packs (ruling 2026-10-21); null = no cap. */
+  max_order_quantity?: number | null;
   size: string | null;
   /** The picked price option (e.g. a locking system), by label. */
   price_option?: string | null;

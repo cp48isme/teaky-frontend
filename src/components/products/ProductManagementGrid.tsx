@@ -18,7 +18,7 @@ interface Props {
 
 interface EditingCell {
   productId: string;
-  field: 'name' | 'category' | 'base_price' | 'base_cost' | 'markup_multiplier' | 'floor_multiplier' | 'pack_size' | 'status' | 'previous_dm_order_number';
+  field: 'name' | 'category' | 'base_price' | 'base_cost' | 'markup_multiplier' | 'floor_multiplier' | 'pack_size' | 'status' | 'previous_dm_order_number' | 'max_order_quantity';
   value: string | number;
 }
 
@@ -106,7 +106,9 @@ export default function ProductManagementGrid({ portalId, onProductsChange }: Pr
                 ? Math.max(1, Math.trunc(Number(editingCell.value)) || 1)
                 : editingCell.field === 'previous_dm_order_number'
                   ? String(editingCell.value).trim() || null
-                  : editingCell.value,
+                  : editingCell.field === 'max_order_quantity'
+                    ? (String(editingCell.value).trim() === '' ? null : Math.max(1, Math.trunc(Number(editingCell.value)) || 1))
+                    : editingCell.value,
       };
 
       const updated = await updateProduct(portalId, product.id, updateData);
@@ -589,6 +591,9 @@ function ProductTable({
             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
               Pack size
             </th>
+            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase" title="The most packs a buyer may order per order (ruling 2026-10-21). Blank = no cap. Above it the storefront refuses and names the support contact. The price never changes.">
+              Max packs
+            </th>
             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase" title="The DocketManager order number of this product's last job; an exact reorder's note says “Print as DocketManager order #…”. Filled in by every push Teaky makes; enter it by hand for history.">
               Prev. DM order #
             </th>
@@ -794,6 +799,32 @@ function ProductTable({
                   />
                 ) : (
                   (product.pack_size ?? 1).toLocaleString('en-US')
+                )}
+              </td>
+              <td
+                className="px-4 py-3 text-sm text-gray-700 cursor-pointer hover:bg-gray-50"
+                onClick={() => onStartEdit(product.id, 'max_order_quantity', product.max_order_quantity ?? '')}
+              >
+                {editingCell?.productId === product.id && editingCell.field === 'max_order_quantity' ? (
+                  <input
+                    type="number"
+                    min={1}
+                    step={1}
+                    value={editingCell.value as number | string}
+                    onChange={(e) => onEditChange(e.target.value)}
+                    onBlur={onSaveEdit}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') onSaveEdit();
+                      if (e.key === 'Escape') onCancelEdit();
+                    }}
+                    autoFocus
+                    placeholder="no cap"
+                    className="w-20 rounded border border-blue-300 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                ) : product.max_order_quantity != null ? (
+                  product.max_order_quantity.toLocaleString('en-US')
+                ) : (
+                  <span className="text-gray-400">no cap</span>
                 )}
               </td>
               <td

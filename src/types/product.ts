@@ -52,6 +52,8 @@ export interface Product {
   mockup_urls: string[];
   /** Minimum order, in packs. */
   min_order_qty: number;
+  /** The most packs a buyer may order here (ruling 2026-10-21); null = no cap. */
+  max_order_quantity?: number | null;
   /** Pieces per pack; the buyer orders packs (1 when absent). */
   pack_size?: number;
   /** What a buyer pays per pack at the minimum quantity, priced by the server; null = not for sale. */
@@ -102,6 +104,7 @@ export interface CreateProductRequest {
   pricing_tiers?: PricingTier[];
   mockup_urls?: string[];
   min_order_qty?: number;
+  max_order_quantity?: number | null;
   pack_size?: number;
   markup_multiplier?: number;
   floor_multiplier?: number | null;
@@ -130,6 +133,7 @@ export interface UpdateProductRequest {
   pricing_tiers?: PricingTier[];
   mockup_urls?: string[];
   min_order_qty?: number;
+  max_order_quantity?: number | null;
   pack_size?: number;
   markup_multiplier?: number;
   floor_multiplier?: number | null;
