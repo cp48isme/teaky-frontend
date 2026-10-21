@@ -84,6 +84,11 @@ export default function PortalProductDetailPage() {
   // With a base price, tiers are quantity breaks above one pack; a product
   // priced only by tiers (no base price) shows them all, as before.
   const packSize = product.pack_size ?? 1;
+  // Quantity cap (ruling 2026-10-21): the storefront never sells above it.
+  const cap = product?.max_order_quantity ?? null;
+  const clampQty = (q: number) => Math.min(cap ?? Infinity, Math.max(product?.min_order_qty ?? 1, q));
+  const support = portal?.brand_config;
+  const contactLine = [support?.support_name, support?.support_email, support?.support_phone].filter(Boolean).join(', ');
   // S87: a product sold by option (e.g. key cards by locking system) prices
   // from the picked option; the buyer must pick one before adding to cart.
   const options = product.price_options ?? [];
@@ -283,6 +288,13 @@ export default function PortalProductDetailPage() {
               ? `Sold in packs of ${packSize.toLocaleString('en-US')}. Minimum order: ${product.min_order_qty} pack${product.min_order_qty === 1 ? '' : 's'}.`
               : `Minimum order quantity: ${product.min_order_qty}`}
           </p>
+            {cap != null && (
+              <p className="mt-1 text-xs text-amber-800">
+                Up to {cap.toLocaleString('en-US')} pack{cap === 1 ? '' : 's'} per order here
+                {quantity >= cap ? ' — that is the most this store sells. ' : '. '}
+                For larger runs contact {contactLine || 'the portal support contact'}.
+              </p>
+            )}
 
           {/* Quantity + Add to Cart */}
           {isAuthenticated() && product.pack_price != null && (
@@ -302,11 +314,12 @@ export default function PortalProductDetailPage() {
                     type="number"
                     min={product.min_order_qty}
                     value={quantity}
-                    onChange={(e) => setQuantity(Math.max(product.min_order_qty, parseInt(e.target.value) || 1))}
+                    onChange={(e) => setQuantity(clampQty(parseInt(e.target.value) || 1))}
                     className="w-16 rounded border border-gray-300 px-2 py-1.5 text-center text-sm"
                   />
                   <button
-                    onClick={() => setQuantity((q) => q + 1)}
+                    onClick={() => setQuantity((q) => (cap != null ? Math.min(cap, q + 1) : q + 1))}
+                    disabled={cap != null && quantity >= cap}
                     className="flex h-8 w-8 items-center justify-center rounded border text-gray-600 hover:bg-gray-50"
                   >
                     +

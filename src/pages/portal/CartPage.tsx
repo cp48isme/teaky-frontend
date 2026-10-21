@@ -117,6 +117,8 @@ export default function CartPage() {
                 </span>
                 <button
                   onClick={() => updateItem(item.id, { quantity: item.quantity + 1 })}
+                  disabled={item.max_order_quantity != null && item.quantity >= item.max_order_quantity}
+                  title={item.max_order_quantity != null && item.quantity >= item.max_order_quantity ? `Up to ${item.max_order_quantity} packs per order here — for larger runs contact the portal support contact` : undefined}
                   className="flex h-7 w-7 items-center justify-center rounded border text-gray-600 hover:bg-gray-50"
                 >
                   +
