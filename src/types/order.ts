@@ -35,7 +35,7 @@ export interface LineItem {
   artwork_disposition?: ArtworkDisposition;
   artwork_change_note?: string | null;
   artwork_upload_url?: string | null;
-  recipients?: { name: string; title?: string | null }[];
+  recipients?: { name: string; title?: string | null; email?: string | null; phone?: string | null }[];
   created_at: string;
 }
 

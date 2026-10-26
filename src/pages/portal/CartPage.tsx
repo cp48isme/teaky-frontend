@@ -1,3 +1,4 @@
+import { recipientText } from '../../lib/recipientText';
 import { Link, useParams } from 'react-router-dom';
 import { useCart } from '../../contexts/CartContext';
 import { usePortalContext } from '../../contexts/PortalContext';
@@ -68,7 +69,7 @@ export default function CartPage() {
               </div>
               {item.recipients && item.recipients.length > 0 && (
                 <p className="mt-1 text-xs text-gray-600">
-                  For: {item.recipients.map((r) => (r.title ? `${r.name} (${r.title})` : r.name)).join('; ')}
+                  For: {item.recipients.map(recipientText).join('; ')}
                 </p>
               )}
               <p className="mt-1 text-sm text-gray-600">
