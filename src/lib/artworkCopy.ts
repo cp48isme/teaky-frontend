@@ -27,9 +27,11 @@ export function artworkSentence(li: LineItem, proofEmail: string | null): string
   const name = li.product_name;
   switch (li.artwork_disposition) {
     case 'changes_new_proof':
-      return `${name}: you asked for changes, so a new proof will be sent${
-        proofEmail ? ` to ${proofEmail}` : ' to you'
-      } for approval before anything is printed. Nothing goes to press until it is approved.`;
+      // Ruling 2026-10-21 (A1): the proof loop runs through Single Source
+      // Concierge — the buyer does not approve in the portal. Say what is true.
+      return `${name}: you asked for changes, so a proof will come from Single Source Concierge${
+        proofEmail ? ` (sent to ${proofEmail})` : ''
+      }. Nothing prints until it is approved.`;
     case 'reuse_unchanged':
       return `${name}: you asked for an exact reprint of the artwork you approved last time, so no new proof is sent. It goes straight to the printer.`;
     case 'no_artwork':
