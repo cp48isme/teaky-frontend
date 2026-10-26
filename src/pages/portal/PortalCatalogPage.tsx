@@ -25,6 +25,25 @@ export default function PortalCatalogPage() {
   return (
     <div className="mx-auto max-w-6xl px-6 py-8">
       <h1 className="text-xl font-bold text-gray-900">Products</h1>
+      {/* Ruling 2026-10-21: a buyer looking for something not listed is told who to call.
+          Static text from the portal's support contact; no form. */}
+      {(portal.brand_config?.support_name || portal.brand_config?.support_phone || portal.brand_config?.support_email) && (
+        <p className="mt-2 max-w-3xl text-sm text-gray-600">
+          Need something that needs quoting, or an item not shown here? Call{' '}
+          {[portal.brand_config?.support_name, portal.brand_config?.support_phone]
+            .filter(Boolean)
+            .join(', ')}
+          {portal.brand_config?.support_email ? (
+            <>
+              {' '}or email{' '}
+              <a className="underline" href={`mailto:${portal.brand_config.support_email}`}>
+                {portal.brand_config.support_email}
+              </a>
+            </>
+          ) : null}
+          .
+        </p>
+      )}
 
       {/* Category Filter */}
       <div className="mt-4 flex flex-wrap gap-2">
