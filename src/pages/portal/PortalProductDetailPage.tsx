@@ -1,3 +1,4 @@
+import { looksLikeEmail } from '../../lib/recipientText';
 import { useState, useEffect } from 'react';
 import { packPriceLabel, packQuantityLabel } from '../../lib/pricing';
 import { QUOTES_ENABLED } from '../../lib/paymentTerms';
@@ -11,6 +12,16 @@ import { useCart } from '../../contexts/CartContext';
 import { isAuthenticated } from '../../api/client';
 import type { Product } from '../../types/product';
 import Spinner from '../../components/ui/Spinner';
+
+type RecipientDraft = { name: string; title: string; email: string; phone: string };
+const emptyRecipient: RecipientDraft = { name: '', title: '', email: '', phone: '' };
+
+/** Every pack has a name, a well-formed email and a phone (any format). */
+function recipientsComplete(recipients: RecipientDraft[], quantity: number): boolean {
+  return Array.from({ length: quantity }, (_, i) => recipients[i] ?? emptyRecipient).every(
+    (r) => r.name.trim() !== '' && looksLikeEmail(r.email) && r.phone.trim() !== '',
+  );
+}
 
 export default function PortalProductDetailPage() {
   const { slug, productId } = useParams<{ slug: string; productId: string }>();
@@ -29,8 +40,9 @@ export default function PortalProductDetailPage() {
     uploadUrl: null,
   });
   const [adding, setAdding] = useState(false);
-  // Variable-data items: one name (and title) per pack ordered (s89_02).
-  const [recipients, setRecipients] = useState<{ name: string; title: string }[]>([]);
+  // Variable-data items: one person per pack ordered (s89_02) — name, title,
+  // and since 2026-10-26 email and phone, the four things the card carries.
+  const [recipients, setRecipients] = useState<RecipientDraft[]>([]);
   const [added, setAdded] = useState(false);
   const [isSafeOrder, setIsSafeOrder] = useState(false);
   const [showQuoteModal, setShowQuoteModal] = useState(false);
@@ -342,42 +354,67 @@ export default function PortalProductDetailPage() {
                     Who is each {packSize > 1 ? 'pack' : 'one'} for?
                   </legend>
                   <p className="mb-2 text-xs text-gray-500">
-                    Name and title as they should appear, one per {packSize > 1 ? 'pack' : 'item'}.
+                    Name and title as they should appear on the card, plus the email address and phone number it
+                    carries — one person per {packSize > 1 ? 'pack' : 'item'}.
                   </p>
-                  {Array.from({ length: quantity }, (_, i) => (
-                    <div key={i} className="mb-2 grid grid-cols-2 gap-2">
-                      <input
-                        id={`recipient-name-${i}`}
-                        type="text"
-                        maxLength={120}
-                        placeholder={`Name ${i + 1}`}
-                        value={recipients[i]?.name ?? ''}
-                        onChange={(e) =>
-                          setRecipients((prev) => {
-                            const next = [...prev];
-                            next[i] = { name: e.target.value, title: next[i]?.title ?? '' };
-                            return next;
-                          })
-                        }
-                        className="rounded-md border border-gray-300 px-3 py-2 text-sm"
-                      />
-                      <input
-                        id={`recipient-title-${i}`}
-                        type="text"
-                        maxLength={120}
-                        placeholder="Title (optional)"
-                        value={recipients[i]?.title ?? ''}
-                        onChange={(e) =>
-                          setRecipients((prev) => {
-                            const next = [...prev];
-                            next[i] = { name: next[i]?.name ?? '', title: e.target.value };
-                            return next;
-                          })
-                        }
-                        className="rounded-md border border-gray-300 px-3 py-2 text-sm"
-                      />
-                    </div>
-                  ))}
+                  {Array.from({ length: quantity }, (_, i) => {
+                    const set = (patch: Partial<RecipientDraft>) =>
+                      setRecipients((prev) => {
+                        const next = [...prev];
+                        next[i] = { ...(next[i] ?? emptyRecipient), ...patch };
+                        return next;
+                      });
+                    const r = recipients[i] ?? emptyRecipient;
+                    const emailBad = r.email.trim() !== '' && !looksLikeEmail(r.email);
+                    return (
+                      <div key={i} className="mb-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                        <input
+                          id={`recipient-name-${i}`}
+                          type="text"
+                          maxLength={120}
+                          placeholder={`Name ${i + 1}`}
+                          aria-label={`Name ${i + 1}`}
+                          value={r.name}
+                          onChange={(e) => set({ name: e.target.value })}
+                          className="rounded-md border border-gray-300 px-3 py-2 text-sm"
+                        />
+                        <input
+                          id={`recipient-title-${i}`}
+                          type="text"
+                          maxLength={120}
+                          placeholder="Title (optional)"
+                          aria-label={`Title ${i + 1} (optional)`}
+                          value={r.title}
+                          onChange={(e) => set({ title: e.target.value })}
+                          className="rounded-md border border-gray-300 px-3 py-2 text-sm"
+                        />
+                        <input
+                          id={`recipient-email-${i}`}
+                          type="email"
+                          maxLength={254}
+                          placeholder={`Email ${i + 1}`}
+                          aria-label={`Email ${i + 1}`}
+                          aria-invalid={emailBad || undefined}
+                          value={r.email}
+                          onChange={(e) => set({ email: e.target.value })}
+                          className={`rounded-md border px-3 py-2 text-sm ${emailBad ? 'border-red-400' : 'border-gray-300'}`}
+                        />
+                        <input
+                          id={`recipient-phone-${i}`}
+                          type="tel"
+                          maxLength={40}
+                          placeholder={`Phone ${i + 1}`}
+                          aria-label={`Phone ${i + 1}`}
+                          value={r.phone}
+                          onChange={(e) => set({ phone: e.target.value })}
+                          className="rounded-md border border-gray-300 px-3 py-2 text-sm"
+                        />
+                        {emailBad && (
+                          <p className="text-xs text-red-600 sm:col-span-2">Enter an email address like name@hotel.com.</p>
+                        )}
+                      </div>
+                    );
+                  })}
                 </fieldset>
               )}
 
@@ -412,6 +449,8 @@ export default function PortalProductDetailPage() {
                             recipients: Array.from({ length: quantity }, (_, i) => ({
                               name: (recipients[i]?.name ?? '').trim(),
                               title: (recipients[i]?.title ?? '').trim() || null,
+                              email: (recipients[i]?.email ?? '').trim(),
+                              phone: (recipients[i]?.phone ?? '').trim(),
                             })),
                           }
                         : {}),
@@ -427,8 +466,7 @@ export default function PortalProductDetailPage() {
                 disabled={
                   adding ||
                   (options.length > 0 && !pickedOption) ||
-                  (product.collects_recipients === true &&
-                    Array.from({ length: quantity }, (_, i) => (recipients[i]?.name ?? '').trim()).some((n) => !n))
+                  (product.collects_recipients === true && !recipientsComplete(recipients, quantity))
                 }
                 className="w-full rounded-md px-4 py-2.5 text-sm font-medium text-white transition-colors disabled:opacity-50"
                 style={{ backgroundColor: added ? '#16a34a' : primaryColor }}

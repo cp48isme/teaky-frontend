@@ -1,3 +1,4 @@
+import { recipientText } from '../lib/recipientText';
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import {
@@ -604,7 +605,7 @@ export default function PrinterOrderDetailPage() {
                 </p>
                 {item.recipients && item.recipients.length > 0 && (
                   <p className="text-xs text-gray-700">
-                    For: {item.recipients.map((r) => (r.title ? `${r.name} (${r.title})` : r.name)).join('; ')}
+                    For: {item.recipients.map(recipientText).join('; ')}
                   </p>
                 )}
                 <p

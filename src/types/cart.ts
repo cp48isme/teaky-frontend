@@ -5,6 +5,10 @@ export type ArtworkDisposition = 'reuse_unchanged' | 'changes_new_proof' | 'no_a
 export interface Recipient {
   name: string;
   title?: string | null;
+  // 2026-10-26: a card carries email and phone too. Required when adding to
+  // the cart; optional here because rows written before then hold name/title.
+  email?: string | null;
+  phone?: string | null;
 }
 
 export interface CartItem {
