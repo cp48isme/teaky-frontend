@@ -13,6 +13,13 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  // Ruling 2026-10-26 (item 4): a buyer arriving from a portal (?next=/p/<slug>,
+  // or a remembered portal) is a hotel's staff signing in to order — never a
+  // print shop that should be offered a free Teaky account. Hide the signup
+  // offer in that context so the first screen a hotel buyer sees is neutral.
+  // The page cannot know the organisation before sign-in; the portal context
+  // is the signal it has. Per-portal branding before sign-in is post-launch.
+  const fromPortal = (portalSlugFromPath(searchParams.get('next')) ?? lastPortalSlug()) !== null;
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -115,12 +122,14 @@ export default function LoginPage() {
               </button>
             </form>
 
-            <p className="mt-6 text-center text-sm text-wood">
-              New to Teaky?{' '}
-              <Link to="/register" className="font-medium text-teak-dark transition hover:text-teak">
-                Create a free account
-              </Link>
-            </p>
+            {!fromPortal && (
+              <p className="mt-6 text-center text-sm text-wood">
+                New to Teaky?{' '}
+                <Link to="/register" className="font-medium text-teak-dark transition hover:text-teak">
+                  Create a free account
+                </Link>
+              </p>
+            )}
           </div>
         </div>
       </div>
