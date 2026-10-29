@@ -34,10 +34,12 @@ const preview = {
   account_exists: false,
 };
 
-function renderPage() {
+// The token travels in the fragment (nt7z); the path form is the pre-29-Oct link.
+function renderPage(entry = '/invite#token=tok-123') {
   return render(
-    <MemoryRouter initialEntries={['/invite/tok-123']}>
+    <MemoryRouter initialEntries={[entry]}>
       <Routes>
+        <Route path="/invite" element={<AcceptInvitationPage />} />
         <Route path="/invite/:token" element={<AcceptInvitationPage />} />
       </Routes>
     </MemoryRouter>,
@@ -70,6 +72,24 @@ describe('AcceptInvitationPage', () => {
     await waitFor(() => expect(acceptInvitation).toHaveBeenCalledWith('tok-123'));
     expect(switchOrganization).toHaveBeenCalledWith('org-rgi');
     expect(mockNavigate).toHaveBeenCalledWith('/p/raphael', { replace: true });
+  });
+
+  it('still reads a link sent before the fragment form, and rewrites its address', async () => {
+    authed = false;
+    const replaceState = vi.spyOn(window.history, 'replaceState');
+    renderPage('/invite/tok-123');
+    expect(await screen.findByText("You're invited to The Raphael Hotel")).toBeInTheDocument();
+    expect(getInvitationPreview).toHaveBeenCalledWith('tok-123');
+    expect(replaceState).toHaveBeenCalledWith(null, '', '/invite#token=tok-123');
+    replaceState.mockRestore();
+  });
+
+  it('parks the token for the sign-in round trip instead of putting it in ?next=', async () => {
+    authed = false;
+    vi.mocked(getInvitationPreview).mockResolvedValue({ ...preview, account_exists: true });
+    renderPage();
+    expect(await screen.findByRole('link', { name: 'Sign in' })).toHaveAttribute('href', '/login?next=%2Finvite');
+    expect(sessionStorage.getItem('teaky.pendingInvitationToken')).toBe('tok-123');
   });
 
   it('tells a used invitation to sign in instead', async () => {

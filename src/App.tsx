@@ -52,6 +52,7 @@ function App() {
           <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/invite" element={<AcceptInvitationPage />} />
           <Route path="/invite/:token" element={<AcceptInvitationPage />} />
           <Route
             path="/dashboard"

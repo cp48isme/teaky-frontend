@@ -1,9 +1,16 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { isAuthenticated, switchOrganization } from '../api/client';
 import { acceptInvitation, getInvitationPreview, registerFromInvitation } from '../api/team';
 import type { InvitationPreview } from '../types/team';
 import { rememberPortal, rememberSignedInEmail } from '../lib/portalSession';
+import {
+  forgetInviteToken,
+  inviteFragmentPath,
+  readInviteFragment,
+  rememberInviteToken,
+  resolveInviteToken,
+} from '../lib/inviteLink';
 import Spinner from '../components/ui/Spinner';
 
 // S86, the proper invited-buyer path: the page reads the invitation, a visitor
@@ -12,7 +19,11 @@ import Spinner from '../components/ui/Spinner';
 // is sent to the printer registration form or the printer dashboard.
 
 export default function AcceptInvitationPage() {
-  const { token } = useParams<{ token: string }>();
+  // The token arrives in the fragment (never sent to a server); a path-form link
+  // from before 29 Oct 2026 still resolves and is rewritten to the fragment form.
+  const { token: pathToken } = useParams<{ token: string }>();
+  const { hash } = useLocation();
+  const token = resolveInviteToken(hash, pathToken);
   const navigate = useNavigate();
   const [preview, setPreview] = useState<InvitationPreview | null>(null);
   const [loading, setLoading] = useState(true);
@@ -23,17 +34,26 @@ export default function AcceptInvitationPage() {
   const authed = isAuthenticated();
 
   useEffect(() => {
-    if (!token) return;
+    if (!token) {
+      setLoading(false);
+      return;
+    }
+    // Parked for the sign-in round trip, so no ?next= ever carries it.
+    rememberInviteToken(token);
+    if (pathToken && !readInviteFragment(hash)) {
+      window.history.replaceState(null, '', inviteFragmentPath(token));
+    }
     getInvitationPreview(token)
       .then(setPreview)
       .catch(() => setPreview(null))
       .finally(() => setLoading(false));
-  }, [token]);
+  }, [token, pathToken, hash]);
 
   const landing = preview?.portal_slug ? `/p/${preview.portal_slug}` : '/';
   const destinationName = preview?.portal_name ?? preview?.organization_name ?? '';
 
   const finish = () => {
+    forgetInviteToken();
     if (preview?.portal_slug) rememberPortal(preview.portal_slug);
     navigate(landing, { replace: true });
   };
@@ -144,7 +164,7 @@ export default function AcceptInvitationPage() {
           {preview.invited_email} already has a Teaky account. Sign in and you'll be able to accept.
         </p>
         <Link
-          to={`/login?next=${encodeURIComponent(`/invite/${token}`)}`}
+          to="/login?next=%2Finvite"
           className="mt-6 block w-full rounded-md bg-teak-dark px-4 py-2.5 text-center text-sm font-medium text-white hover:bg-teak"
         >
           Sign in

@@ -99,7 +99,7 @@ const SESSION_ESTABLISHING_PATHS: readonly RegExp[] = [
   /^\/auth\/login$/,
   /^\/auth\/register$/,
   /^\/auth\/refresh$/,
-  /^\/team\/invitations\/[^/]+\/register$/,
+  /^\/team\/invitations\/register$/,
   /^\/p\/[^/]+\/register$/,
 ];
 
