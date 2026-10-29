@@ -34,6 +34,9 @@ describe('isSessionEstablishingPath', () => {
     expect(isSessionEstablishingPath('/auth/login?next=/p/raphael')).toBe(true);
     expect(isSessionEstablishingPath('/team/invitations/abc123/register')).toBe(true);
     expect(isSessionEstablishingPath('/p/raphael/register')).toBe(true);
+    expect(isSessionEstablishingPath('/auth/password-reset/request')).toBe(true);
+    expect(isSessionEstablishingPath('/auth/password-reset/confirm')).toBe(true);
+    expect(isSessionEstablishingPath('/auth/password-reset/other')).toBe(false);
     expect(isSessionEstablishingPath('/auth/logout')).toBe(false);
     expect(isSessionEstablishingPath('/team/invitations/abc123')).toBe(false);
     expect(isSessionEstablishingPath('/team/invitations/abc123/accept')).toBe(false);
