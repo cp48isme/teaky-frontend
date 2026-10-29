@@ -83,6 +83,39 @@ export async function switchOrganization(organizationId: string): Promise<boolea
   return true;
 }
 
+/**
+ * Endpoints that establish a session rather than use one. Two rules, both
+ * needed (29 Oct 2026, launch blocker): they are sent without a bearer, since
+ * whatever sits in localStorage is irrelevant to proving who you are; and a
+ * 401 from them is their own answer (a failed sign-in), never a session expiry.
+ * Before this, a returning user with an expired token who mistyped a password
+ * once had the login's 401 treated as "session expired": refresh, clear
+ * storage, hard reload, and no message. Logout is not listed: it consumes a
+ * session rather than opening one. The two token-issuing routes outside /auth
+ * — taking up an invitation with a new password, and portal self-registration
+ * — establish a session the same way and are listed with them.
+ */
+const SESSION_ESTABLISHING_PATHS: readonly RegExp[] = [
+  /^\/auth\/login$/,
+  /^\/auth\/register$/,
+  /^\/auth\/refresh$/,
+  /^\/team\/invitations\/[^/]+\/register$/,
+  /^\/p\/[^/]+\/register$/,
+];
+
+export function isSessionEstablishingPath(path: string): boolean {
+  const [pathname] = path.split('?');
+  const candidate = pathname ?? path;
+  return SESSION_ESTABLISHING_PATHS.some((pattern) => pattern.test(candidate));
+}
+
+/** The hard navigation taken when the session is gone; an object so tests can observe it. */
+export const sessionNavigation = {
+  toLogin(): void {
+    window.location.href = '/login';
+  },
+};
+
 export async function apiRequest<T>(
   path: string,
   options: RequestInit = {},
@@ -94,22 +127,26 @@ export async function apiRequest<T>(
     ...(options.headers as Record<string, string> | undefined),
   };
 
-  const accessToken = getAccessToken();
+  const establishesSession = isSessionEstablishingPath(path);
+  // Half one: no bearer on the endpoints that establish a session.
+  const accessToken = establishesSession ? null : getAccessToken();
   if (accessToken) {
     headers['Authorization'] = `Bearer ${accessToken}`;
   }
 
   let response = await fetch(url, { ...options, headers });
 
-  // If 401, attempt token refresh and retry once
-  if (response.status === 401 && accessToken) {
+  // Half two: only a 401 to a request that used a session means the session
+  // expired — then refresh and retry once, or send the user to sign in. A 401
+  // from a session-establishing endpoint falls through to the error below.
+  if (response.status === 401 && accessToken && !establishesSession) {
     const refreshed = await refreshAccessToken();
     if (refreshed) {
       headers['Authorization'] = `Bearer ${getAccessToken()}`;
       response = await fetch(url, { ...options, headers });
     } else {
       clearTokens();
-      window.location.href = '/login';
+      sessionNavigation.toLogin();
       throw new Error('Session expired');
     }
   }
