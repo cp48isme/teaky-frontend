@@ -79,4 +79,16 @@ describe('AcceptInvitationPage', () => {
     expect(await screen.findByText('This invitation has already been used.')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Sign in' })).toHaveAttribute('href', '/login?next=%2Fp%2Fraphael');
   });
+
+  it('an address that already has an account is offered the reset, not only the sign-in it may be locked out of', async () => {
+    authed = false;
+    vi.mocked(getInvitationPreview).mockResolvedValue({ ...preview, account_exists: true });
+    renderPage();
+    expect(await screen.findByText(/reset your password if you have forgotten it/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Sign in' })).toHaveAttribute('href', '/login?next=%2Finvite%2Ftok-123');
+    expect(screen.getByRole('link', { name: 'Reset your password' })).toHaveAttribute(
+      'href',
+      '/forgot-password?email=frontdesk%40example.com&next=%2Finvite%2Ftok-123',
+    );
+  });
 });

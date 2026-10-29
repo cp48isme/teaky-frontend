@@ -50,3 +50,29 @@ export async function logout(): Promise<void> {
   }
   clearTokens();
 }
+
+export interface PasswordResetRequestResponse {
+  detail: string;
+}
+
+export interface PasswordResetConfirmResponse {
+  detail: string;
+  sessions_ended: number;
+}
+
+/** Ask for a reset link. The answer is the same sentence whether or not the
+ *  address has an account; the portal only brands the email. */
+export function requestPasswordReset(email: string, portalSlug?: string | null): Promise<PasswordResetRequestResponse> {
+  return apiRequest<PasswordResetRequestResponse>('/auth/password-reset/request', {
+    method: 'POST',
+    body: JSON.stringify({ email, portal_slug: portalSlug || undefined }),
+  });
+}
+
+/** Consume the single-use token and set the password. Every other session ends. */
+export function confirmPasswordReset(token: string, newPassword: string): Promise<PasswordResetConfirmResponse> {
+  return apiRequest<PasswordResetConfirmResponse>('/auth/password-reset/confirm', {
+    method: 'POST',
+    body: JSON.stringify({ token, new_password: newPassword }),
+  });
+}

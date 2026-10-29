@@ -141,13 +141,20 @@ export default function AcceptInvitationPage() {
       <>
         <h1 className="text-xl font-bold text-gray-900">You're invited to {destinationName}</h1>
         <p className="mt-3 text-sm text-gray-600">
-          {preview.invited_email} already has a Teaky account. Sign in and you'll be able to accept.
+          {preview.invited_email} already has an account. Sign in and you'll be able to accept, or reset
+          your password if you have forgotten it.
         </p>
         <Link
           to={`/login?next=${encodeURIComponent(`/invite/${token}`)}`}
           className="mt-6 block w-full rounded-md bg-teak-dark px-4 py-2.5 text-center text-sm font-medium text-white hover:bg-teak"
         >
           Sign in
+        </Link>
+        <Link
+          to={`/forgot-password?${new URLSearchParams({ email: preview.invited_email, next: `/invite/${token}` }).toString()}`}
+          className="mt-3 block w-full rounded-md border border-gray-200 px-4 py-2.5 text-center text-sm font-medium text-teak-dark hover:bg-gray-50"
+        >
+          Reset your password
         </Link>
       </>,
     );
