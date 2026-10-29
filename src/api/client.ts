@@ -91,13 +91,22 @@ export async function switchOrganization(organizationId: string): Promise<boolea
  * Before this, a returning user with an expired token who mistyped a password
  * once had the login's 401 treated as "session expired": refresh, clear
  * storage, hard reload, and no message. Logout is not listed: it consumes a
- * session rather than opening one.
+ * session rather than opening one. The two token-issuing routes outside /auth
+ * — taking up an invitation with a new password, and portal self-registration
+ * — establish a session the same way and are listed with them.
  */
-const SESSION_ESTABLISHING_PATHS = new Set(['/auth/login', '/auth/register', '/auth/refresh']);
+const SESSION_ESTABLISHING_PATHS: readonly RegExp[] = [
+  /^\/auth\/login$/,
+  /^\/auth\/register$/,
+  /^\/auth\/refresh$/,
+  /^\/team\/invitations\/[^/]+\/register$/,
+  /^\/p\/[^/]+\/register$/,
+];
 
 export function isSessionEstablishingPath(path: string): boolean {
   const [pathname] = path.split('?');
-  return SESSION_ESTABLISHING_PATHS.has(pathname ?? path);
+  const candidate = pathname ?? path;
+  return SESSION_ESTABLISHING_PATHS.some((pattern) => pattern.test(candidate));
 }
 
 /** The hard navigation taken when the session is gone; an object so tests can observe it. */

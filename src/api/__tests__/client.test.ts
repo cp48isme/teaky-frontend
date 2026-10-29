@@ -32,7 +32,12 @@ describe('isSessionEstablishingPath', () => {
     expect(isSessionEstablishingPath('/auth/register')).toBe(true);
     expect(isSessionEstablishingPath('/auth/refresh')).toBe(true);
     expect(isSessionEstablishingPath('/auth/login?next=/p/raphael')).toBe(true);
+    expect(isSessionEstablishingPath('/team/invitations/abc123/register')).toBe(true);
+    expect(isSessionEstablishingPath('/p/raphael/register')).toBe(true);
     expect(isSessionEstablishingPath('/auth/logout')).toBe(false);
+    expect(isSessionEstablishingPath('/team/invitations/abc123')).toBe(false);
+    expect(isSessionEstablishingPath('/team/invitations/abc123/accept')).toBe(false);
+    expect(isSessionEstablishingPath('/p/raphael/cart')).toBe(false);
     expect(isSessionEstablishingPath('/orders')).toBe(false);
   });
 });
@@ -62,6 +67,18 @@ describe('apiRequest and the session-establishing endpoints', () => {
 
     expect(tokens.access_token).toBe('new');
     expect(calls()).toEqual([{ url: '/api/auth/login', authorization: undefined }]);
+  });
+
+  it('sends no bearer when taking up an invitation with a new password, and its 401 is not an expiry', async () => {
+    localStorage.setItem('access_token', STALE.access_token);
+    localStorage.setItem('refresh_token', STALE.refresh_token);
+    responses.mockResolvedValueOnce(jsonResponse(401, { detail: 'Invitation not found' }));
+
+    await expect(apiRequest('/team/invitations/abc123/register', { method: 'POST', body: '{}' })).rejects.toMatchObject({ status: 401, message: 'Invitation not found' });
+
+    expect(calls()).toEqual([{ url: '/api/team/invitations/abc123/register', authorization: undefined }]);
+    expect(toLogin).not.toHaveBeenCalled();
+    expect(localStorage.getItem('access_token')).toBe(STALE.access_token);
   });
 
   it('sends no bearer to /auth/register either', async () => {
