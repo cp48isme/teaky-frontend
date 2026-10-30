@@ -1,4 +1,4 @@
-import { looksLikeEmail } from '../../lib/recipientText';
+import { looksLikeEmail, looksLikePhone, PHONE_RULE } from '../../lib/recipientText';
 import { useState, useEffect } from 'react';
 import { packPriceLabel, packQuantityLabel } from '../../lib/pricing';
 import { QUOTES_ENABLED } from '../../lib/paymentTerms';
@@ -18,11 +18,21 @@ import { useAction } from '../../hooks/useAction';
 type RecipientDraft = { name: string; title: string; email: string; phone: string };
 const emptyRecipient: RecipientDraft = { name: '', title: '', email: '', phone: '' };
 
-/** Every pack has a name, a well-formed email and a phone (any format). */
-function recipientsComplete(recipients: RecipientDraft[], quantity: number): boolean {
-  return Array.from({ length: quantity }, (_, i) => recipients[i] ?? emptyRecipient).every(
-    (r) => r.name.trim() !== '' && looksLikeEmail(r.email) && r.phone.trim() !== '',
-  );
+/**
+ * Why Add to Cart cannot go yet, or null: every pack needs a name, a
+ * well-formed email and a dialable phone (any format, 30 Oct 2026). The first
+ * problem is named so the buyer knows which field, not just that one is wrong.
+ */
+function recipientsProblem(recipients: RecipientDraft[], quantity: number): string | null {
+  const drafts = Array.from({ length: quantity }, (_, i) => recipients[i] ?? emptyRecipient);
+  if (drafts.some((r) => r.name.trim() === '' || r.email.trim() === '' || r.phone.trim() === '')) {
+    return 'Add a name, email and phone for each pack';
+  }
+  const badEmail = drafts.findIndex((r) => !looksLikeEmail(r.email));
+  if (badEmail >= 0) return `Email ${badEmail + 1} does not look like an email address`;
+  const badPhone = drafts.findIndex((r) => !looksLikePhone(r.phone));
+  if (badPhone >= 0) return `Phone ${badPhone + 1} ${PHONE_RULE}`;
+  return null;
 }
 
 export default function PortalProductDetailPage() {
@@ -471,11 +481,7 @@ export default function PortalProductDetailPage() {
                 pending={adding}
                 pendingLabel="Adding..."
                 disabled={options.length > 0 && !pickedOption}
-                reason={
-                  product.collects_recipients === true && !recipientsComplete(recipients, quantity)
-                    ? 'Add a name, email and phone for each pack'
-                    : null
-                }
+                reason={product.collects_recipients === true ? recipientsProblem(recipients, quantity) : null}
                 reasonClassName="mt-2 text-sm text-gray-600"
                 className="w-full rounded-md px-4 py-2.5 text-sm font-medium text-white transition-colors disabled:opacity-50"
                 style={{ backgroundColor: added ? '#16a34a' : primaryColor }}
