@@ -27,7 +27,11 @@ export default function PortalDetailPage() {
   const [portal, setPortal] = useState<Portal | null>(null);
   const [classification, setClassification] = useState<CustomerClassification | ''>('');
   const [shareRate, setShareRate] = useState('');
-  const [classifyError, setClassifyError] = useState<string | null>(null);
+  // Cause 8 (30 Oct 2026): classification and share rate are set once and
+  // cannot be changed in place, so the form restates the exact values and
+  // asks again before committing them.
+  const [confirmingSetOnce, setConfirmingSetOnce] = useState(false);
+  const [setOnceError, setSetOnceError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [publishing, setPublishing] = useState(false);
   const [error, setError] = useState('');
@@ -63,6 +67,13 @@ export default function PortalDetailPage() {
       setPublishing(false);
     }
   };
+
+  const setOnce = useAction(
+    'Classification and share rate',
+    (id: string, data: { customer_classification?: CustomerClassification; revenue_share_rate?: number }) =>
+      updatePortal(id, data),
+    { success: 'Classification and share rate set' },
+  );
 
   const duplicate = useAction(
     'Duplicate portal',
@@ -276,25 +287,26 @@ export default function PortalDetailPage() {
               </dd>
             </div>
           </dl>
-          {(!portal.customer_classification || portal.revenue_share_rate == null) && (
+          {(!portal.customer_classification || portal.revenue_share_rate == null) && !confirmingSetOnce && (
             <form
               className="mt-3 flex flex-wrap items-end gap-2 border-t pt-3"
-              onSubmit={async (e) => {
+              onSubmit={(e) => {
                 e.preventDefault();
-                setClassifyError(null);
-                try {
-                  const updated = await updatePortal(portal.id, {
-                    ...(classification && !portal.customer_classification
-                      ? { customer_classification: classification }
-                      : {}),
-                    ...(shareRate !== '' && portal.revenue_share_rate == null
-                      ? { revenue_share_rate: Number(shareRate) / 100 }
-                      : {}),
-                  });
-                  setPortal(updated);
-                } catch (err) {
-                  setClassifyError(err instanceof Error ? err.message : 'Could not save');
+                setSetOnceError(null);
+                const settingClassification = Boolean(classification) && !portal.customer_classification;
+                const settingRate = shareRate.trim() !== '' && portal.revenue_share_rate == null;
+                if (!settingClassification && !settingRate) {
+                  setSetOnceError('Choose a classification or enter a share rate first.');
+                  return;
                 }
+                if (settingRate) {
+                  const rate = Number(shareRate);
+                  if (!Number.isFinite(rate) || rate < 0 || rate > 100) {
+                    setSetOnceError('The share rate is a percentage from 0 to 100.');
+                    return;
+                  }
+                }
+                setConfirmingSetOnce(true);
               }}
             >
               {!portal.customer_classification && (
@@ -332,8 +344,63 @@ export default function PortalDetailPage() {
               <span className="text-xs text-gray-500">
                 These cannot be changed in place afterwards.
               </span>
-              {classifyError && <span className="text-xs text-red-600">{classifyError}</span>}
+              {setOnceError && <span className="text-xs text-red-600">{setOnceError}</span>}
             </form>
+          )}
+          {confirmingSetOnce && (
+            <div
+              role="group"
+              aria-labelledby="set-once-heading"
+              className="mt-3 rounded-md border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900"
+            >
+              <p id="set-once-heading" className="font-semibold">
+                Set once, for {portal.name}. This cannot be changed in place afterwards.
+              </p>
+              <dl className="mt-2 space-y-1">
+                {classification && !portal.customer_classification && (
+                  <div className="flex gap-2">
+                    <dt className="text-amber-800">Classification:</dt>
+                    <dd className="font-medium">{CLASSIFICATION_LABELS[classification]}</dd>
+                  </div>
+                )}
+                {shareRate.trim() !== '' && portal.revenue_share_rate == null && (
+                  <div className="flex gap-2">
+                    <dt className="text-amber-800">Revenue share rate:</dt>
+                    <dd className="font-medium">{Number(shareRate)}%</dd>
+                  </div>
+                )}
+              </dl>
+              <div className="mt-3 flex items-center gap-2">
+                <button
+                  type="button"
+                  disabled={setOnce.pending}
+                  onClick={async () => {
+                    const updated = await setOnce.run(portal.id, {
+                      ...(classification && !portal.customer_classification
+                        ? { customer_classification: classification }
+                        : {}),
+                      ...(shareRate.trim() !== '' && portal.revenue_share_rate == null
+                        ? { revenue_share_rate: Number(shareRate) / 100 }
+                        : {}),
+                    });
+                    if (!updated) return;
+                    setPortal(updated);
+                    setConfirmingSetOnce(false);
+                  }}
+                  className="rounded-md bg-teak-dark px-3 py-1.5 text-sm font-medium text-white hover:bg-teak disabled:opacity-50"
+                >
+                  {setOnce.pending ? 'Setting…' : 'Confirm — set once'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setConfirmingSetOnce(false)}
+                  className="rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
+                >
+                  Go back
+                </button>
+                {setOnce.error && <span className="text-xs text-red-600">{setOnce.error}</span>}
+              </div>
+            </div>
           )}
         </div>
 
