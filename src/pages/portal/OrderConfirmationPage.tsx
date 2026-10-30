@@ -94,7 +94,7 @@ export default function OrderConfirmationPage() {
         <h2 className="font-semibold text-gray-900">What happens next</h2>
         <ol className="mt-2 list-decimal space-y-1 pl-5 text-gray-700">
           {order.line_items.map((li) => (
-            <li key={li.id}>{artworkSentence(li, order.proof_email ?? null)}</li>
+            <li key={li.id}>{artworkSentence(li, order.proof_email ?? null, support?.support_name || 'the printer')}</li>
           ))}
           <li>
             You will be invoiced after it ships. No payment is taken now
