@@ -200,3 +200,27 @@ describe('CheckoutPage — invoice-terms buyer path', () => {
     expect(mockNavigate).not.toHaveBeenCalled();
   });
 });
+
+describe('CheckoutPage — the ship-to phone must be dialable (30 Oct 2026, ruling R4)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    portal = { name: 'The Raphael Hotel', slug: 'raphael', brand_config: null, type: 'client', status: 'active', require_po: false };
+    vi.mocked(createPortalOrder).mockResolvedValue({ id: 'order-9' } as never);
+    vi.mocked(listMyOrders).mockResolvedValue([]);
+  });
+
+  it('refuses a one-letter phone before the order is sent, and accepts a real one', async () => {
+    const user = userEvent.setup();
+    renderPage();
+    await fillAddress(user);
+    await user.type(screen.getByLabelText('Phone'), 'x');
+    await user.click(screen.getByRole('button', { name: 'Place order — to be invoiced' }));
+    expect(await screen.findByText(/Phone: needs at least 7 digits/)).toBeInTheDocument();
+    expect(createPortalOrder).not.toHaveBeenCalled();
+    await user.clear(screen.getByLabelText('Phone'));
+    await user.type(screen.getByLabelText('Phone'), '816-555-0101');
+    await user.click(screen.getByRole('button', { name: 'Place order — to be invoiced' }));
+    await waitFor(() => expect(createPortalOrder).toHaveBeenCalledTimes(1));
+    expect(vi.mocked(createPortalOrder).mock.calls[0][1].shipping_address.phone).toBe('816-555-0101');
+  });
+});

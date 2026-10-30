@@ -10,6 +10,7 @@ import type { ShippingAddress } from "../../types/order";
 import type { ShippingRate } from "../../types/shipping";
 import { INVOICE_TERMS, FREIGHT_NOTE } from "../../lib/paymentTerms";
 import { todayIsoDate } from "../../lib/neededBy";
+import { looksLikePhone, PHONE_RULE } from "../../lib/recipientText";
 import StripePaymentForm from "../../components/checkout/StripePaymentForm";
 import Spinner from "../../components/ui/Spinner";
 import { packPriceLabel, packQuantityLabel } from '../../lib/pricing';
@@ -203,6 +204,14 @@ export default function CheckoutPage() {
       setError(
         "This portal requires a purchase-order number or reference on every order.",
       );
+      return;
+    }
+
+    // The ship-to phone is optional, but when given it is the carrier's
+    // contact and must be dialable (30 Oct 2026, ruling R4). The server
+    // refuses it too; this says so before the order is sent.
+    if (address.phone && address.phone.trim() && !looksLikePhone(address.phone)) {
+      setError(`Phone: ${PHONE_RULE}`);
       return;
     }
 
