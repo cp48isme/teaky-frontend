@@ -358,7 +358,7 @@ export default function PrinterOrderDetailPage() {
 
   const nextStatuses = VALID_TRANSITIONS[order.status] || [];
   const showProductionStatus = ['approved', 'in_production'].includes(order.status);
-  const release = describeRelease(order);
+  const release = describeRelease(order, sync);
   const releaseTone =
     release?.tone === 'ok'
       ? 'border-green-200 bg-green-50 text-green-900'
