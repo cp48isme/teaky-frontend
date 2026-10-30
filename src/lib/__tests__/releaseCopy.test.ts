@@ -49,3 +49,41 @@ describe('hold-and-release copy', () => {
     expect(RELEASE_LABELS.needs_human).toBe('Check DocketManager');
   });
 });
+
+describe('retryable banner names the failure and the next action (Cause 7, 30 Oct 2026)', () => {
+  const retryable = { release_state: 'retryable', status: 'approved', release_attempts: 2 } as const;
+
+  it('carries the DocketManager block’s reason and action into the banner', () => {
+    const d = describeRelease(order(retryable), {
+      tone: 'hold',
+      headline: 'Held: a product on this order has no cost per pack, so the job cannot carry its price.',
+      next: 'Add the cost per pack on the product (Products), then push again from here.',
+      reason: 'price_needed',
+    })!;
+    expect(d.headline).toBe(
+      'Release attempt 2 did not make the job. Held: a product on this order has no cost per pack, so the job cannot carry its price.',
+    );
+    expect(d.next).toBe(
+      'Add the cost per pack on the product (Products), then release again from here. Nothing was created in DocketManager.',
+    );
+    expect(d.next).not.toMatch(/block below|fix the cause/i);
+    expect(d.canRelease).toBe(true);
+  });
+
+  it('names a refused import and the order-form fallback', () => {
+    const d = describeRelease(order(retryable), {
+      tone: 'failed',
+      headline: 'DocketManager refused the import.',
+      next: 'Enter the job from the emailed order form and tell Teaky so the cause is fixed.',
+      reason: 'rejected',
+    })!;
+    expect(d.headline).toBe('Release attempt 2 did not make the job. DocketManager refused the import.');
+    expect(d.next).toMatch(/^Enter the job from the emailed order form and tell Teaky so the cause is fixed\. Nothing was created/);
+  });
+
+  it('still says what to do when the block has no reading yet', () => {
+    const d = describeRelease(order(retryable), null)!;
+    expect(d.headline).toBe('Release attempt 2 did not make the job in DocketManager; nothing was created there.');
+    expect(d.next).toBe('Release again; nothing was created there. If it fails again, enter the job from the emailed order form and tell Teaky.');
+  });
+});
