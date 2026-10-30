@@ -1,7 +1,8 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { ApiError } from '../api/client';
+import { ApiError, isAuthenticated } from '../api/client';
+import Spinner from '../components/ui/Spinner';
 import { usePostLoginRedirect } from '../hooks/usePostLoginRedirect';
 
 const FEATURES = [
@@ -75,6 +76,12 @@ export default function LandingPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  // belq (30 Oct 2026): this page carries a sign-in form, so it must never be
+  // where a signed-in user lands. One is sent on to their own place instead.
+  const signedIn = isAuthenticated();
+  useEffect(() => {
+    if (signedIn) void postLoginRedirect();
+  }, [signedIn, postLoginRedirect]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -93,6 +100,14 @@ export default function LandingPage() {
       setLoading(false);
     }
   };
+
+  if (signedIn) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-brand-light">
+        <Spinner className="h-8 w-8 text-teak-dark" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-brand-light">
