@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { confirmProductPrice, updateProduct } from '../../api/products';
+import { useAction } from '../../hooks/useAction';
 import type { PriceOption, PriceOptionInput, Product } from '../../types/product';
 
 /**
@@ -54,20 +55,18 @@ export function KeepPriceButton({
   optionLabel?: string;
   onUpdated: (product: Product) => void;
 }) {
-  const [busy, setBusy] = useState(false);
+  const confirmPrice = useAction(
+    'Price',
+    () => confirmProductPrice(portalId, product.id, optionLabel),
+    { success: 'Price confirmed' },
+  );
   return (
     <button
       type="button"
-      disabled={busy}
+      disabled={confirmPrice.pending}
       onClick={async () => {
-        setBusy(true);
-        try {
-          onUpdated(await confirmProductPrice(portalId, product.id, optionLabel));
-        } catch {
-          alert('Could not confirm the price');
-        } finally {
-          setBusy(false);
-        }
+        const updated = await confirmPrice.run();
+        if (updated) onUpdated(updated);
       }}
       className="text-sm text-teak-dark hover:text-teak disabled:opacity-50"
       title="Keep the hotel's price as it is and record today as its confirmed date"
@@ -98,7 +97,12 @@ export function PriceOptionsEditor({
 }) {
   const [setName, setSetName] = useState(product.option_set_name ?? '');
   const [rows, setRows] = useState<PriceOptionInput[]>((product.price_options ?? []).map(toInput));
-  const [saving, setSaving] = useState(false);
+  const saveOptions = useAction('Price options', () =>
+    updateProduct(portalId, product.id, {
+      option_set_name: setName.trim() || null,
+      price_options: rows,
+    }),
+  );
   const saved = new Map((product.price_options ?? []).map((o) => [o.label, o]));
 
   const update = (index: number, patch: Partial<PriceOptionInput>) =>
@@ -176,22 +180,12 @@ export function PriceOptionsEditor({
           </button>
           <button
             type="button"
-            disabled={saving || rows.some((r) => !r.label.trim())}
+            disabled={saveOptions.pending || rows.some((r) => !r.label.trim())}
             onClick={async () => {
-              setSaving(true);
-              try {
-                onUpdated(
-                  await updateProduct(portalId, product.id, {
-                    option_set_name: setName.trim() || null,
-                    price_options: rows,
-                  }),
-                );
-                onClose();
-              } catch {
-                alert('Could not save the options');
-              } finally {
-                setSaving(false);
-              }
+              const updated = await saveOptions.run();
+              if (!updated) return;
+              onUpdated(updated);
+              onClose();
             }}
             className="rounded bg-teak px-3 py-1.5 text-sm text-white disabled:opacity-50"
           >

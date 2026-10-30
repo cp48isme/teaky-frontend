@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { listOrderFiles, uploadOrderFile, deleteOrderFile } from '../../api/orderFiles';
 import type { OrderFile } from '../../api/orderFiles';
 import Spinner from '../ui/Spinner';
+import { useAction } from '../../hooks/useAction';
 
 interface Props {
   orderId: string;
@@ -16,7 +17,6 @@ function formatFileSize(bytes: number): string {
 export default function OrderFilesSection({ orderId }: Props) {
   const [files, setFiles] = useState<OrderFile[]>([]);
   const [loading, setLoading] = useState(true);
-  const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -35,29 +35,33 @@ export default function OrderFilesSection({ orderId }: Props) {
     fetchFiles();
   }, [fetchFiles]);
 
-  const handleUpload = async (fileList: FileList | null) => {
-    if (!fileList || fileList.length === 0) return;
-    setUploading(true);
-    try {
-      for (const file of Array.from(fileList)) {
+  const upload = useAction(
+    'Upload',
+    async (fileList: File[]) => {
+      for (const file of fileList) {
         await uploadOrderFile(orderId, file);
       }
       await fetchFiles();
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to upload file');
-    } finally {
-      setUploading(false);
-    }
+      return fileList.length;
+    },
+    { success: (count) => (count === 1 ? 'File uploaded' : `${count} files uploaded`) },
+  );
+  const uploading = upload.pending;
+
+  const handleUpload = (fileList: FileList | null) => {
+    if (!fileList || fileList.length === 0) return;
+    void upload.run(Array.from(fileList));
   };
+
+  const removeFile = useAction('Delete file', (fileId: string) => deleteOrderFile(orderId, fileId), {
+    success: 'File deleted',
+  });
 
   const handleDelete = async (fileId: string) => {
     if (!confirm('Delete this file?')) return;
-    try {
-      await deleteOrderFile(orderId, fileId);
-      setFiles((prev) => prev.filter((f) => f.id !== fileId));
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to delete file');
-    }
+    const result = await removeFile.run(fileId);
+    if (result === undefined) return;
+    setFiles((prev) => prev.filter((f) => f.id !== fileId));
   };
 
   const handleDragOver = (e: React.DragEvent) => {

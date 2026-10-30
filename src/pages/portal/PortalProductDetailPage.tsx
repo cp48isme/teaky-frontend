@@ -12,6 +12,8 @@ import { useCart } from '../../contexts/CartContext';
 import { isAuthenticated } from '../../api/client';
 import type { Product } from '../../types/product';
 import Spinner from '../../components/ui/Spinner';
+import ActionButton from '../../components/ui/ActionButton';
+import { useAction } from '../../hooks/useAction';
 
 type RecipientDraft = { name: string; title: string; email: string; phone: string };
 const emptyRecipient: RecipientDraft = { name: '', title: '', email: '', phone: '' };
@@ -39,11 +41,20 @@ export default function PortalProductDetailPage() {
     note: '',
     uploadUrl: null,
   });
-  const [adding, setAdding] = useState(false);
   // Variable-data items: one person per pack ordered (s89_02) — name, title,
   // and since 2026-10-26 email and phone, the four things the card carries.
   const [recipients, setRecipients] = useState<RecipientDraft[]>([]);
   const [added, setAdded] = useState(false);
+  // Add to cart reports through the status region (30 Oct 2026): a cap refusal
+  // (422) used to be swallowed here — the button flashed "Adding..." and
+  // nothing said why. The server's sentence now reaches the region.
+  const addToCart = useAction('Add to cart', (data: Parameters<typeof addItem>[0]) => addItem(data), {
+    success: () =>
+      product
+        ? `Added to your cart: ${product.name}, ${packQuantityLabel(quantity, product.pack_size ?? 1)}`
+        : 'Added to your cart',
+  });
+  const adding = addToCart.pending;
   const [isSafeOrder, setIsSafeOrder] = useState(false);
   const [showQuoteModal, setShowQuoteModal] = useState(false);
   const [quoteDescription, setQuoteDescription] = useState('');
@@ -418,14 +429,12 @@ export default function PortalProductDetailPage() {
                 </fieldset>
               )}
 
-              <button
+              <ActionButton
                 onClick={async () => {
                   if (!product) return;
-                  setAdding(true);
                   setAdded(false);
-                  try {
-                    // No price is sent: the server prices the line.
-                    await addItem({
+                  // No price is sent: the server prices the line.
+                  const result = await addToCart.run({
                       product_id: product.id,
                       quantity,
                       size: selectedSize || undefined,
@@ -454,31 +463,29 @@ export default function PortalProductDetailPage() {
                             })),
                           }
                         : {}),
-                    });
-                    setAdded(true);
-                    setTimeout(() => setAdded(false), 2000);
-                  } catch {
-                    // error handled by cart context
-                  } finally {
-                    setAdding(false);
-                  }
+                  });
+                  if (result === undefined) return;
+                  setAdded(true);
+                  setTimeout(() => setAdded(false), 2000);
                 }}
-                disabled={
-                  adding ||
-                  (options.length > 0 && !pickedOption) ||
-                  (product.collects_recipients === true && !recipientsComplete(recipients, quantity))
+                pending={adding}
+                pendingLabel="Adding..."
+                disabled={options.length > 0 && !pickedOption}
+                reason={
+                  product.collects_recipients === true && !recipientsComplete(recipients, quantity)
+                    ? 'Add a name, email and phone for each pack'
+                    : null
                 }
+                reasonClassName="mt-2 text-sm text-gray-600"
                 className="w-full rounded-md px-4 py-2.5 text-sm font-medium text-white transition-colors disabled:opacity-50"
                 style={{ backgroundColor: added ? '#16a34a' : primaryColor }}
               >
-                {adding
-                  ? 'Adding...'
-                  : added
-                    ? 'Added to Cart!'
-                    : options.length > 0 && !pickedOption
-                      ? `Choose a ${(product.option_set_name || 'option').toLowerCase()}`
-                      : 'Add to Cart'}
-              </button>
+                {added
+                  ? 'Added to Cart!'
+                  : options.length > 0 && !pickedOption
+                    ? `Choose a ${(product.option_set_name || 'option').toLowerCase()}`
+                    : 'Add to Cart'}
+              </ActionButton>
 
               {QUOTES_ENABLED && (
                 <button

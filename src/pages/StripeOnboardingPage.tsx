@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getOnboardingLink, getStripeStatus } from '../api/stripe';
 import Spinner from '../components/ui/Spinner';
+import { useAction } from '../hooks/useAction';
 
 export default function StripeOnboardingPage() {
   const [status, setStatus] = useState<{
@@ -9,7 +10,6 @@ export default function StripeOnboardingPage() {
     account_id: string | null;
   } | null>(null);
   const [loading, setLoading] = useState(true);
-  const [connecting, setConnecting] = useState(false);
 
   useEffect(() => {
     getStripeStatus()
@@ -18,15 +18,18 @@ export default function StripeOnboardingPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  const handleConnect = async () => {
-    setConnecting(true);
-    try {
+  const connect = useAction(
+    'Stripe onboarding',
+    async () => {
       const result = await getOnboardingLink();
       window.location.href = result.url;
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to start onboarding');
-      setConnecting(false);
-    }
+    },
+    { success: false }, // Stripe's page is the next thing the user sees
+  );
+  const connecting = connect.pending;
+
+  const handleConnect = () => {
+    void connect.run();
   };
 
   if (loading) {
