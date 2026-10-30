@@ -3,8 +3,9 @@ name: CI
 on:
   push:
     branches: [main]
+  # Every pull request, whatever its base: a PR stacked on another branch
+  # (30 Oct 2026, Causes 3/4/6/8 on the status seam) was getting no checks.
   pull_request:
-    branches: [main]
 
 jobs:
   lint-and-build:
