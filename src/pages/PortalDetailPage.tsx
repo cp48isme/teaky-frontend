@@ -13,6 +13,7 @@ import type { Invitation } from '../types/team';
 import Spinner from '../components/ui/Spinner';
 import Breadcrumbs from '../components/ui/Breadcrumbs';
 import SplitScreenLayout from '../components/layout/SplitScreenLayout';
+import { useAction } from '../hooks/useAction';
 
 const CLASSIFICATION_LABELS: Record<CustomerClassification, string> = {
   existing: 'Existing (RGI account before Teaky)',
@@ -38,7 +39,6 @@ export default function PortalDetailPage() {
   const [showDuplicateModal, setShowDuplicateModal] = useState(false);
   const [duplicateLocation, setDuplicateLocation] = useState('');
   const [duplicateSubdomain, setDuplicateSubdomain] = useState('');
-  const [duplicating, setDuplicating] = useState(false);
 
   useEffect(() => {
     if (!portalId) return;
@@ -64,23 +64,25 @@ export default function PortalDetailPage() {
     }
   };
 
-  const handleDuplicate = async () => {
-    if (!portalId || !duplicateLocation.trim()) return;
-    setDuplicating(true);
-    try {
-      const newPortal = await duplicatePortal(portalId, {
+  const duplicate = useAction(
+    'Duplicate portal',
+    (id: string) =>
+      duplicatePortal(id, {
         location_name: duplicateLocation,
         custom_subdomain: duplicateSubdomain || null,
-      });
-      setShowDuplicateModal(false);
-      setDuplicateLocation('');
-      setDuplicateSubdomain('');
-      navigate(`/portals/${newPortal.id}`);
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to duplicate portal');
-    } finally {
-      setDuplicating(false);
-    }
+      }),
+    { success: false }, // the new portal's page is the confirmation
+  );
+  const duplicating = duplicate.pending;
+
+  const handleDuplicate = async () => {
+    if (!portalId || !duplicateLocation.trim()) return;
+    const newPortal = await duplicate.run(portalId);
+    if (!newPortal) return;
+    setShowDuplicateModal(false);
+    setDuplicateLocation('');
+    setDuplicateSubdomain('');
+    navigate(`/portals/${newPortal.id}`);
   };
 
   if (loading) {

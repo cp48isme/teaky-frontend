@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { listProducts, createProduct, updateProduct, deleteProduct } from '../../api/products';
 import { KeepPriceButton, MarkupBadge, PriceOptionsEditor } from './ProductPricingCells';
 import { createProductsFromDescription } from '../../api/portals';
-import { ApiError } from '../../api/client';
+import { useAction } from '../../hooks/useAction';
 import { uploadFile } from '../../api/uploads';
 import type { Product, CreateProductRequest } from '../../types/product';
 import Spinner from '../ui/Spinner';
@@ -22,6 +22,20 @@ interface EditingCell {
   value: string | number;
 }
 
+/** What the region calls each editable column when a cell is saved ("Max packs saved"). */
+const FIELD_LABELS: Record<EditingCell['field'], string> = {
+  name: 'Name',
+  category: 'Category',
+  base_price: 'Price',
+  base_cost: 'Cost',
+  markup_multiplier: 'Markup',
+  floor_multiplier: 'Floor',
+  pack_size: 'Pack size',
+  status: 'Status',
+  previous_dm_order_number: 'DocketManager order #',
+  max_order_quantity: 'Max packs',
+};
+
 export default function ProductManagementGrid({ portalId, onProductsChange }: Props) {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -32,8 +46,6 @@ export default function ProductManagementGrid({ portalId, onProductsChange }: Pr
   const [sortAsc, setSortAsc] = useState(true);
   const [showAIInput, setShowAIInput] = useState(false);
   const [aiPrompt, setAiPrompt] = useState('');
-  const [aiCreating, setAiCreating] = useState(false);
-  const [uploadingFile, setUploadingFile] = useState(false);
   const [groupByCategory, setGroupByCategory] = useState(false);
   // The missing-number view (ruling 2026-10-20): products whose exact-reorder
   // note cannot name a DocketManager order yet.
@@ -61,6 +73,58 @@ export default function ProductManagementGrid({ portalId, onProductsChange }: Pr
       setLoading(false);
     }
   };
+
+  // Every mutation on this grid reports through the status region (30 Oct 2026).
+  const saveCell = useAction(
+    'Product',
+    async (productId: string, data: Partial<CreateProductRequest>, label: string) => ({
+      updated: await updateProduct(portalId, productId, data),
+      label,
+    }),
+    { success: ({ label }) => `${label} saved` },
+  );
+  const bulkDeleteAction = useAction(
+    'Delete products',
+    async (ids: string[]) => {
+      await Promise.all(ids.map((id) => deleteProduct(portalId, id)));
+      return ids.length;
+    },
+    { success: (count) => `${count} product${count === 1 ? '' : 's'} deleted` },
+  );
+  const bulkUpdate = useAction(
+    'Update products',
+    (ids: string[], data: Partial<CreateProductRequest>) =>
+      Promise.all(ids.map((id) => updateProduct(portalId, id, data))),
+    { success: (updated) => `${updated.length} product${updated.length === 1 ? '' : 's'} updated` },
+  );
+  const aiCreate = useAction(
+    'Create products',
+    async (prompt: string) => {
+      await createProductsFromDescription(portalId, prompt);
+      await loadProducts();
+    },
+    { success: 'Products created' },
+  );
+  const fileUpload = useAction('Upload', (file: File) => uploadFile(file), {
+    success: 'File uploaded. Processing will be implemented soon.',
+  });
+  const addProduct = useAction(
+    'New product',
+    () =>
+      createProduct(portalId, {
+        name: 'New Product',
+        category: DEFAULT_PRODUCT_CATEGORY,
+        description: '',
+        sizes: [],
+        colors: [],
+        pricing_tiers: [],
+        mockup_urls: [],
+        min_order_qty: 1,
+      }),
+    { success: 'New product added' },
+  );
+  const aiCreating = aiCreate.pending;
+  const uploadingFile = fileUpload.pending;
 
   // Bulk select handlers
   const toggleSelect = (id: string) => {
@@ -91,35 +155,33 @@ export default function ProductManagementGrid({ portalId, onProductsChange }: Pr
     const product = products.find((p) => p.id === editingCell.productId);
     if (!product) return;
 
-    try {
-      const updateData: Partial<CreateProductRequest> = {
-        [editingCell.field]:
-          editingCell.field === 'base_price' ||
-          editingCell.field === 'base_cost' ||
-          editingCell.field === 'markup_multiplier'
-            ? parseFloat(editingCell.value as string)
-            : editingCell.field === 'floor_multiplier'
-              ? editingCell.value === '' || editingCell.value == null
-                ? null
-                : parseFloat(editingCell.value as string)
-              : editingCell.field === 'pack_size'
-                ? Math.max(1, Math.trunc(Number(editingCell.value)) || 1)
-                : editingCell.field === 'previous_dm_order_number'
-                  ? String(editingCell.value).trim() || null
-                  : editingCell.field === 'max_order_quantity'
-                    ? (String(editingCell.value).trim() === '' ? null : Math.max(1, Math.trunc(Number(editingCell.value)) || 1))
-                    : editingCell.value,
-      };
+    const updateData: Partial<CreateProductRequest> = {
+      [editingCell.field]:
+        editingCell.field === 'base_price' ||
+        editingCell.field === 'base_cost' ||
+        editingCell.field === 'markup_multiplier'
+          ? parseFloat(editingCell.value as string)
+          : editingCell.field === 'floor_multiplier'
+            ? editingCell.value === '' || editingCell.value == null
+              ? null
+              : parseFloat(editingCell.value as string)
+            : editingCell.field === 'pack_size'
+              ? Math.max(1, Math.trunc(Number(editingCell.value)) || 1)
+              : editingCell.field === 'previous_dm_order_number'
+                ? String(editingCell.value).trim() || null
+                : editingCell.field === 'max_order_quantity'
+                  ? (String(editingCell.value).trim() === '' ? null : Math.max(1, Math.trunc(Number(editingCell.value)) || 1))
+                  : editingCell.value,
+    };
 
-      const updated = await updateProduct(portalId, product.id, updateData);
-      setProducts((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
-      onProductsChange?.(products.map((p) => (p.id === updated.id ? updated : p)));
-      setEditingCell(null);
-    } catch (err) {
-      // A draft cannot be activated without a price: say so (13 Oct 2026).
-      alert(err instanceof ApiError ? err.message : 'Could not save the change');
-      setEditingCell(null);
-    }
+    // A refusal — a draft cannot be activated without a price (13 Oct 2026) —
+    // reaches the region with the server's reason; a save says which column.
+    const result = await saveCell.run(product.id, updateData, FIELD_LABELS[editingCell.field]);
+    setEditingCell(null);
+    if (!result) return;
+    const { updated } = result;
+    setProducts((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
+    onProductsChange?.(products.map((p) => (p.id === updated.id ? updated : p)));
   };
 
   const cancelEdit = () => {
@@ -131,14 +193,11 @@ export default function ProductManagementGrid({ portalId, onProductsChange }: Pr
     if (selectedIds.size === 0) return;
     if (!confirm(`Delete ${selectedIds.size} product(s)?`)) return;
 
-    try {
-      await Promise.all(Array.from(selectedIds).map((id) => deleteProduct(portalId, id)));
-      setProducts((prev) => prev.filter((p) => !selectedIds.has(p.id)));
-      setSelectedIds(new Set());
-      onProductsChange?.(products.filter((p) => !selectedIds.has(p.id)));
-    } catch {
-      alert('Failed to delete some products');
-    }
+    const deleted = await bulkDeleteAction.run(Array.from(selectedIds));
+    if (deleted === undefined) return;
+    setProducts((prev) => prev.filter((p) => !selectedIds.has(p.id)));
+    setSelectedIds(new Set());
+    onProductsChange?.(products.filter((p) => !selectedIds.has(p.id)));
   };
 
   const bulkChangeCategory = async () => {
@@ -146,22 +205,16 @@ export default function ProductManagementGrid({ portalId, onProductsChange }: Pr
     const newCategory = prompt('Enter new category:', DEFAULT_PRODUCT_CATEGORY);
     if (!newCategory) return;
 
-    try {
-      const updates = Array.from(selectedIds).map((id) =>
-        updateProduct(portalId, id, { category: newCategory })
-      );
-      const updated = await Promise.all(updates);
-      setProducts((prev) =>
-        prev.map((p) => {
-          const match = updated.find((u) => u.id === p.id);
-          return match || p;
-        })
-      );
-      setSelectedIds(new Set());
-      onProductsChange?.(products);
-    } catch {
-      alert('Failed to update some products');
-    }
+    const updated = await bulkUpdate.run(Array.from(selectedIds), { category: newCategory });
+    if (!updated) return;
+    setProducts((prev) =>
+      prev.map((p) => {
+        const match = updated.find((u) => u.id === p.id);
+        return match || p;
+      })
+    );
+    setSelectedIds(new Set());
+    onProductsChange?.(products);
   };
 
   const bulkChangePrice = async () => {
@@ -171,38 +224,25 @@ export default function ProductManagementGrid({ portalId, onProductsChange }: Pr
     const newPrice = parseFloat(priceStr);
     if (isNaN(newPrice)) return;
 
-    try {
-      const updates = Array.from(selectedIds).map((id) =>
-        updateProduct(portalId, id, { base_price: newPrice })
-      );
-      const updated = await Promise.all(updates);
-      setProducts((prev) =>
-        prev.map((p) => {
-          const match = updated.find((u) => u.id === p.id);
-          return match || p;
-        })
-      );
-      setSelectedIds(new Set());
-      onProductsChange?.(products);
-    } catch {
-      alert('Failed to update some products');
-    }
+    const updated = await bulkUpdate.run(Array.from(selectedIds), { base_price: newPrice });
+    if (!updated) return;
+    setProducts((prev) =>
+      prev.map((p) => {
+        const match = updated.find((u) => u.id === p.id);
+        return match || p;
+      })
+    );
+    setSelectedIds(new Set());
+    onProductsChange?.(products);
   };
 
   // AI product creation
   const handleAICreate = async () => {
     if (!aiPrompt.trim()) return;
-    setAiCreating(true);
-    try {
-      await createProductsFromDescription(portalId, aiPrompt);
-      await loadProducts();
-      setAiPrompt('');
-      setShowAIInput(false);
-    } catch {
-      alert('Failed to create products from AI');
-    } finally {
-      setAiCreating(false);
-    }
+    const created = await aiCreate.run(aiPrompt);
+    if (created === undefined) return;
+    setAiPrompt('');
+    setShowAIInput(false);
   };
 
   // File upload handler
@@ -210,38 +250,18 @@ export default function ProductManagementGrid({ portalId, onProductsChange }: Pr
     const file = e.target.files?.[0];
     if (!file) return;
 
-    setUploadingFile(true);
-    try {
-      // For now, just upload the file - backend will handle processing
-      // In future, we'll have endpoints for CSV/PDF/image processing
-      await uploadFile(file);
-      alert('File uploaded! Processing will be implemented soon.');
-    } catch {
-      alert('Failed to upload file');
-    } finally {
-      setUploadingFile(false);
-      e.target.value = ''; // Reset input
-    }
+    // For now, just upload the file - backend will handle processing
+    // In future, we'll have endpoints for CSV/PDF/image processing
+    await fileUpload.run(file);
+    e.target.value = ''; // Reset input
   };
 
   // Add new blank row
   const addBlankRow = async () => {
-    try {
-      const newProduct = await createProduct(portalId, {
-        name: 'New Product',
-        category: DEFAULT_PRODUCT_CATEGORY,
-        description: '',
-        sizes: [],
-        colors: [],
-        pricing_tiers: [],
-        mockup_urls: [],
-        min_order_qty: 1,
-      });
-      setProducts((prev) => [newProduct, ...prev]);
-      onProductsChange?.([newProduct, ...products]);
-    } catch {
-      alert('Failed to create product');
-    }
+    const newProduct = await addProduct.run();
+    if (!newProduct) return;
+    setProducts((prev) => [newProduct, ...prev]);
+    onProductsChange?.([newProduct, ...products]);
   };
 
   // Sorting

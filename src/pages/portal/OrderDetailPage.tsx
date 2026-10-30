@@ -7,6 +7,7 @@ import type { ReorderResult } from '../../hooks/useReorder';
 import type { Order } from '../../types/order';
 import type { TrackingInfo } from '../../types/shipping';
 import Spinner from '../../components/ui/Spinner';
+import { useAction } from '../../hooks/useAction';
 import { humanize, countryName } from '../../lib/labels';
 import { packQuantityLabel } from '../../lib/pricing';
 import { isInvoiceOrder, FREIGHT_NOTE } from '../../lib/paymentTerms';
@@ -35,6 +36,8 @@ const STATUS_COLORS: Record<string, string> = {
 export default function OrderDetailPage() {
   const { slug, orderId } = useParams<{ slug: string; orderId: string }>();
   const { reorder, reordering } = useReorder();
+  // The page shows what was added and what was skipped; the region speaks only on failure.
+  const reorderAction = useAction('Reorder', (o: Order) => reorder(o), { success: false });
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [reordered, setReordered] = useState<ReorderResult | null>(null);
@@ -150,11 +153,8 @@ export default function OrderDetailPage() {
             <button
               onClick={async () => {
                 if (!order) return;
-                try {
-                  setReordered(await reorder(order));
-                } catch {
-                  alert('Failed to add items to cart');
-                }
+                const result = await reorderAction.run(order);
+                if (result) setReordered(result);
               }}
               disabled={reordering}
               className="rounded-md bg-teak-dark px-4 py-2 text-sm font-medium text-white hover:bg-teak disabled:opacity-50"

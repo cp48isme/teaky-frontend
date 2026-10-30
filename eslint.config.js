@@ -4,6 +4,7 @@ import reactHooks from 'eslint-plugin-react-hooks'
 import reactRefresh from 'eslint-plugin-react-refresh'
 import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
+import { bannedCallRules } from './eslint.banned.js'
 
 export default defineConfig([
   globalIgnores(['dist']),
@@ -19,5 +20,6 @@ export default defineConfig([
       ecmaVersion: 2020,
       globals: globals.browser,
     },
+    rules: bannedCallRules,
   },
 ])
