@@ -1,5 +1,6 @@
 import { NavLink, useLocation } from 'react-router-dom';
 import { useMyOrganization } from '../../hooks/useMyOrganization';
+import { useSelfServeOnboarding } from '../../hooks/useSelfServeOnboarding';
 import type { ReactNode } from 'react';
 
 interface NavItem {
@@ -98,8 +99,11 @@ const NAV_ITEMS: NavItem[] = [
 export default function Sidebar() {
   const { pathname } = useLocation();
   const { organization } = useMyOrganization();
-  // Equipment is a self-serve surface; a managed account never sees it (8 Oct 2026).
-  const items = organization?.is_managed ? NAV_ITEMS.filter((i) => i.to !== '/equipment') : NAV_ITEMS;
+  const { selfServe } = useSelfServeOnboarding();
+  // Equipment is a self-serve surface: a managed account never sees it (8 Oct
+  // 2026), and neither does an organisation that already has a portal (Cause 5).
+  const items =
+    organization?.is_managed || selfServe !== true ? NAV_ITEMS.filter((i) => i.to !== '/equipment') : NAV_ITEMS;
 
   return (
     <aside className="hidden w-56 shrink-0 border-r border-gray-100 bg-white lg:block">

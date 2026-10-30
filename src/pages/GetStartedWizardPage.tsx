@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { useMyOrganization } from '../hooks/useMyOrganization';
+import { useSelfServeOnboarding } from '../hooks/useSelfServeOnboarding';
 import CompanyProfileStep, {
   type CompanyProfileData,
 } from '../components/wizard/CompanyProfileStep';
@@ -33,6 +34,7 @@ const STEPS = [
 export default function GetStartedWizardPage() {
   const orgId = useOrganizationId();
   const { organization } = useMyOrganization();
+  const { selfServe } = useSelfServeOnboarding();
   const [currentStep, setCurrentStep] = useState(0);
   const [profileId, setProfileId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -207,8 +209,10 @@ export default function GetStartedWizardPage() {
   };
 
   // A managed account (set up by Teaky on negotiated terms) is never asked
-  // about equipment, capabilities, pricing or a plan (8 Oct 2026 ruling).
-  if (organization?.is_managed) {
+  // about equipment, capabilities, pricing or a plan (8 Oct 2026 ruling), and
+  // neither is an organisation that already has a portal — it was provisioned
+  // another way, and its invited staff are not signing up (Cause 5, 30 Oct 2026).
+  if (organization?.is_managed || selfServe === false) {
     return <Navigate to="/dashboard" replace />;
   }
 
