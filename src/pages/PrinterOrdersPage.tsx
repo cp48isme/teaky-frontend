@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { listPrinterOrders } from '../api/orders';
+import { listPortals } from '../api/portals';
 import type { Order } from '../types/order';
 import { describeRelease, isHeld } from '../lib/releaseCopy';
 import Spinner from '../components/ui/Spinner';
+import SearchBox from '../components/ui/SearchBox';
+import { matchesSearch } from '../lib/search';
 
 const STATUS_FILTERS = [
   { label: 'All', value: '' },
@@ -38,6 +41,21 @@ export default function PrinterOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('');
+  // Search (Cause 6, 30 Oct 2026): the products grid's box and rule, not a
+  // second one. Matches the Teaky order number, the RGI number and the
+  // portal name, case-insensitively, on a partial string.
+  const [searchQuery, setSearchQuery] = useState('');
+  const [portalNames, setPortalNames] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    listPortals()
+      .then((portals) => setPortalNames(Object.fromEntries(portals.map((p) => [p.id, p.name]))))
+      .catch(() => {});
+  }, []);
+
+  const visibleOrders = orders.filter((o) =>
+    matchesSearch(searchQuery, [o.order_number, o.rgi_order_number, portalNames[o.portal_id]]),
+  );
 
   useEffect(() => {
     setLoading(true);
@@ -69,6 +87,13 @@ export default function PrinterOrdersPage() {
         </Link>
       </div>
 
+      <SearchBox
+        value={searchQuery}
+        onChange={setSearchQuery}
+        placeholder="Search by order #, RGI # or portal"
+        aria-label="Search orders"
+      />
+
       {/* Status Filter */}
       <div className="flex flex-wrap gap-2">
         {STATUS_FILTERS.map((f) => (
@@ -90,8 +115,10 @@ export default function PrinterOrdersPage() {
         <div className="flex items-center justify-center py-12">
           <Spinner className="h-8 w-8 text-teak-dark" />
         </div>
-      ) : orders.length === 0 ? (
-        <p className="py-8 text-center text-gray-500">No orders found.</p>
+      ) : visibleOrders.length === 0 ? (
+        <p className="py-8 text-center text-gray-500">
+          {orders.length === 0 ? 'No orders found.' : `No orders match “${searchQuery.trim()}”.`}
+        </p>
       ) : (
         <div className="overflow-hidden rounded-lg border border-gray-200">
           <table className="min-w-full divide-y divide-gray-200 text-sm">
@@ -99,6 +126,7 @@ export default function PrinterOrdersPage() {
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">Order</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500" title="RGI's own order number for the job">RGI #</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">Portal</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">Date</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">Items</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">Total</th>
@@ -106,7 +134,7 @@ export default function PrinterOrdersPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 bg-white">
-              {orders.map((order) => (
+              {visibleOrders.map((order) => (
                 <tr key={order.id} className="hover:bg-gray-50">
                   <td className="px-4 py-3">
                     <Link
@@ -123,6 +151,7 @@ export default function PrinterOrdersPage() {
                       <span className="font-sans text-amber-700">none</span>
                     )}
                   </td>
+                  <td className="px-4 py-3 text-gray-600">{portalNames[order.portal_id] ?? ''}</td>
                   <td className="px-4 py-3 text-gray-500">
                     {new Date(order.placed_at).toLocaleDateString()}
                   </td>
