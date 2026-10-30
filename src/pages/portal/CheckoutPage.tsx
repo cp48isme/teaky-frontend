@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useCart } from "../../contexts/CartContext";
 import { usePortalContext } from "../../contexts/PortalContext";
@@ -10,9 +10,16 @@ import type { ShippingAddress } from "../../types/order";
 import type { ShippingRate } from "../../types/shipping";
 import { INVOICE_TERMS, FREIGHT_NOTE } from "../../lib/paymentTerms";
 import { todayIsoDate } from "../../lib/neededBy";
-import StripePaymentForm from "../../components/checkout/StripePaymentForm";
 import Spinner from "../../components/ui/Spinner";
 import { packPriceLabel, packQuantityLabel } from '../../lib/pricing';
+
+// Dynamic on purpose (30 Oct 2026): the payment form carries Stripe.js, a third
+// party that fingerprints the device the moment it loads. Imported statically
+// it sat in the boot chunk and ran on every route, the signed-out login page
+// included. It now loads when the payment step renders and not before.
+const StripePaymentForm = lazy(
+  () => import("../../components/checkout/StripePaymentForm"),
+);
 
 // S84 / plan §5.5 — Phase 1 hardcode: every RGI portal is invoice-terms, so the
 // checkout places the order for later invoicing and never shows a payment step.
@@ -659,11 +666,13 @@ export default function CheckoutPage() {
                 </button>
               </div>
 
-              <StripePaymentForm
-                clientSecret={clientSecret}
-                onSuccess={handlePaymentSuccess}
-                primaryColor={primaryColor}
-              />
+              <Suspense fallback={<Spinner className="h-6 w-6" />}>
+                <StripePaymentForm
+                  clientSecret={clientSecret}
+                  onSuccess={handlePaymentSuccess}
+                  primaryColor={primaryColor}
+                />
+              </Suspense>
             </div>
           )}
         </div>

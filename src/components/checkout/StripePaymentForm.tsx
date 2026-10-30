@@ -5,10 +5,29 @@ import {
   useStripe,
   useElements,
 } from '@stripe/react-stripe-js';
-import { loadStripe } from '@stripe/stripe-js';
+import { loadStripe } from '@stripe/stripe-js/pure';
+import type { Stripe } from '@stripe/stripe-js';
 import Spinner from '../ui/Spinner';
 
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY ?? '');
+// Stripe.js is a third party: a dozen scripts, three frames, its own cookies
+// and a device fingerprint to m.stripe.com. Until 30 Oct 2026 it ran on every
+// route, the signed-out login page included, for two reasons that both had to
+// go. The default entry of @stripe/stripe-js injects the script as a side
+// effect of being imported, so the `/pure` entry is used here: it injects
+// nothing until loadStripe is called. And loadStripe was called at module
+// scope, so the first call now happens inside the component, on mount, and is
+// shared by every later mount. CheckoutPage imports this component dynamically,
+// so none of this is in the app's boot chunk. The key is build-time
+// (VITE_STRIPE_PUBLISHABLE_KEY); a per-printer key would be read here as well,
+// which is one more reason the call cannot live at module scope.
+let stripePromise: Promise<Stripe | null> | null = null;
+
+function getStripe(): Promise<Stripe | null> {
+  if (!stripePromise) {
+    stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY ?? '');
+  }
+  return stripePromise;
+}
 
 interface StripePaymentFormProps {
   clientSecret: string;
@@ -94,9 +113,12 @@ export default function StripePaymentForm({
   onSuccess,
   primaryColor,
 }: StripePaymentFormProps) {
+  // Lazy: Stripe.js is fetched the first time a payment form mounts, not before.
+  const [stripe] = useState(getStripe);
+
   return (
     <Elements
-      stripe={stripePromise}
+      stripe={stripe}
       options={{
         clientSecret,
         appearance: {
