@@ -73,6 +73,8 @@ export interface Product {
   base_price?: number | null;
   /** Supplier cost at quantity one. */
   base_cost?: number | null;
+  /** No cost per pack and not a cost on every option (Cause 4): say "cost not recorded", never a margin from zero. */
+  cost_unknown?: boolean;
   /** Markup applied to base_cost to derive base_price. Serialized as a decimal string. */
   margin_percent?: string | null;
   /** A human set base_price by hand; bulk reprice skips it unless told otherwise. */
