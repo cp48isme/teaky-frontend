@@ -43,6 +43,7 @@ import MessageCenterPage from './pages/MessageCenterPage';
 import EquipmentPage from './pages/EquipmentPage';
 import PlaceholderPage from './pages/PlaceholderPage';
 import PortalLegalPage from './pages/portal/PortalLegalPage';
+import ChoosePortalPage from './pages/ChoosePortalPage';
 
 function App() {
   return (
@@ -53,6 +54,14 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/invite/:token" element={<AcceptInvitationPage />} />
+          <Route
+            path="/choose-portal"
+            element={
+              <ProtectedRoute>
+                <ChoosePortalPage />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/dashboard"
             element={
