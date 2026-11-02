@@ -8,6 +8,7 @@ import {
   updateMember,
 } from '../../api/team';
 import type { TeamMember, Invitation } from '../../types/team';
+import { useAction } from '../../hooks/useAction';
 import Spinner from '../../components/ui/Spinner';
 
 const ROLE_OPTIONS = [
@@ -73,14 +74,22 @@ export default function TeamPage() {
     }
   };
 
+  const revoke = useAction('Invitation', (invId: string) => revokeInvitation(invId), {
+    success: 'Invitation revoked',
+  });
   const handleRevoke = async (invId: string) => {
-    try {
-      await revokeInvitation(invId);
-      await loadData();
-    } catch {
-      setError('Failed to revoke invitation');
-    }
+    const result = await revoke.run(invId);
+    if (result === undefined) return;
+    await loadData();
   };
+
+  // Cause 3 (30 Oct 2026): an invitation past its expiry is not pending — the
+  // link in it no longer works — so it is listed apart, without a Revoke
+  // button, instead of among the live ones.
+  const now = Date.now();
+  const isExpired = (inv: Invitation) => new Date(inv.expires_at).getTime() <= now;
+  const pending = invitations.filter((inv) => !isExpired(inv));
+  const expired = invitations.filter(isExpired);
 
   const handleUpdateRole = async (userId: string) => {
     try {
@@ -148,11 +157,11 @@ export default function TeamPage() {
       </div>
 
       {/* Pending Invitations */}
-      {invitations.length > 0 && (
+      {pending.length > 0 && (
         <div className="rounded-lg border border-gray-200 bg-white p-6">
           <h2 className="font-heading text-xl font-bold text-brand-dark">Pending Invitations</h2>
           <div className="mt-4 space-y-3">
-            {invitations.map((inv) => (
+            {pending.map((inv) => (
               <div
                 key={inv.id}
                 className="flex items-center justify-between rounded-md border border-gray-100 bg-gray-50 px-4 py-3"
@@ -173,6 +182,33 @@ export default function TeamPage() {
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Expired invitations: not pending, nothing to revoke */}
+      {expired.length > 0 && (
+        <div className="rounded-lg border border-gray-200 bg-white p-6">
+          <h2 className="font-heading text-xl font-bold text-brand-dark">Expired Invitations</h2>
+          <p className="mt-1 text-sm text-gray-500">
+            The link in each of these has stopped working. Send a new invitation if the person still needs one.
+          </p>
+          <ul className="mt-4 space-y-3">
+            {expired.map((inv) => (
+              <li
+                key={inv.id}
+                className="flex items-center justify-between rounded-md border border-gray-100 bg-gray-50 px-4 py-3"
+              >
+                <div>
+                  <p className="text-sm font-medium text-gray-700">{inv.invited_email}</p>
+                  <p className="text-xs text-gray-500">
+                    Role: {inv.role.replace(/_/g, ' ')} &middot; Expired{' '}
+                    {new Date(inv.expires_at).toLocaleDateString()}
+                  </p>
+                </div>
+                <span className="rounded-full bg-gray-200 px-2 py-0.5 text-xs font-medium text-gray-700">Expired</span>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
 
