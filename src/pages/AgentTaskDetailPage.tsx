@@ -15,6 +15,7 @@ import type { AgentTask } from '../types/agent';
 import type { Message } from '../types/message';
 import Spinner from '../components/ui/Spinner';
 import Breadcrumbs from '../components/ui/Breadcrumbs';
+import { useAction } from '../hooks/useAction';
 
 const STATUS_COLORS: Record<string, string> = {
   pending: 'bg-yellow-100 text-yellow-800',
@@ -34,7 +35,6 @@ export default function AgentTaskDetailPage() {
   const [loading, setLoading] = useState(true);
   const [acting, setActing] = useState(false);
   const [newMessage, setNewMessage] = useState('');
-  const [sending, setSending] = useState(false);
   const [editedDraft, setEditedDraft] = useState<string>('');
   const [isSubmittingDraft, setIsSubmittingDraft] = useState<boolean>(false);
   const [draftError, setDraftError] = useState<string | null>(null);
@@ -112,26 +112,22 @@ export default function AgentTaskDetailPage() {
     }
   };
 
-  const handleSendMessage = async () => {
-    if (!taskId || !newMessage.trim() || !task) return;
-    setSending(true);
-    try {
-      const channel = task.channel || 'sms';
-      await sendTaskMessage(
-        taskId,
-        newMessage.trim(),
-        channel,
-        task.external_ref || undefined,
-      );
+  const sendMessage = useAction(
+    'Message',
+    async (id: string, text: string, channel: string, externalRef: string | undefined) => {
+      await sendTaskMessage(id, text, channel, externalRef);
       setNewMessage('');
       // Refresh messages
-      const msgs = await getTaskMessages(taskId);
+      const msgs = await getTaskMessages(id);
       setMessages(msgs);
-    } catch {
-      alert('Failed to send message');
-    } finally {
-      setSending(false);
-    }
+    },
+    { success: 'Message sent' },
+  );
+  const sending = sendMessage.pending;
+
+  const handleSendMessage = () => {
+    if (!taskId || !newMessage.trim() || !task) return;
+    void sendMessage.run(taskId, newMessage.trim(), task.channel || 'sms', task.external_ref || undefined);
   };
 
   const handleApproveDraft = async () => {

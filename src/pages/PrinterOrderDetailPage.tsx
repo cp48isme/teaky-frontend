@@ -27,6 +27,8 @@ import Spinner from '../components/ui/Spinner';
 import OrderFilesSection from '../components/orders/OrderFilesSection';
 import OrderCostsPanel from '../components/orders/OrderCostsPanel';
 import Breadcrumbs from '../components/ui/Breadcrumbs';
+import ActionButton from '../components/ui/ActionButton';
+import { useAction } from '../hooks/useAction';
 import { getPortal } from '../api/portals';
 import { listMembers } from '../api/team';
 import { staffArtworkLine } from '../lib/artworkCopy';
@@ -79,17 +81,14 @@ export default function PrinterOrderDetailPage() {
 
   // MIS sync state
   const [syncStatus, setSyncStatus] = useState<OrderSyncStatus | null>(null);
-  const [pushing, setPushing] = useState(false);
 
   // Production status state
   const [productionNotes, setProductionNotes] = useState('');
-  const [updatingProduction, setUpdatingProduction] = useState(false);
 
   // Tracking info state
   const [trackingInfo, setTrackingInfo] = useState<TrackingInfo | null>(null);
 
   // Invoice state
-  const [downloadingInvoice, setDownloadingInvoice] = useState(false);
 
   // Proof submission state
   const [proofFileUrl, setProofFileUrl] = useState('');
@@ -98,13 +97,11 @@ export default function PrinterOrderDetailPage() {
   const [signingProofId, setSigningProofId] = useState<string | null>(null);
 
   // Hold-and-release state (ruling 2026-10-20)
-  const [releasing, setReleasing] = useState(false);
   const [linkNumber, setLinkNumber] = useState('');
 
   // Cancel state
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
-  const [cancelling, setCancelling] = useState(false);
   // Who and where (13 Oct 2026): the portal, the person who placed it, the PO.
   const [portalName, setPortalName] = useState('');
   const [placedBy, setPlacedBy] = useState('');
@@ -165,59 +162,65 @@ export default function PrinterOrderDetailPage() {
     fetchData();
   }, [orderId]);
 
+  // Every mutation on this page reports through the status region (30 Oct
+  // 2026): the server's reason on failure, what was saved on success. The
+  // 29 Oct pass found the RGI order number Save answering a 200 with nothing
+  // on screen; it now says "Order details saved".
+  const statusTransition = useAction('Order status', (id: string, newStatus: string) =>
+    updateOrderStatus(id, { status: newStatus }),
+  );
   const handleStatusTransition = async (newStatus: string) => {
     if (!orderId) return;
-    try {
-      const updated = await updateOrderStatus(orderId, { status: newStatus });
-      setOrder(updated);
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to update status');
-    }
+    const updated = await statusTransition.run(orderId, newStatus);
+    if (updated) setOrder(updated);
   };
 
+  const productionUpdate = useAction('Production status', (id: string, newStatus: string) =>
+    updateProductionStatus(id, {
+      production_status: newStatus,
+      notes: productionNotes || undefined,
+    }),
+  );
+  const updatingProduction = productionUpdate.pending;
   const handleProductionStatusUpdate = async (newStatus: string) => {
     if (!orderId) return;
-    setUpdatingProduction(true);
-    try {
-      const updated = await updateProductionStatus(orderId, {
-        production_status: newStatus,
-        notes: productionNotes || undefined,
-      });
-      setOrder(updated);
-      setProductionNotes('');
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to update production status');
-    } finally {
-      setUpdatingProduction(false);
-    }
+    const updated = await productionUpdate.run(orderId, newStatus);
+    if (!updated) return;
+    setOrder(updated);
+    setProductionNotes('');
   };
 
+  const saveDetails = useAction('Order details', (id: string) =>
+    updateOrder(id, {
+      tracking_number: trackingNumber || undefined,
+      rgi_order_number: rgiOrderNumber.trim() || null,
+      notes: notes || undefined,
+    }),
+  );
   const handleSaveDetails = async () => {
     if (!orderId) return;
-    try {
-      const updated = await updateOrder(orderId, {
-        tracking_number: trackingNumber || undefined,
-        rgi_order_number: rgiOrderNumber.trim() || null,
-        notes: notes || undefined,
-      });
-      setOrder(updated);
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to save');
-    }
+    const updated = await saveDetails.run(orderId);
+    if (updated) setOrder(updated);
   };
 
-  const handleManualPush = async () => {
-    if (!orderId) return;
-    setPushing(true);
-    try {
-      await manualPushOrder(orderId);
-      const status = await getOrderSyncStatus(orderId);
+  // The push resolves even when DocketManager refused the job; the sync log
+  // says which, so a failed push is reported as one.
+  const push = useAction(
+    'Push to DocketManager',
+    async (id: string) => {
+      await manualPushOrder(id);
+      const status = await getOrderSyncStatus(id);
       setSyncStatus(status);
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to push to MIS');
-    } finally {
-      setPushing(false);
-    }
+      const described = describeSync(status);
+      if (described.tone === 'failed') throw new Error(described.headline);
+      return described;
+    },
+    { success: (described) => described.headline },
+  );
+  const pushing = push.pending;
+  const handleManualPush = () => {
+    if (!orderId) return;
+    void push.run(orderId);
   };
 
   // After any release action the order and the DocketManager block both change.
@@ -228,120 +231,117 @@ export default function PrinterOrderDetailPage() {
     }
   };
 
+  const releaseAction = useAction('Release', (id: string) => releaseOrder(id), { success: 'Order released to production' });
+  const linkRelease = useAction(
+    'DocketManager order number',
+    (id: string, number: string) => linkReleasedOrder(id, { dm_order_number: number }),
+    { success: 'DocketManager order number recorded' },
+  );
+  const releaseNotFound = useAction('Release', (id: string) => confirmReleaseNotFound(id), {
+    success: 'Recorded: not in DocketManager. The order can be released again.',
+  });
+  const releasing = releaseAction.pending || linkRelease.pending || releaseNotFound.pending;
+
   const handleRelease = async () => {
     if (!orderId || releasing) return;
-    setReleasing(true);
-    try {
-      await afterRelease(await releaseOrder(orderId));
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'The release did not go through');
+    const updated = await releaseAction.run(orderId);
+    if (updated) {
+      await afterRelease(updated);
+    } else {
       fetchData();
-    } finally {
-      setReleasing(false);
     }
   };
 
   const handleLinkRelease = async () => {
     if (!orderId || !linkNumber.trim() || releasing) return;
-    setReleasing(true);
-    try {
-      await afterRelease(await linkReleasedOrder(orderId, { dm_order_number: linkNumber.trim() }));
-      setLinkNumber('');
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'Could not record the DocketManager order');
-    } finally {
-      setReleasing(false);
-    }
+    const updated = await linkRelease.run(orderId, linkNumber.trim());
+    if (!updated) return;
+    await afterRelease(updated);
+    setLinkNumber('');
   };
 
   const handleReleaseNotFound = async () => {
     if (!orderId || releasing) return;
     if (!confirm('You checked DocketManager and the job is not there? The order can then be released again.')) return;
-    setReleasing(true);
-    try {
-      await afterRelease(await confirmReleaseNotFound(orderId));
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'Could not update the order');
-    } finally {
-      setReleasing(false);
-    }
+    const updated = await releaseNotFound.run(orderId);
+    if (updated) await afterRelease(updated);
   };
 
+  const cancel = useAction('Cancel order', (id: string, reason: string) => cancelOrder(id, { reason }), {
+    success: 'Order cancelled',
+  });
+  const cancelling = cancel.pending;
   const handleCancel = async () => {
     if (!orderId || !cancelReason.trim()) return;
-    setCancelling(true);
-    try {
-      const updated = await cancelOrder(orderId, { reason: cancelReason });
-      setOrder(updated);
-      setShowCancelModal(false);
-      setCancelReason('');
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to cancel order');
-    } finally {
-      setCancelling(false);
-    }
+    const updated = await cancel.run(orderId, cancelReason);
+    if (!updated) return;
+    setOrder(updated);
+    setShowCancelModal(false);
+    setCancelReason('');
   };
 
-  const handleDownloadInvoice = async () => {
-    if (!orderId) return;
-    setDownloadingInvoice(true);
-    try {
-      const blob = await downloadOrderInvoicePdf(orderId);
+  const downloadInvoice = useAction(
+    'Invoice download',
+    async (id: string) => {
+      const blob = await downloadOrderInvoicePdf(id);
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `invoice-${order?.order_number || orderId}.pdf`;
+      a.download = `invoice-${order?.order_number || id}.pdf`;
       a.click();
       URL.revokeObjectURL(url);
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to download invoice');
-    } finally {
-      setDownloadingInvoice(false);
-    }
+    },
+    { success: false }, // the browser's download is the confirmation
+  );
+  const downloadingInvoice = downloadInvoice.pending;
+  const handleDownloadInvoice = () => {
+    if (!orderId) return;
+    void downloadInvoice.run(orderId);
   };
 
+  const proofSubmit = useAction(
+    'Proof',
+    async (id: string, lineItemId: string, fileUrl: string) => {
+      await submitProof(id, { line_item_id: lineItemId, file_url: fileUrl });
+    },
+    { success: 'Proof submitted' },
+  );
   const handleSubmitProof = async () => {
     if (!orderId || !selectedLineItem || !proofFileUrl) return;
-    try {
-      await submitProof(orderId, {
-        line_item_id: selectedLineItem,
-        file_url: proofFileUrl,
-      });
-      setProofFileUrl('');
-      setSelectedLineItem('');
-      await fetchData();
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to submit proof');
-    }
+    const result = await proofSubmit.run(orderId, selectedLineItem, proofFileUrl);
+    if (result === undefined) return;
+    setProofFileUrl('');
+    setSelectedLineItem('');
+    await fetchData();
   };
 
+  const proofApprove = useAction(
+    'Proof approval',
+    async (proofId: string, signatureData?: string) => {
+      await approveProof(proofId, signatureData ? { signature_data: signatureData } : undefined);
+    },
+    { success: 'Proof approved' },
+  );
   const handleApproveProof = async (proofId: string, signatureData?: string) => {
-    try {
-      await approveProof(
-        proofId,
-        signatureData
-          ? { signature_data: signatureData }
-          : undefined,
-      );
-      setSigningProofId(null);
-      await fetchData();
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to approve');
-    }
+    const result = await proofApprove.run(proofId, signatureData);
+    if (result === undefined) return;
+    setSigningProofId(null);
+    await fetchData();
   };
 
+  const proofReject = useAction(
+    'Proof rejection',
+    async (proofId: string, reason: string) => {
+      await rejectProof(proofId, { reason });
+    },
+    { success: 'Proof rejected' },
+  );
   const handleRejectProof = async (proofId: string) => {
-    if (!rejectReason.trim()) {
-      alert('Please enter a reason for rejection');
-      return;
-    }
-    try {
-      await rejectProof(proofId, { reason: rejectReason });
-      setRejectReason('');
-      await fetchData();
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to reject');
-    }
+    if (!rejectReason.trim()) return; // the Reject button says why it is disabled
+    const result = await proofReject.run(proofId, rejectReason);
+    if (result === undefined) return;
+    setRejectReason('');
+    await fetchData();
   };
 
   if (loading) {
@@ -871,12 +871,14 @@ export default function PrinterOrderDetailPage() {
                             placeholder="Reason..."
                             className="w-32 rounded border px-2 py-1 text-xs"
                           />
-                          <button
+                          <ActionButton
                             onClick={() => handleRejectProof(proof.id)}
-                            className="rounded bg-red-600 px-2 py-1 text-xs text-white hover:bg-red-700"
+                            reason={rejectReason.trim() ? null : 'Enter a reason to reject'}
+                            reasonClassName="self-center text-xs text-gray-500"
+                            className="rounded bg-red-600 px-2 py-1 text-xs text-white hover:bg-red-700 disabled:opacity-50"
                           >
                             Reject
-                          </button>
+                          </ActionButton>
                         </div>
                       </div>
                     )}

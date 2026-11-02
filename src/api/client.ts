@@ -152,8 +152,8 @@ export async function apiRequest<T>(
   }
 
   if (!response.ok) {
-    const errorBody = await response.json().catch(() => ({}));
-    throw new ApiError(response.status, errorBody.detail || 'Request failed');
+    const errorBody: unknown = await response.json().catch(() => ({}));
+    throw new ApiError(response.status, detailText(errorBody) ?? 'Request failed');
   }
 
   // Handle 204 No Content
@@ -162,6 +162,30 @@ export async function apiRequest<T>(
   }
 
   return response.json();
+}
+
+/**
+ * The server's own words for a failure. A string `detail` is used as is. A
+ * validation failure (422) carries a list of `{loc, msg}` entries; each is
+ * rendered as "field: message" so a refused phone number reads as
+ * "phone: needs at least 7 digits", not "[object Object]" (30 Oct 2026).
+ */
+export function detailText(body: unknown): string | null {
+  if (!body || typeof body !== 'object') return null;
+  const { detail } = body as { detail?: unknown };
+  if (typeof detail === 'string' && detail) return detail;
+  if (Array.isArray(detail)) {
+    const parts = detail.flatMap((entry) => {
+      if (!entry || typeof entry !== 'object') return [];
+      const { msg, loc } = entry as { msg?: unknown; loc?: unknown };
+      if (typeof msg !== 'string') return [];
+      const text = msg.replace(/^Value error, /, '');
+      const field = Array.isArray(loc) ? loc.filter((part) => typeof part === 'string' && part !== 'body').pop() : undefined;
+      return [typeof field === 'string' ? `${field}: ${text}` : text];
+    });
+    if (parts.length) return parts.join(' ');
+  }
+  return null;
 }
 
 export class ApiError extends Error {

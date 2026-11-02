@@ -3,6 +3,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import { PortalProvider } from './contexts/PortalContext';
 import { CartProvider } from './contexts/CartContext';
 import { PreviewProvider } from './context/PreviewContext';
+import StatusProvider from './contexts/StatusProvider';
 import ProtectedRoute from './components/ProtectedRoute';
 import AppLayout from './components/layout/AppLayout';
 import PortalLayout from './components/layout/PortalLayout';
@@ -48,6 +49,7 @@ import ChoosePortalPage from './pages/ChoosePortalPage';
 function App() {
   return (
     <BrowserRouter>
+      <StatusProvider>
       <PreviewProvider>
         <AuthProvider>
           <Routes>
@@ -275,6 +277,7 @@ function App() {
         </Routes>
         </AuthProvider>
       </PreviewProvider>
+      </StatusProvider>
     </BrowserRouter>
   );
 }
