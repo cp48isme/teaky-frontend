@@ -3,7 +3,6 @@ import { useState, useEffect, type ChangeEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { listProducts, createProduct, updateProduct, deleteProduct } from '../../api/products';
 import { KeepPriceButton, MarkupBadge, PriceOptionsEditor } from './ProductPricingCells';
-import { createProductsFromDescription } from '../../api/portals';
 import { useAction } from '../../hooks/useAction';
 import { uploadFile } from '../../api/uploads';
 import type { Product, CreateProductRequest } from '../../types/product';
@@ -46,8 +45,6 @@ export default function ProductManagementGrid({ portalId, onProductsChange }: Pr
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'name' | 'category' | 'base_price' | 'status'>('name');
   const [sortAsc, setSortAsc] = useState(true);
-  const [showAIInput, setShowAIInput] = useState(false);
-  const [aiPrompt, setAiPrompt] = useState('');
   const [groupByCategory, setGroupByCategory] = useState(false);
   // The missing-number view (ruling 2026-10-20): products whose exact-reorder
   // note cannot name a DocketManager order yet.
@@ -99,14 +96,6 @@ export default function ProductManagementGrid({ portalId, onProductsChange }: Pr
       Promise.all(ids.map((id) => updateProduct(portalId, id, data))),
     { success: (updated) => `${updated.length} product${updated.length === 1 ? '' : 's'} updated` },
   );
-  const aiCreate = useAction(
-    'Create products',
-    async (prompt: string) => {
-      await createProductsFromDescription(portalId, prompt);
-      await loadProducts();
-    },
-    { success: 'Products created' },
-  );
   const fileUpload = useAction('Upload', (file: File) => uploadFile(file), {
     success: 'File uploaded. Processing will be implemented soon.',
   });
@@ -125,7 +114,6 @@ export default function ProductManagementGrid({ portalId, onProductsChange }: Pr
       }),
     { success: 'New product added' },
   );
-  const aiCreating = aiCreate.pending;
   const uploadingFile = fileUpload.pending;
 
   // Bulk select handlers
@@ -239,14 +227,6 @@ export default function ProductManagementGrid({ portalId, onProductsChange }: Pr
   };
 
   // AI product creation
-  const handleAICreate = async () => {
-    if (!aiPrompt.trim()) return;
-    const created = await aiCreate.run(aiPrompt);
-    if (created === undefined) return;
-    setAiPrompt('');
-    setShowAIInput(false);
-  };
-
   // File upload handler
   const handleFileUpload = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -357,13 +337,6 @@ export default function ProductManagementGrid({ portalId, onProductsChange }: Pr
             />
           </label>
 
-          <button
-            onClick={() => setShowAIInput(true)}
-            className="rounded-md border border-purple-200 bg-purple-50 px-4 py-2 text-sm font-medium text-purple-700 hover:bg-purple-100"
-          >
-            Ask AI to Add Products
-          </button>
-
           <Link
             to={`/portals/${portalId}/products/reprice`}
             className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
@@ -382,38 +355,6 @@ export default function ProductManagementGrid({ portalId, onProductsChange }: Pr
           </label>
         </div>
       </div>
-
-      {/* AI Input */}
-      {showAIInput && (
-        <div className="rounded-lg border border-purple-200 bg-purple-50 p-4">
-          <h3 className="text-sm font-semibold text-purple-900">Describe products to add</h3>
-          <textarea
-            value={aiPrompt}
-            onChange={(e) => setAiPrompt(e.target.value)}
-            placeholder="e.g., Add #10 window envelopes, pack of 1,000 at $252 per pack, and parking passes, pack of 1,000 at $215"
-            rows={3}
-            className="mt-2 w-full rounded-md border border-purple-200 px-3 py-2 text-sm focus:border-purple-400 focus:outline-none focus:ring-purple-400"
-          />
-          <div className="mt-3 flex gap-2">
-            <button
-              onClick={handleAICreate}
-              disabled={aiCreating || !aiPrompt.trim()}
-              className="rounded-md bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700 disabled:opacity-50"
-            >
-              {aiCreating ? 'Creating...' : 'Create Products'}
-            </button>
-            <button
-              onClick={() => {
-                setShowAIInput(false);
-                setAiPrompt('');
-              }}
-              className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Bulk Actions Bar */}
       {selectedIds.size > 0 && (
