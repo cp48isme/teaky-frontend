@@ -76,3 +76,15 @@ export function confirmPasswordReset(token: string, newPassword: string): Promis
     body: JSON.stringify({ token, new_password: newPassword }),
   });
 }
+
+export interface MyPortal {
+  id: string;
+  name: string;
+  slug: string;
+  status: string;
+}
+
+/** The portals the signed-in user is assigned to (belq, 30 Oct 2026): where sign-in lands. */
+export async function listMyPortals(): Promise<MyPortal[]> {
+  return apiRequest<MyPortal[]>('/auth/me/portals');
+}

@@ -3,6 +3,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import { PortalProvider } from './contexts/PortalContext';
 import { CartProvider } from './contexts/CartContext';
 import { PreviewProvider } from './context/PreviewContext';
+import StatusProvider from './contexts/StatusProvider';
 import ProtectedRoute from './components/ProtectedRoute';
 import AppLayout from './components/layout/AppLayout';
 import PortalLayout from './components/layout/PortalLayout';
@@ -45,10 +46,12 @@ import MessageCenterPage from './pages/MessageCenterPage';
 import EquipmentPage from './pages/EquipmentPage';
 import PlaceholderPage from './pages/PlaceholderPage';
 import PortalLegalPage from './pages/portal/PortalLegalPage';
+import ChoosePortalPage from './pages/ChoosePortalPage';
 
 function App() {
   return (
     <BrowserRouter>
+      <StatusProvider>
       <PreviewProvider>
         <AuthProvider>
           <Routes>
@@ -57,6 +60,14 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/invite/:token" element={<AcceptInvitationPage />} />
+          <Route
+            path="/choose-portal"
+            element={
+              <ProtectedRoute>
+                <ChoosePortalPage />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/dashboard"
             element={
@@ -270,6 +281,7 @@ function App() {
         </Routes>
         </AuthProvider>
       </PreviewProvider>
+      </StatusProvider>
     </BrowserRouter>
   );
 }

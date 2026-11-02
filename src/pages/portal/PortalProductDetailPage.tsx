@@ -1,4 +1,4 @@
-import { looksLikeEmail } from '../../lib/recipientText';
+import { looksLikeEmail, looksLikePhone, PHONE_RULE } from '../../lib/recipientText';
 import { useState, useEffect } from 'react';
 import { packPriceLabel, packQuantityLabel } from '../../lib/pricing';
 import { QUOTES_ENABLED } from '../../lib/paymentTerms';
@@ -12,15 +12,27 @@ import { useCart } from '../../contexts/CartContext';
 import { isAuthenticated } from '../../api/client';
 import type { Product } from '../../types/product';
 import Spinner from '../../components/ui/Spinner';
+import ActionButton from '../../components/ui/ActionButton';
+import { useAction } from '../../hooks/useAction';
 
 type RecipientDraft = { name: string; title: string; email: string; phone: string };
 const emptyRecipient: RecipientDraft = { name: '', title: '', email: '', phone: '' };
 
-/** Every pack has a name, a well-formed email and a phone (any format). */
-function recipientsComplete(recipients: RecipientDraft[], quantity: number): boolean {
-  return Array.from({ length: quantity }, (_, i) => recipients[i] ?? emptyRecipient).every(
-    (r) => r.name.trim() !== '' && looksLikeEmail(r.email) && r.phone.trim() !== '',
-  );
+/**
+ * Why Add to Cart cannot go yet, or null: every pack needs a name, a
+ * well-formed email and a dialable phone (any format, 30 Oct 2026). The first
+ * problem is named so the buyer knows which field, not just that one is wrong.
+ */
+function recipientsProblem(recipients: RecipientDraft[], quantity: number): string | null {
+  const drafts = Array.from({ length: quantity }, (_, i) => recipients[i] ?? emptyRecipient);
+  if (drafts.some((r) => r.name.trim() === '' || r.email.trim() === '' || r.phone.trim() === '')) {
+    return 'Add a name, email and phone for each pack';
+  }
+  const badEmail = drafts.findIndex((r) => !looksLikeEmail(r.email));
+  if (badEmail >= 0) return `Email ${badEmail + 1} does not look like an email address`;
+  const badPhone = drafts.findIndex((r) => !looksLikePhone(r.phone));
+  if (badPhone >= 0) return `Phone ${badPhone + 1} ${PHONE_RULE}`;
+  return null;
 }
 
 export default function PortalProductDetailPage() {
@@ -39,11 +51,20 @@ export default function PortalProductDetailPage() {
     note: '',
     uploadUrl: null,
   });
-  const [adding, setAdding] = useState(false);
   // Variable-data items: one person per pack ordered (s89_02) — name, title,
   // and since 2026-10-26 email and phone, the four things the card carries.
   const [recipients, setRecipients] = useState<RecipientDraft[]>([]);
   const [added, setAdded] = useState(false);
+  // Add to cart reports through the status region (30 Oct 2026): a cap refusal
+  // (422) used to be swallowed here — the button flashed "Adding..." and
+  // nothing said why. The server's sentence now reaches the region.
+  const addToCart = useAction('Add to cart', (data: Parameters<typeof addItem>[0]) => addItem(data), {
+    success: () =>
+      product
+        ? `Added to your cart: ${product.name}, ${packQuantityLabel(quantity, product.pack_size ?? 1)}`
+        : 'Added to your cart',
+  });
+  const adding = addToCart.pending;
   const [isSafeOrder, setIsSafeOrder] = useState(false);
   const [showQuoteModal, setShowQuoteModal] = useState(false);
   const [quoteDescription, setQuoteDescription] = useState('');
@@ -418,14 +439,12 @@ export default function PortalProductDetailPage() {
                 </fieldset>
               )}
 
-              <button
+              <ActionButton
                 onClick={async () => {
                   if (!product) return;
-                  setAdding(true);
                   setAdded(false);
-                  try {
-                    // No price is sent: the server prices the line.
-                    await addItem({
+                  // No price is sent: the server prices the line.
+                  const result = await addToCart.run({
                       product_id: product.id,
                       quantity,
                       size: selectedSize || undefined,
@@ -454,31 +473,25 @@ export default function PortalProductDetailPage() {
                             })),
                           }
                         : {}),
-                    });
-                    setAdded(true);
-                    setTimeout(() => setAdded(false), 2000);
-                  } catch {
-                    // error handled by cart context
-                  } finally {
-                    setAdding(false);
-                  }
+                  });
+                  if (result === undefined) return;
+                  setAdded(true);
+                  setTimeout(() => setAdded(false), 2000);
                 }}
-                disabled={
-                  adding ||
-                  (options.length > 0 && !pickedOption) ||
-                  (product.collects_recipients === true && !recipientsComplete(recipients, quantity))
-                }
+                pending={adding}
+                pendingLabel="Adding..."
+                disabled={options.length > 0 && !pickedOption}
+                reason={product.collects_recipients === true ? recipientsProblem(recipients, quantity) : null}
+                reasonClassName="mt-2 text-sm text-gray-600"
                 className="w-full rounded-md px-4 py-2.5 text-sm font-medium text-white transition-colors disabled:opacity-50"
                 style={{ backgroundColor: added ? '#16a34a' : primaryColor }}
               >
-                {adding
-                  ? 'Adding...'
-                  : added
-                    ? 'Added to Cart!'
-                    : options.length > 0 && !pickedOption
-                      ? `Choose a ${(product.option_set_name || 'option').toLowerCase()}`
-                      : 'Add to Cart'}
-              </button>
+                {added
+                  ? 'Added to Cart!'
+                  : options.length > 0 && !pickedOption
+                    ? `Choose a ${(product.option_set_name || 'option').toLowerCase()}`
+                    : 'Add to Cart'}
+              </ActionButton>
 
               {QUOTES_ENABLED && (
                 <button
