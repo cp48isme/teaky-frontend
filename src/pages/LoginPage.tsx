@@ -101,6 +101,17 @@ export default function LoginPage() {
                   className="mt-1.5 block w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-brand-dark placeholder-gray-400 transition focus:border-teak focus:outline-none focus:ring-1 focus:ring-teak"
                   placeholder="Your password"
                 />
+                <p className="mt-2 text-right text-sm">
+                  <Link
+                    to={`/forgot-password?${new URLSearchParams({
+                      ...(email ? { email } : {}),
+                      ...(searchParams.get('next') ? { next: searchParams.get('next') as string } : {}),
+                    }).toString()}`}
+                    className="font-medium text-teak-dark transition hover:text-teak"
+                  >
+                    Forgot your password?
+                  </Link>
+                </p>
               </div>
 
               <button
