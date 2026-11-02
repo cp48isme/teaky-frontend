@@ -4,9 +4,11 @@ interface Props {
   profile: CompanyProfile | null;
   /** A managed account is set up by Teaky: no wizard link, ever. */
   managed?: boolean;
+  /** Only a self-serve signup with nothing yet is offered the wizard (Cause 5, 30 Oct 2026). */
+  selfServe?: boolean;
 }
 
-export default function CompanyProfileCard({ profile, managed = false }: Props) {
+export default function CompanyProfileCard({ profile, managed = false, selfServe = false }: Props) {
   if (!profile) {
     return (
       <div className="rounded-lg border border-gray-200 bg-white p-6">
@@ -14,13 +16,15 @@ export default function CompanyProfileCard({ profile, managed = false }: Props) 
         <p className="mt-2 text-sm text-gray-500">
           {managed ? (
             'Your profile is set up by Teaky. To change it, reply to any Teaky email.'
-          ) : (
+          ) : selfServe ? (
             <>
               No profile set up yet.{' '}
               <a href="/get-started" className="text-teak-dark hover:text-teak">
                 Complete the wizard
               </a>
             </>
+          ) : (
+            'No profile on file. To add one, reply to any Teaky email.'
           )}
         </p>
       </div>
@@ -31,7 +35,7 @@ export default function CompanyProfileCard({ profile, managed = false }: Props) 
     <div className="rounded-lg border border-gray-200 bg-white p-6">
       <div className="flex items-start justify-between">
         <h3 className="font-heading text-sm font-semibold text-brand-dark">Company Profile</h3>
-        {!managed && (
+        {selfServe && (
           <a
             href="/get-started"
             className="text-xs text-teak-dark hover:text-teak"
