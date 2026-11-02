@@ -8,6 +8,8 @@ import { useAction } from '../../hooks/useAction';
 import { uploadFile } from '../../api/uploads';
 import type { Product, CreateProductRequest } from '../../types/product';
 import Spinner from '../ui/Spinner';
+import SearchBox from '../ui/SearchBox';
+import { matchesSearch } from '../../lib/search';
 import { formatMoney } from '../../lib/money';
 
 
@@ -277,15 +279,7 @@ export default function ProductManagementGrid({ portalId, onProductsChange }: Pr
   // Filter and sort
   const filteredProducts = products
     .filter((p) => !onlyMissingNumber || !p.previous_dm_order_number)
-    .filter((p) => {
-      if (!searchQuery) return true;
-      const q = searchQuery.toLowerCase();
-      return (
-        p.name.toLowerCase().includes(q) ||
-        p.category?.toLowerCase().includes(q) ||
-        p.sku?.toLowerCase().includes(q)
-      );
-    })
+    .filter((p) => matchesSearch(searchQuery, [p.name, p.category, p.sku]))
     .sort((a, b) => {
       let aVal: string | number | null = a[sortBy] ?? '';
       let bVal: string | number | null = b[sortBy] ?? '';
@@ -324,12 +318,11 @@ export default function ProductManagementGrid({ portalId, onProductsChange }: Pr
       {/* Header Actions */}
       <div className="flex items-center justify-between gap-4">
         {/* Search */}
-        <input
-          type="text"
+        <SearchBox
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          onChange={setSearchQuery}
           placeholder="Search products..."
-          className="w-64 rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-teak focus:outline-none focus:ring-teak"
+          aria-label="Search products"
         />
         <label className="flex items-center gap-2 text-sm text-gray-700" title="Products whose exact-reorder note cannot name a DocketManager order yet">
           <input

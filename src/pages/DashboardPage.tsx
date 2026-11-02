@@ -15,11 +15,15 @@ import EquipmentSummary from '../components/dashboard/EquipmentSummary';
 import CreatePortalCTA from '../components/dashboard/CreatePortalCTA';
 import Spinner from '../components/ui/Spinner';
 import { useMyOrganization } from '../hooks/useMyOrganization';
+import { useSelfServeOnboarding } from '../hooks/useSelfServeOnboarding';
 
 export default function DashboardPage() {
   const orgId = useOrganizationId();
   const { organization } = useMyOrganization();
   const managed = organization?.is_managed ?? false;
+  // Cause 5 (30 Oct 2026): wizard surfaces only for a self-serve signup with nothing yet.
+  const { selfServe } = useSelfServeOnboarding();
+  const showWizardSurfaces = selfServe === true;
   const [profile, setProfile] = useState<CompanyProfile | null>(null);
   const [equipment, setEquipment] = useState<OrganizationEquipment[]>([]);
   const [portals, setPortals] = useState<Portal[]>([]);
@@ -91,12 +95,12 @@ export default function DashboardPage() {
 
       {/* Create Portal CTA: self-serve accounts with no portal yet. A managed
           account never sees it, and nobody with a portal does (8 Oct 2026). */}
-      {!managed && portals.length === 0 && <CreatePortalCTA />}
+      {showWizardSurfaces && portals.length === 0 && <CreatePortalCTA />}
 
       {/* Profile + Equipment */}
       <div className="grid gap-6 lg:grid-cols-2">
-        <CompanyProfileCard profile={profile} managed={managed} />
-        {!managed && <EquipmentSummary equipment={equipment} />}
+        <CompanyProfileCard profile={profile} managed={managed} selfServe={showWizardSurfaces} />
+        {showWizardSurfaces && <EquipmentSummary equipment={equipment} />}
       </div>
     </div>
   );
