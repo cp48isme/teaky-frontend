@@ -106,3 +106,24 @@ describe('PortalProductDetailPage — outcomes reach the status region', () => {
     expect(screen.getByText('Add a name, email and phone for each pack')).toBeInTheDocument();
   });
 });
+
+describe('PortalProductDetailPage — a phone must be dialable (30 Oct 2026, ruling R4)', () => {
+  beforeEach(() => {
+    addItem.mockReset();
+    currentProduct = businessCards;
+  });
+
+  it('keeps Add to Cart disabled, and says which phone, while a recipient phone is a letter', async () => {
+    renderPage();
+    const add = await screen.findByRole('button', { name: 'Add to Cart' });
+    await userEvent.type(screen.getByLabelText('Name 1'), 'Pat Front-Desk');
+    await userEvent.type(screen.getByLabelText('Email 1'), 'pat@example.com');
+    await userEvent.type(screen.getByLabelText('Phone 1'), 'x');
+    expect(add).toBeDisabled();
+    expect(add).toHaveAccessibleDescription(/Phone 1 needs at least 7 digits/);
+    await userEvent.clear(screen.getByLabelText('Phone 1'));
+    await userEvent.type(screen.getByLabelText('Phone 1'), '816-555-0101');
+    expect(add).toBeEnabled();
+    expect(addItem).not.toHaveBeenCalled();
+  });
+});
