@@ -76,6 +76,7 @@ export default function OrderCostsPanel({ orderId, subtotal }: Props) {
     0,
   );
   const costed = costs.lines.every((l) => l.unit_cost != null);
+  const uncosted = costs.lines.filter((l) => l.unit_cost == null).length;
   const grossProfit = subtotal - cogs - (costs.outbound_freight_cost ?? 0);
 
   const saveOrder = async () => {
@@ -130,13 +131,19 @@ export default function OrderCostsPanel({ orderId, subtotal }: Props) {
           Costs and gross profit
         </h3>
         <p className="text-sm text-gray-600">
-          Price {money(subtotal)} · Cost of goods {money(cogs)}
+          Price {money(subtotal)}
+          {costed && ` · Cost of goods ${money(cogs)}`}
           {costs.outbound_freight_cost != null && ` · Freight ${money(costs.outbound_freight_cost)}`}
           {' · '}
-          <span className={costed ? 'font-medium text-gray-900' : 'text-yellow-700'}>
-            GP {money(grossProfit)}
-            {!costed && ' (a line has no cost yet)'}
-          </span>
+          {costed ? (
+            <span className="font-medium text-gray-900">GP {money(grossProfit)}</span>
+          ) : (
+            // Cause 4 (2 Nov 2026): a product may be active without a cost; never
+            // print a gross profit computed from a cost of zero.
+            <span className="font-medium text-amber-700">
+              GP cost not recorded ({uncosted} of {costs.lines.length} {costs.lines.length === 1 ? 'line has' : 'lines have'} no cost)
+            </span>
+          )}
           {costs.revenue_share_rate_snapshot != null &&
             ` · share rate ${(Number(costs.revenue_share_rate_snapshot) * 100).toFixed(0)}%`}
         </p>

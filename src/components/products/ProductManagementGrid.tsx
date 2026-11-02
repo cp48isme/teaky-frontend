@@ -681,6 +681,8 @@ function ProductTable({
                     autoFocus
                     className="w-24 rounded border border-blue-300 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
+                ) : product.cost_unknown ?? product.base_cost == null ? (
+                  <span className="text-amber-700">cost not recorded</span>
                 ) : (
                   formatMoney(product.base_cost)
                 )}
