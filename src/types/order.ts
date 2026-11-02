@@ -1,6 +1,7 @@
-import type { ArtworkDisposition } from './cart';
+import type { ArtworkDisposition } from "./cart";
 
-export type ReleaseState = 'held_for_proof' | 'releasing' | 'released' | 'retryable' | 'needs_human';
+export type ReleaseState =
+  "held_for_proof" | "releasing" | "released" | "retryable" | "needs_human";
 export interface ShippingAddress {
   name: string;
   line1: string;
@@ -35,7 +36,12 @@ export interface LineItem {
   artwork_disposition?: ArtworkDisposition;
   artwork_change_note?: string | null;
   artwork_upload_url?: string | null;
-  recipients?: { name: string; title?: string | null; email?: string | null; phone?: string | null }[];
+  recipients?: {
+    name: string;
+    title?: string | null;
+    email?: string | null;
+    phone?: string | null;
+  }[];
   created_at: string;
 }
 
@@ -83,6 +89,8 @@ export interface Order {
    * unknown; someone checks DocketManager and links the job or marks it absent.
    */
   release_state?: ReleaseState | null;
+  /** Release units (H v2): one per RGI order the lines are placed as; filled on the order detail read. */
+  release_units?: import("./releaseUnit").ReleaseUnit[];
   released_at?: string | null;
   release_attempts?: number;
   production_status: string | null;
@@ -128,7 +136,7 @@ export interface CreateOrderOnBehalfRequest {
   customer_name?: string;
   items: OnBehalfLineItem[];
   shipping_address: ShippingAddress;
-  payment_method: 'invoice_later' | 'stripe';
+  payment_method: "invoice_later" | "stripe";
   po_number?: string;
   notes?: string;
 }
@@ -186,14 +194,14 @@ export interface InvoiceData {
 }
 
 export const PRODUCTION_STATUSES = [
-  'received',
-  'in_prepress',
-  'printing',
-  'finishing',
-  'quality_check',
-  'ready_to_ship',
-  'shipped',
-  'picked_up',
+  "received",
+  "in_prepress",
+  "printing",
+  "finishing",
+  "quality_check",
+  "ready_to_ship",
+  "shipped",
+  "picked_up",
 ] as const;
 
 export type ProductionStatus = (typeof PRODUCTION_STATUSES)[number];
