@@ -178,14 +178,15 @@ export default function PrinterOrdersPage() {
                             to={`/orders/${e.source_order_id}`}
                             className="text-teak-dark underline"
                           >
-                            {e.order_number ?? e.purchase_order_reference}
+                            {e.order_number ?? e.reference}
                           </Link>
                         ) : (
-                          e.purchase_order_reference
+                          e.reference
                         )}
                       </td>
                       <td className="py-1 pr-2">
-                        {e.purchase_order_reference}
+                        {e.kind === "production" ? "job " : ""}
+                        {e.reference}
                       </td>
                       <td className="py-1 pr-2">
                         {e.release_state
@@ -194,7 +195,13 @@ export default function PrinterOrdersPage() {
                       </td>
                       <td className="py-1 pr-2">{formatAge(e.age_seconds)}</td>
                       <td className="py-1">
-                        {e.open_holds.join("; ") || e.reason || ""}
+                        {e.open_holds
+                          .map((h) =>
+                            h.prior_decision?.answer
+                              ? `${h.reason}: ${h.detail ?? ""} (last time: ${h.prior_decision.answer})`
+                              : `${h.reason}${h.detail ? `: ${h.detail}` : ""}`,
+                          )
+                          .join("; ")}
                       </td>
                     </tr>
                   ))}

@@ -2,17 +2,19 @@ import { apiRequest } from "./client";
 import type { Order } from "../types/order";
 import type {
   HeldQueueEntry,
-  HoldEvidence,
+  HoldResolution,
   ReleaseUnit,
 } from "../types/releaseUnit";
 
-/** Release units (H v2): the per-unit release machine for the order desk. */
+/** Release units (H v3): the per-unit release machine for the order desk. */
 export async function listHeldQueue(): Promise<HeldQueueEntry[]> {
   return apiRequest<HeldQueueEntry[]>("/release-units/queue");
 }
 
-export async function releaseUnit(unitId: string): Promise<ReleaseUnit> {
-  return apiRequest<ReleaseUnit>(`/release-units/${unitId}/release`, {
+/** Release a shipment group (forms and releases its production group) or
+ * re-release a retryable production group. Returns the order, both levels. */
+export async function releaseUnit(unitId: string): Promise<Order> {
+  return apiRequest<Order>(`/release-units/${unitId}/release`, {
     method: "POST",
   });
 }
@@ -36,13 +38,13 @@ export async function unitNotFound(unitId: string): Promise<ReleaseUnit> {
 export async function clearUnitHold(
   unitId: string,
   holdId: string,
-  evidence: HoldEvidence,
+  resolution: HoldResolution,
 ): Promise<ReleaseUnit> {
   return apiRequest<ReleaseUnit>(
     `/release-units/${unitId}/holds/${holdId}/clear`,
     {
       method: "POST",
-      body: JSON.stringify(evidence),
+      body: JSON.stringify(resolution),
     },
   );
 }

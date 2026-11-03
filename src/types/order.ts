@@ -15,6 +15,13 @@ export interface ShippingAddress {
   phone?: string;
 }
 
+export interface VariableDatum {
+  key: string;
+  value: string | null;
+  file_id: string | null;
+  position: number;
+}
+
 export interface LineItem {
   id: string;
   order_id: string;
@@ -36,6 +43,14 @@ export interface LineItem {
   artwork_disposition?: ArtworkDisposition;
   artwork_change_note?: string | null;
   artwork_upload_url?: string | null;
+  /** H v3: the line's shipment unit and production unit (null until formed). */
+  shipment_unit_id?: string | null;
+  production_unit_id?: string | null;
+  /** When the source says the line was created, and when Teaky first saw it. */
+  source_created_at?: string | null;
+  received_at?: string | null;
+  /** Variable data as the source sent it: text (empty = empty slot) or a file. */
+  variable_data?: VariableDatum[];
   recipients?: {
     name: string;
     title?: string | null;
