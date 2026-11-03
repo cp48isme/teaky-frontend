@@ -18,7 +18,9 @@ const unit = (
 ): ReleaseUnit =>
   ({
     id,
+    kind: "shipment",
     ordinal,
+    reference: `ORD-41BD4C83-${ordinal}`,
     line_item_ids: lineIds,
     cancelled_at: null,
     release_state: waiting ? "held_for_proof" : null,
@@ -90,5 +92,34 @@ describe("groupSentences", () => {
         null,
       ),
     ).toBeNull();
+  });
+});
+
+describe("groupSentences (H v3)", () => {
+  it("speaks only of shipment groups; a production job is never the buyer's", () => {
+    const job = {
+      ...unit("p1", 1, ["a", "b", "c"], false),
+      kind: "production",
+    } as never;
+    expect(
+      groupSentences(
+        {
+          order_number: "ORD-41BD4C83",
+          line_items: [line("a", "Cards", 2), line("c", "V", 3)],
+          release_units: [unit("u1", 1, ["a"], false), job],
+        },
+        null,
+      ),
+    ).toBeNull();
+    const result = groupSentences(
+      {
+        order_number: "ORD-41BD4C83",
+        line_items: [line("a", "Cards", 2), line("c", "V", 3)],
+        release_units: [unit("u1", 1, ["a"], false), unit("u2", 2, ["c"], true), job],
+      },
+      null,
+    );
+    expect(result?.groups.map((g) => g.unitId)).toEqual(["u1", "u2"]);
+    expect(result?.invoiceNote).toContain("with a suffix (-1, -2)");
   });
 });

@@ -1,7 +1,8 @@
 /**
- * What the buyer is told, per group, when an order was split (H v2 §6).
- * Never the words held or released: what goes now, what waits for a proof,
- * and that each group ships and is invoiced separately with its own freight.
+ * What the buyer is told, per shipment group, when an order was split
+ * (H v3 §6, ruling 7). Never the words held or released: what goes now, what
+ * waits for a proof, and that each group ships and is invoiced separately
+ * with its own freight. Production jobs are RGI's and never appear here.
  */
 import type { LineItem, Order } from "../types/order";
 import type { ReleaseUnit } from "../types/releaseUnit";
@@ -15,7 +16,7 @@ export interface GroupSentence {
 
 function liveUnits(order: Pick<Order, "release_units">): ReleaseUnit[] {
   return (order.release_units ?? [])
-    .filter((u) => !u.cancelled_at)
+    .filter((u) => u.kind === "shipment" && !u.cancelled_at)
     .sort((a, b) => a.ordinal - b.ordinal);
 }
 
@@ -53,6 +54,6 @@ export function groupSentences(
   });
   return {
     groups,
-    invoiceNote: `These groups ship and are invoiced separately, each with its own freight charge. Each invoice will show your order number ${order.order_number} with a suffix (-1, -2).`,
+    invoiceNote: `These groups ship and are invoiced separately, each with its own freight charge. Each invoice will show your order number ${order.order_number} with a suffix (${units.map((u) => u.reference.replace(order.order_number, "")).join(", ")}).`,
   };
 }
