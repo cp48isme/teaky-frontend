@@ -50,14 +50,21 @@ export async function revokeInvitation(invitationId: string): Promise<void> {
   });
 }
 
+// The token goes in the request body on all three public calls, never in the
+// path or query: a path token is written to every access log on the way in
+// (bead nt7z, 29 Oct 2026).
 export async function acceptInvitation(token: string): Promise<Invitation> {
-  return apiRequest<Invitation>(`/team/invitations/${token}/accept`, {
+  return apiRequest<Invitation>('/team/invitations/accept', {
     method: 'POST',
+    body: JSON.stringify({ token }),
   });
 }
 
 export async function getInvitationPreview(token: string): Promise<InvitationPreview> {
-  return apiRequest<InvitationPreview>(`/team/invitations/${token}`);
+  return apiRequest<InvitationPreview>('/team/invitations/preview', {
+    method: 'POST',
+    body: JSON.stringify({ token }),
+  });
 }
 
 /** Set a password and take up the invitation; the returned session is scoped to
@@ -68,8 +75,8 @@ export async function registerFromInvitation(
   displayName?: string,
 ): Promise<void> {
   const tokens = await apiRequest<{ access_token: string; refresh_token: string; token_type: string; expires_in: number }>(
-    `/team/invitations/${token}/register`,
-    { method: 'POST', body: JSON.stringify({ password, display_name: displayName || undefined }) },
+    '/team/invitations/register',
+    { method: 'POST', body: JSON.stringify({ token, password, display_name: displayName || undefined }) },
   );
   setTokens(tokens);
 }

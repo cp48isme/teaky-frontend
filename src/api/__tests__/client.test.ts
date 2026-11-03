@@ -32,14 +32,14 @@ describe('isSessionEstablishingPath', () => {
     expect(isSessionEstablishingPath('/auth/register')).toBe(true);
     expect(isSessionEstablishingPath('/auth/refresh')).toBe(true);
     expect(isSessionEstablishingPath('/auth/login?next=/p/raphael')).toBe(true);
-    expect(isSessionEstablishingPath('/team/invitations/abc123/register')).toBe(true);
+    expect(isSessionEstablishingPath('/team/invitations/register')).toBe(true);
     expect(isSessionEstablishingPath('/p/raphael/register')).toBe(true);
     expect(isSessionEstablishingPath('/auth/password-reset/request')).toBe(true);
     expect(isSessionEstablishingPath('/auth/password-reset/confirm')).toBe(true);
     expect(isSessionEstablishingPath('/auth/password-reset/other')).toBe(false);
     expect(isSessionEstablishingPath('/auth/logout')).toBe(false);
-    expect(isSessionEstablishingPath('/team/invitations/abc123')).toBe(false);
-    expect(isSessionEstablishingPath('/team/invitations/abc123/accept')).toBe(false);
+    expect(isSessionEstablishingPath('/team/invitations/preview')).toBe(false);
+    expect(isSessionEstablishingPath('/team/invitations/accept')).toBe(false);
     expect(isSessionEstablishingPath('/p/raphael/cart')).toBe(false);
     expect(isSessionEstablishingPath('/orders')).toBe(false);
   });
@@ -77,9 +77,9 @@ describe('apiRequest and the session-establishing endpoints', () => {
     localStorage.setItem('refresh_token', STALE.refresh_token);
     responses.mockResolvedValueOnce(jsonResponse(401, { detail: 'Invitation not found' }));
 
-    await expect(apiRequest('/team/invitations/abc123/register', { method: 'POST', body: '{}' })).rejects.toMatchObject({ status: 401, message: 'Invitation not found' });
+    await expect(apiRequest('/team/invitations/register', { method: 'POST', body: '{}' })).rejects.toMatchObject({ status: 401, message: 'Invitation not found' });
 
-    expect(calls()).toEqual([{ url: '/api/team/invitations/abc123/register', authorization: undefined }]);
+    expect(calls()).toEqual([{ url: '/api/team/invitations/register', authorization: undefined }]);
     expect(toLogin).not.toHaveBeenCalled();
     expect(localStorage.getItem('access_token')).toBe(STALE.access_token);
   });

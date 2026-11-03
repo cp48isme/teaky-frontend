@@ -34,7 +34,6 @@ export interface Invitation {
   invited_by: string;
   role: string;
   portal_ids: string[] | null;
-  token: string;
   expires_at: string;
   accepted_at: string | null;
   revoked_at: string | null;

@@ -121,7 +121,7 @@ const SESSION_ESTABLISHING_PATHS: readonly RegExp[] = [
   /^\/auth\/login$/,
   /^\/auth\/register$/,
   /^\/auth\/refresh$/,
-  /^\/team\/invitations\/[^/]+\/register$/,
+  /^\/team\/invitations\/register$/,
   /^\/p\/[^/]+\/register$/,
   // Forgot-password (29 Oct 2026): asking for a link and setting the password
   // establish a session's credentials; a stale bearer has no say in either.
