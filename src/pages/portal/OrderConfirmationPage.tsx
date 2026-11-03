@@ -118,7 +118,7 @@ export default function OrderConfirmationPage() {
             if (!split) {
               return order.line_items.map((li) => (
                 <li key={li.id}>
-                  {artworkSentence(li, order.proof_email ?? null)}
+                  {artworkSentence(li, order.proof_email ?? null, support?.support_name || 'the printer')}
                 </li>
               ));
             }
