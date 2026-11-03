@@ -34,6 +34,9 @@ describe('isSessionEstablishingPath', () => {
     expect(isSessionEstablishingPath('/auth/login?next=/p/raphael')).toBe(true);
     expect(isSessionEstablishingPath('/team/invitations/abc123/register')).toBe(true);
     expect(isSessionEstablishingPath('/p/raphael/register')).toBe(true);
+    expect(isSessionEstablishingPath('/auth/password-reset/request')).toBe(true);
+    expect(isSessionEstablishingPath('/auth/password-reset/confirm')).toBe(true);
+    expect(isSessionEstablishingPath('/auth/password-reset/other')).toBe(false);
     expect(isSessionEstablishingPath('/auth/logout')).toBe(false);
     expect(isSessionEstablishingPath('/team/invitations/abc123')).toBe(false);
     expect(isSessionEstablishingPath('/team/invitations/abc123/accept')).toBe(false);
@@ -124,6 +127,69 @@ describe('apiRequest and the session-establishing endpoints', () => {
       { url: '/api/orders', authorization: 'Bearer fresh' },
     ]);
     expect(toLogin).not.toHaveBeenCalled();
+  });
+
+  it('four parallel 401s share one refresh and all four retry with the new token (672f)', async () => {
+    localStorage.setItem('access_token', STALE.access_token);
+    localStorage.setItem('refresh_token', STALE.refresh_token);
+    let releaseRefresh: (r: Response) => void = () => undefined;
+    const refreshGate = new Promise<Response>((resolve) => {
+      releaseRefresh = resolve;
+    });
+    responses.mockImplementation((url: string, init?: RequestInit) => {
+      if (url === '/api/auth/refresh') return refreshGate;
+      const auth = (init?.headers as Record<string, string> | undefined)?.['Authorization'];
+      if (auth === `Bearer ${STALE.access_token}`) return Promise.resolve(jsonResponse(401, { detail: 'Access token has expired' }));
+      return Promise.resolve(jsonResponse(200, { ok: url }));
+    });
+
+    const paths = ['/portals', '/analytics/summary', '/organizations/x/equipment', '/notifications/unread-count'];
+    const pending = paths.map((p) => apiRequest<{ ok: string }>(p));
+    await new Promise((r) => setTimeout(r, 0));
+    releaseRefresh(jsonResponse(200, { access_token: 'fresh', refresh_token: 'fresh-r', token_type: 'bearer', expires_in: 900 }));
+    const results = await Promise.all(pending);
+
+    expect(results.map((r) => r.ok)).toEqual(paths.map((p) => `/api${p}`));
+    expect(calls().filter((c) => c.url === '/api/auth/refresh')).toHaveLength(1);
+    expect(calls().filter((c) => c.authorization === 'Bearer fresh')).toHaveLength(4);
+    expect(toLogin).not.toHaveBeenCalled();
+    expect(localStorage.getItem('refresh_token')).toBe('fresh-r');
+  });
+
+  it('a 401 on a token that storage has already replaced retries without refreshing', async () => {
+    localStorage.setItem('access_token', STALE.access_token);
+    localStorage.setItem('refresh_token', STALE.refresh_token);
+    responses.mockImplementation((url: string, init?: RequestInit) => {
+      const auth = (init?.headers as Record<string, string> | undefined)?.['Authorization'];
+      if (auth === `Bearer ${STALE.access_token}`) {
+        // Someone else's refresh landed while this request was in flight.
+        localStorage.setItem('access_token', 'fresh');
+        localStorage.setItem('refresh_token', 'fresh-r');
+        return Promise.resolve(jsonResponse(401, { detail: 'Access token has expired' }));
+      }
+      return Promise.resolve(jsonResponse(200, { ok: url }));
+    });
+
+    const result = await apiRequest<{ ok: string }>('/orders');
+
+    expect(result.ok).toBe('/api/orders');
+    expect(calls().map((c) => c.url)).toEqual(['/api/orders', '/api/orders']);
+    expect(calls()[1]?.authorization).toBe('Bearer fresh');
+  });
+
+  it('when the shared refresh fails, every waiting caller is sent to sign in once each and nothing retries', async () => {
+    localStorage.setItem('access_token', STALE.access_token);
+    localStorage.setItem('refresh_token', STALE.refresh_token);
+    responses.mockImplementation((url: string) => {
+      if (url === '/api/auth/refresh') return Promise.resolve(jsonResponse(401, { detail: 'Invalid or expired refresh token' }));
+      return Promise.resolve(jsonResponse(401, { detail: 'Access token has expired' }));
+    });
+
+    const outcomes = await Promise.allSettled([apiRequest('/portals'), apiRequest('/orders')]);
+
+    expect(outcomes.map((o) => o.status)).toEqual(['rejected', 'rejected']);
+    expect(calls().filter((c) => c.url === '/api/auth/refresh')).toHaveLength(1);
+    expect(localStorage.getItem('access_token')).toBeNull();
   });
 
   it('genuine expiry — the refresh itself 401s: storage cleared, sent to sign in, "Session expired" thrown', async () => {

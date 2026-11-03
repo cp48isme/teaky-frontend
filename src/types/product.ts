@@ -54,6 +54,11 @@ export interface Product {
   min_order_qty: number;
   /** The most packs a buyer may order here (ruling 2026-10-21); null = no cap. */
   max_order_quantity?: number | null;
+  /** H v3: RGI's lead-time band (the shipment grouping key) and whether the
+   * product is outsourced (its own group). Setting a band clears the
+   * product's open lead-time holds. */
+  lead_time_band?: string | null;
+  outsourced?: boolean;
   /** Pieces per pack; the buyer orders packs (1 when absent). */
   pack_size?: number;
   /** What a buyer pays per pack at the minimum quantity, priced by the server; null = not for sale. */
@@ -73,6 +78,8 @@ export interface Product {
   base_price?: number | null;
   /** Supplier cost at quantity one. */
   base_cost?: number | null;
+  /** No cost per pack and not a cost on every option (Cause 4): say "cost not recorded", never a margin from zero. */
+  cost_unknown?: boolean;
   /** Markup applied to base_cost to derive base_price. Serialized as a decimal string. */
   margin_percent?: string | null;
   /** A human set base_price by hand; bulk reprice skips it unless told otherwise. */
@@ -105,6 +112,11 @@ export interface CreateProductRequest {
   mockup_urls?: string[];
   min_order_qty?: number;
   max_order_quantity?: number | null;
+  /** H v3: RGI's lead-time band (the shipment grouping key) and whether the
+   * product is outsourced (its own group). Setting a band clears the
+   * product's open lead-time holds. */
+  lead_time_band?: string | null;
+  outsourced?: boolean;
   pack_size?: number;
   markup_multiplier?: number;
   floor_multiplier?: number | null;
@@ -134,6 +146,11 @@ export interface UpdateProductRequest {
   mockup_urls?: string[];
   min_order_qty?: number;
   max_order_quantity?: number | null;
+  /** H v3: RGI's lead-time band (the shipment grouping key) and whether the
+   * product is outsourced (its own group). Setting a band clears the
+   * product's open lead-time holds. */
+  lead_time_band?: string | null;
+  outsourced?: boolean;
   pack_size?: number;
   markup_multiplier?: number;
   floor_multiplier?: number | null;

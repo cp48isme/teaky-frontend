@@ -41,7 +41,27 @@ function currentOrganizationId(): string | null {
   }
 }
 
-async function refreshAccessToken(): Promise<boolean> {
+/**
+ * One refresh at a time (bead 672f, 2 Nov 2026). The server rotates the refresh
+ * token on every use, so when several requests meet a 401 at once — the
+ * dashboard fires four on mount and the unread-count poll is a fifth — each
+ * running its own refresh means at most one can win and the rest clear storage
+ * and throw the user to sign in. Every caller awaits the same in-flight promise
+ * and retries with its result. A caller whose 401 came from a token that has
+ * already been replaced (another refresh finished first) does not refresh at
+ * all; it retries with the token in storage.
+ */
+let inFlightRefresh: Promise<boolean> | null = null;
+
+function refreshAccessToken(): Promise<boolean> {
+  if (inFlightRefresh) return inFlightRefresh;
+  inFlightRefresh = doRefresh().finally(() => {
+    inFlightRefresh = null;
+  });
+  return inFlightRefresh;
+}
+
+async function doRefresh(): Promise<boolean> {
   const refreshToken = getRefreshToken();
   if (!refreshToken) return false;
 
@@ -71,6 +91,8 @@ async function refreshAccessToken(): Promise<boolean> {
 
 /** Re-issue the session inside `organizationId` (after accepting an invitation) (S86). */
 export async function switchOrganization(organizationId: string): Promise<boolean> {
+  // Never race a refresh already in flight: it would consume the same token.
+  if (inFlightRefresh) await inFlightRefresh;
   const refreshToken = getRefreshToken();
   if (!refreshToken) return false;
   const response = await fetch(`${API_BASE}/auth/refresh`, {
@@ -101,6 +123,9 @@ const SESSION_ESTABLISHING_PATHS: readonly RegExp[] = [
   /^\/auth\/refresh$/,
   /^\/team\/invitations\/[^/]+\/register$/,
   /^\/p\/[^/]+\/register$/,
+  // Forgot-password (29 Oct 2026): asking for a link and setting the password
+  // establish a session's credentials; a stale bearer has no say in either.
+  /^\/auth\/password-reset\/(request|confirm)$/,
 ];
 
 export function isSessionEstablishingPath(path: string): boolean {
@@ -140,7 +165,10 @@ export async function apiRequest<T>(
   // expired — then refresh and retry once, or send the user to sign in. A 401
   // from a session-establishing endpoint falls through to the error below.
   if (response.status === 401 && accessToken && !establishesSession) {
-    const refreshed = await refreshAccessToken();
+    // Another caller's refresh may already have replaced the token this
+    // request carried; then the retry needs no refresh of its own.
+    const alreadyReplaced = getAccessToken() !== null && getAccessToken() !== accessToken;
+    const refreshed = alreadyReplaced || (await refreshAccessToken());
     if (refreshed) {
       headers['Authorization'] = `Bearer ${getAccessToken()}`;
       response = await fetch(url, { ...options, headers });
@@ -152,8 +180,8 @@ export async function apiRequest<T>(
   }
 
   if (!response.ok) {
-    const errorBody = await response.json().catch(() => ({}));
-    throw new ApiError(response.status, errorBody.detail || 'Request failed');
+    const errorBody: unknown = await response.json().catch(() => ({}));
+    throw new ApiError(response.status, detailText(errorBody) ?? 'Request failed');
   }
 
   // Handle 204 No Content
@@ -162,6 +190,30 @@ export async function apiRequest<T>(
   }
 
   return response.json();
+}
+
+/**
+ * The server's own words for a failure. A string `detail` is used as is. A
+ * validation failure (422) carries a list of `{loc, msg}` entries; each is
+ * rendered as "field: message" so a refused phone number reads as
+ * "phone: needs at least 7 digits", not "[object Object]" (30 Oct 2026).
+ */
+export function detailText(body: unknown): string | null {
+  if (!body || typeof body !== 'object') return null;
+  const { detail } = body as { detail?: unknown };
+  if (typeof detail === 'string' && detail) return detail;
+  if (Array.isArray(detail)) {
+    const parts = detail.flatMap((entry) => {
+      if (!entry || typeof entry !== 'object') return [];
+      const { msg, loc } = entry as { msg?: unknown; loc?: unknown };
+      if (typeof msg !== 'string') return [];
+      const text = msg.replace(/^Value error, /, '');
+      const field = Array.isArray(loc) ? loc.filter((part) => typeof part === 'string' && part !== 'body').pop() : undefined;
+      return [typeof field === 'string' ? `${field}: ${text}` : text];
+    });
+    if (parts.length) return parts.join(' ');
+  }
+  return null;
 }
 
 export class ApiError extends Error {

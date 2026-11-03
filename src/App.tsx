@@ -3,12 +3,15 @@ import { AuthProvider } from './contexts/AuthContext';
 import { PortalProvider } from './contexts/PortalContext';
 import { CartProvider } from './contexts/CartContext';
 import { PreviewProvider } from './context/PreviewContext';
+import StatusProvider from './contexts/StatusProvider';
 import ProtectedRoute from './components/ProtectedRoute';
 import AppLayout from './components/layout/AppLayout';
 import PortalLayout from './components/layout/PortalLayout';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
 import DashboardPage from './pages/DashboardPage';
 import GetStartedWizardPage from './pages/GetStartedWizardPage';
 import PortalsListPage from './pages/PortalsListPage';
@@ -43,16 +46,28 @@ import MessageCenterPage from './pages/MessageCenterPage';
 import EquipmentPage from './pages/EquipmentPage';
 import PlaceholderPage from './pages/PlaceholderPage';
 import PortalLegalPage from './pages/portal/PortalLegalPage';
+import ChoosePortalPage from './pages/ChoosePortalPage';
 
 function App() {
   return (
     <BrowserRouter>
+      <StatusProvider>
       <PreviewProvider>
         <AuthProvider>
           <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/invite/:token" element={<AcceptInvitationPage />} />
+          <Route
+            path="/choose-portal"
+            element={
+              <ProtectedRoute>
+                <ChoosePortalPage />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/dashboard"
             element={
@@ -266,6 +281,7 @@ function App() {
         </Routes>
         </AuthProvider>
       </PreviewProvider>
+      </StatusProvider>
     </BrowserRouter>
   );
 }

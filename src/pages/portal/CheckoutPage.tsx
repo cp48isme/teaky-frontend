@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useCart } from "../../contexts/CartContext";
 import { usePortalContext } from "../../contexts/PortalContext";
@@ -10,9 +10,18 @@ import type { ShippingAddress } from "../../types/order";
 import type { ShippingRate } from "../../types/shipping";
 import { INVOICE_TERMS, FREIGHT_NOTE } from "../../lib/paymentTerms";
 import { todayIsoDate } from "../../lib/neededBy";
-import StripePaymentForm from "../../components/checkout/StripePaymentForm";
+import { looksLikePhone, PHONE_RULE } from "../../lib/recipientText";
+import { shipToProblem, STREET_NEEDED_FOR_RATES } from "../../lib/shipToText";
 import Spinner from "../../components/ui/Spinner";
-import { packPriceLabel, packQuantityLabel } from '../../lib/pricing';
+import { packPriceLabel, packQuantityLabel } from "../../lib/pricing";
+
+// Dynamic on purpose (30 Oct 2026): the payment form carries Stripe.js, a third
+// party that fingerprints the device the moment it loads. Imported statically
+// it sat in the boot chunk and ran on every route, the signed-out login page
+// included. It now loads when the payment step renders and not before.
+const StripePaymentForm = lazy(
+  () => import("../../components/checkout/StripePaymentForm"),
+);
 
 // S84 / plan §5.5 — Phase 1 hardcode: every RGI portal is invoice-terms, so the
 // checkout places the order for later invoicing and never shows a payment step.
@@ -49,7 +58,9 @@ export default function CheckoutPage() {
     listMyOrders(slug)
       .then((orders) => {
         if (cancelled || orders.length === 0) return;
-        const latest = [...orders].sort((a, b) => (a.placed_at < b.placed_at ? 1 : -1))[0];
+        const latest = [...orders].sort((a, b) =>
+          a.placed_at < b.placed_at ? 1 : -1,
+        )[0];
         const prior = latest.shipping_address;
         setAddress((current) => ({
           ...current,
@@ -73,7 +84,10 @@ export default function CheckoutPage() {
     };
   }, [slug]);
   useEffect(() => {
-    if (portal?.name) setAddress((current) => (current.name ? current : { ...current, name: portal.name }));
+    if (portal?.name)
+      setAddress((current) =>
+        current.name ? current : { ...current, name: portal.name },
+      );
   }, [portal?.name]);
   const [poNumber, setPoNumber] = useState("");
   // "When do you need these by?" — optional; sent as YYYY-MM-DD (2026-10-15).
@@ -84,7 +98,8 @@ export default function CheckoutPage() {
   const [proofEmail, setProofEmail] = useState("");
   const anyProofRequired =
     cart?.items.some(
-      (item) => products.find((p) => p.id === item.product_id)?.proof_required === true,
+      (item) =>
+        products.find((p) => p.id === item.product_id)?.proof_required === true,
     ) ?? false;
 
   // Shipping rates state
@@ -107,7 +122,15 @@ export default function CheckoutPage() {
   useEffect(() => {
     // Invoice terms: freight is billed at cost later, so no rate is quoted.
     if (INVOICE_TERMS) return;
-    if (!address.city || !address.state || !address.postal_code) {
+    // A quote against a made-up street is a wrong number nobody can see is
+    // wrong (ruling 2 Nov 2026): no street, no quote — the form says so.
+    if (
+      !address.line1.trim() ||
+      !address.city ||
+      !address.state ||
+      !address.postal_code
+    ) {
+      setShippingRates([]);
       return;
     }
 
@@ -123,7 +146,7 @@ export default function CheckoutPage() {
             country: "US",
           },
           to_address: {
-            street1: address.line1 || "123 Main St",
+            street1: address.line1.trim(),
             city: address.city,
             state: address.state,
             zip: address.postal_code,
@@ -206,6 +229,26 @@ export default function CheckoutPage() {
       return;
     }
 
+    // The ship-to must be a deliverable US street address (ruling 2 Nov
+    // 2026); the server refuses the same things with the same words.
+    const shipToIssue = shipToProblem(address);
+    if (shipToIssue) {
+      setError(shipToIssue);
+      return;
+    }
+
+    // The ship-to phone is optional, but when given it is the carrier's
+    // contact and must be dialable (30 Oct 2026, ruling R4). The server
+    // refuses it too; this says so before the order is sent.
+    if (
+      address.phone &&
+      address.phone.trim() &&
+      !looksLikePhone(address.phone)
+    ) {
+      setError(`Phone: ${PHONE_RULE}`);
+      return;
+    }
+
     if (INVOICE_TERMS) {
       await placeInvoiceOrder();
       return;
@@ -259,9 +302,7 @@ export default function CheckoutPage() {
       <div className="mt-6 grid gap-8 lg:grid-cols-2">
         {/* Shipping Address */}
         <div className="space-y-4">
-          <h2 className="text-lg font-semibold text-gray-900">
-            Ship to
-          </h2>
+          <h2 className="text-lg font-semibold text-gray-900">Ship to</h2>
           <p className="text-sm text-gray-500">
             {prefilledFrom
               ? `Filled in from your last order (${prefilledFrom}). Check it and change anything that differs.`
@@ -401,9 +442,15 @@ export default function CheckoutPage() {
                     id="ship-state"
                     type="text"
                     required
+                    maxLength={2}
+                    autoComplete="address-level1"
+                    placeholder="MO"
                     value={address.state}
                     onChange={(e) =>
-                      setAddress({ ...address, state: e.target.value })
+                      setAddress({
+                        ...address,
+                        state: e.target.value.toUpperCase(),
+                      })
                     }
                     disabled={showPayment}
                     className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-teak focus:ring-1 focus:ring-teak disabled:bg-gray-50 disabled:text-gray-500"
@@ -423,6 +470,10 @@ export default function CheckoutPage() {
                     id="ship-zip"
                     type="text"
                     required
+                    inputMode="numeric"
+                    maxLength={10}
+                    autoComplete="postal-code"
+                    placeholder="64112"
                     value={address.postal_code}
                     onChange={(e) =>
                       setAddress({ ...address, postal_code: e.target.value })
@@ -466,6 +517,13 @@ export default function CheckoutPage() {
                 <p className="mt-2 text-sm text-gray-600">
                   Shipped on the printer's carrier account. {FREIGHT_NOTE}; no
                   freight is charged here.
+                </p>
+              ) : !address.line1.trim() &&
+                address.city &&
+                address.state &&
+                address.postal_code ? (
+                <p className="mt-2 text-sm text-gray-600">
+                  {STREET_NEEDED_FOR_RATES}
                 </p>
               ) : loadingRates ? (
                 <div className="mt-2 flex items-center gap-2 text-sm text-gray-500">
@@ -659,11 +717,13 @@ export default function CheckoutPage() {
                 </button>
               </div>
 
-              <StripePaymentForm
-                clientSecret={clientSecret}
-                onSuccess={handlePaymentSuccess}
-                primaryColor={primaryColor}
-              />
+              <Suspense fallback={<Spinner className="h-6 w-6" />}>
+                <StripePaymentForm
+                  clientSecret={clientSecret}
+                  onSuccess={handlePaymentSuccess}
+                  primaryColor={primaryColor}
+                />
+              </Suspense>
             </div>
           )}
         </div>
@@ -678,8 +738,7 @@ export default function CheckoutPage() {
                 <span className="text-gray-600">
                   <span className="font-medium text-gray-900">
                     {productName(item.product_id)}
-                  </span>
-                  {" "}
+                  </span>{" "}
                   {(item.pack_size ?? 1) > 1
                     ? `${packQuantityLabel(item.quantity, item.pack_size)} × ${packPriceLabel(item.unit_price, item.pack_size)}`
                     : `${item.quantity} × $${Number(item.unit_price).toFixed(2)}`}

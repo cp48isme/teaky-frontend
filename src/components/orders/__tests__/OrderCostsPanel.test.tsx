@@ -59,6 +59,17 @@ describe('OrderCostsPanel', () => {
     expect(screen.getByText(/share rate 70%/)).toBeInTheDocument();
   });
 
+  it('never prints a gross profit when a line has no cost: the line reads "cost not recorded"', async () => {
+    getOrderCosts.mockResolvedValueOnce({
+      ...costs,
+      lines: [{ ...costs.lines[0], unit_cost: null, cost_source: null }],
+    });
+    render(<OrderCostsPanel orderId="ord-1" subtotal={840} />);
+    expect(await screen.findByText(/GP cost not recorded \(1 of 1 line has no cost\)/)).toBeInTheDocument();
+    expect(screen.queryByText(/GP \$/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Cost of goods/)).not.toBeInTheDocument();
+  });
+
   it('sends only the line fields staff filled', async () => {
     const user = userEvent.setup();
     render(<OrderCostsPanel orderId="ord-1" subtotal={840} />);

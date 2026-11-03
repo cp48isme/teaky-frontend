@@ -1,6 +1,6 @@
-import { recipientText } from '../lib/recipientText';
-import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { recipientText } from "../lib/recipientText";
+import { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
 import {
   getPrinterOrder,
   updateOrder,
@@ -11,103 +11,111 @@ import {
   releaseOrder,
   linkReleasedOrder,
   confirmReleaseNotFound,
-} from '../api/orders';
-import { listProofs, submitProof, approveProof, rejectProof } from '../api/proofs';
-import { getOrderSyncStatus, manualPushOrder } from '../api/mis';
-import { getProduct } from '../api/products';
-import { describeSync } from '../lib/misSyncCopy';
-import { getTrackingInfo } from '../api/shipping';
-import type { Order } from '../types/order';
-import { PRODUCTION_STATUSES } from '../types/order';
-import type { Proof } from '../types/proof';
-import type { OrderSyncStatus } from '../types/mis';
-import type { TrackingInfo } from '../types/shipping';
-import SignatureCapture from '../components/proofs/SignatureCapture';
-import Spinner from '../components/ui/Spinner';
-import OrderFilesSection from '../components/orders/OrderFilesSection';
-import OrderCostsPanel from '../components/orders/OrderCostsPanel';
-import Breadcrumbs from '../components/ui/Breadcrumbs';
-import { getPortal } from '../api/portals';
-import { listMembers } from '../api/team';
-import { staffArtworkLine } from '../lib/artworkCopy';
-import { formatNeededBy } from '../lib/neededBy';
-import { describeRelease } from '../lib/releaseCopy';
+} from "../api/orders";
+import {
+  listProofs,
+  submitProof,
+  approveProof,
+  rejectProof,
+} from "../api/proofs";
+import { getOrderSyncStatus, manualPushOrder } from "../api/mis";
+import { getProduct } from "../api/products";
+import { describeSync } from "../lib/misSyncCopy";
+import { getTrackingInfo } from "../api/shipping";
+import type { Order } from "../types/order";
+import { PRODUCTION_STATUSES } from "../types/order";
+import type { Proof } from "../types/proof";
+import type { OrderSyncStatus } from "../types/mis";
+import type { TrackingInfo } from "../types/shipping";
+import SignatureCapture from "../components/proofs/SignatureCapture";
+import Spinner from "../components/ui/Spinner";
+import OrderFilesSection from "../components/orders/OrderFilesSection";
+import OrderCostsPanel from "../components/orders/OrderCostsPanel";
+import Breadcrumbs from "../components/ui/Breadcrumbs";
+import ActionButton from "../components/ui/ActionButton";
+import { useAction } from "../hooks/useAction";
+import { getPortal } from "../api/portals";
+import { listMembers } from "../api/team";
+import { staffArtworkLine } from "../lib/artworkCopy";
+import { formatNeededBy } from "../lib/neededBy";
+import { describeRelease } from "../lib/releaseCopy";
+import ReleaseUnitsPanel from "../components/orders/ReleaseUnitsPanel";
 
 const STATUS_COLORS: Record<string, string> = {
-  submitted: 'bg-blue-100 text-blue-800',
-  pending_approval: 'bg-yellow-100 text-yellow-800',
-  approved: 'bg-green-100 text-green-800',
-  in_production: 'bg-purple-100 text-purple-800',
-  quality_check: 'bg-orange-100 text-orange-800',
-  shipped: 'bg-teal-100 text-teal-800',
-  delivered: 'bg-teal-100 text-teal-800',
-  completed: 'bg-gray-100 text-gray-800',
-  cancelled: 'bg-red-100 text-red-800',
+  submitted: "bg-blue-100 text-blue-800",
+  pending_approval: "bg-yellow-100 text-yellow-800",
+  approved: "bg-green-100 text-green-800",
+  in_production: "bg-purple-100 text-purple-800",
+  quality_check: "bg-orange-100 text-orange-800",
+  shipped: "bg-teal-100 text-teal-800",
+  delivered: "bg-teal-100 text-teal-800",
+  completed: "bg-gray-100 text-gray-800",
+  cancelled: "bg-red-100 text-red-800",
 };
 
 const PRODUCTION_STATUS_COLORS: Record<string, string> = {
-  received: 'bg-blue-50 text-blue-700',
-  in_prepress: 'bg-yellow-50 text-yellow-700',
-  printing: 'bg-purple-50 text-purple-700',
-  finishing: 'bg-orange-50 text-orange-700',
-  quality_check: 'bg-cyan-50 text-cyan-700',
-  ready_to_ship: 'bg-green-50 text-green-700',
-  shipped: 'bg-teak/10 text-teak-dark',
-  picked_up: 'bg-teal-50 text-teal-700',
+  received: "bg-blue-50 text-blue-700",
+  in_prepress: "bg-yellow-50 text-yellow-700",
+  printing: "bg-purple-50 text-purple-700",
+  finishing: "bg-orange-50 text-orange-700",
+  quality_check: "bg-cyan-50 text-cyan-700",
+  ready_to_ship: "bg-green-50 text-green-700",
+  shipped: "bg-teak/10 text-teak-dark",
+  picked_up: "bg-teal-50 text-teal-700",
 };
 
 const VALID_TRANSITIONS: Record<string, string[]> = {
-  submitted: ['pending_approval', 'approved'],
-  pending_approval: ['approved'],
-  approved: ['in_production'],
-  in_production: ['quality_check', 'shipped'],
-  quality_check: ['shipped'],
-  shipped: ['delivered'],
-  delivered: ['completed'],
+  submitted: ["pending_approval", "approved"],
+  pending_approval: ["approved"],
+  approved: ["in_production"],
+  in_production: ["quality_check", "shipped"],
+  quality_check: ["shipped"],
+  shipped: ["delivered"],
+  delivered: ["completed"],
 };
 
-const CANCELLABLE = new Set(['submitted', 'pending_approval', 'approved', 'in_production']);
+const CANCELLABLE = new Set([
+  "submitted",
+  "pending_approval",
+  "approved",
+  "in_production",
+]);
 
 export default function PrinterOrderDetailPage() {
   const { orderId } = useParams<{ orderId: string }>();
   const [order, setOrder] = useState<Order | null>(null);
   const [proofs, setProofs] = useState<Proof[]>([]);
   const [loading, setLoading] = useState(true);
-  const [trackingNumber, setTrackingNumber] = useState('');
-  const [rgiOrderNumber, setRgiOrderNumber] = useState('');
-  const [notes, setNotes] = useState('');
+  const [trackingNumber, setTrackingNumber] = useState("");
+  const [rgiOrderNumber, setRgiOrderNumber] = useState("");
+  const [notes, setNotes] = useState("");
 
   // MIS sync state
   const [syncStatus, setSyncStatus] = useState<OrderSyncStatus | null>(null);
-  const [pushing, setPushing] = useState(false);
 
   // Production status state
-  const [productionNotes, setProductionNotes] = useState('');
-  const [updatingProduction, setUpdatingProduction] = useState(false);
+  const [productionNotes, setProductionNotes] = useState("");
 
   // Tracking info state
   const [trackingInfo, setTrackingInfo] = useState<TrackingInfo | null>(null);
 
   // Invoice state
-  const [downloadingInvoice, setDownloadingInvoice] = useState(false);
 
   // Proof submission state
-  const [proofFileUrl, setProofFileUrl] = useState('');
-  const [selectedLineItem, setSelectedLineItem] = useState('');
-  const [rejectReason, setRejectReason] = useState('');
+  const [proofFileUrl, setProofFileUrl] = useState("");
+  const [selectedLineItem, setSelectedLineItem] = useState("");
+  const [rejectReason, setRejectReason] = useState("");
   const [signingProofId, setSigningProofId] = useState<string | null>(null);
 
   // Hold-and-release state (ruling 2026-10-20)
-  const [releasing, setReleasing] = useState(false);
-  const [linkNumber, setLinkNumber] = useState('');
+  const [linkNumber, setLinkNumber] = useState("");
 
   // Cancel state
   const [showCancelModal, setShowCancelModal] = useState(false);
-  const [cancelReason, setCancelReason] = useState('');
-  const [cancelling, setCancelling] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
   // Who and where (13 Oct 2026): the portal, the person who placed it, the PO.
-  const [portalName, setPortalName] = useState('');
-  const [placedBy, setPlacedBy] = useState('');
+  const [portalName, setPortalName] = useState("");
+  const [placedBy, setPlacedBy] = useState("");
 
   const sync = describeSync(syncStatus);
   // A price_needed hold stands until every product on the order has a cost per
@@ -115,14 +123,17 @@ export default function PrinterOrderDetailPage() {
   const [priceHoldStands, setPriceHoldStands] = useState(false);
   useEffect(() => {
     let cancelled = false;
-    if (!order || sync.reason !== 'price_needed') {
+    if (!order || sync.reason !== "price_needed") {
       setPriceHoldStands(false);
       return;
     }
-    const ids = Array.from(new Set(order.line_items.map((li) => li.product_id)));
+    const ids = Array.from(
+      new Set(order.line_items.map((li) => li.product_id)),
+    );
     Promise.all(ids.map((id) => getProduct(order.portal_id, id)))
       .then((products) => {
-        if (!cancelled) setPriceHoldStands(products.some((p) => p.base_cost == null));
+        if (!cancelled)
+          setPriceHoldStands(products.some((p) => p.base_cost == null));
       })
       .catch(() => {
         if (!cancelled) setPriceHoldStands(true);
@@ -135,24 +146,41 @@ export default function PrinterOrderDetailPage() {
   const fetchData = async () => {
     if (!orderId) return;
     try {
-      const [o, p] = await Promise.all([getPrinterOrder(orderId), listProofs(orderId)]);
+      const [o, p] = await Promise.all([
+        getPrinterOrder(orderId),
+        listProofs(orderId),
+      ]);
       setOrder(o);
       setProofs(p);
-      getPortal(o.portal_id).then((portal) => setPortalName(portal.name)).catch(() => {});
+      getPortal(o.portal_id)
+        .then((portal) => setPortalName(portal.name))
+        .catch(() => {});
       listMembers()
         .then((members) => {
-          const who = members.find((m) => m.user_id === (o.placed_by_id ?? o.user_id));
-          setPlacedBy(who ? (who.display_name ? `${who.display_name} (${who.email})` : who.email) : '');
+          const who = members.find(
+            (m) => m.user_id === (o.placed_by_id ?? o.user_id),
+          );
+          setPlacedBy(
+            who
+              ? who.display_name
+                ? `${who.display_name} (${who.email})`
+                : who.email
+              : "",
+          );
         })
         .catch(() => {});
-      setTrackingNumber(o.tracking_number || '');
-      setRgiOrderNumber(o.rgi_order_number || '');
-      setNotes(o.notes || '');
+      setTrackingNumber(o.tracking_number || "");
+      setRgiOrderNumber(o.rgi_order_number || "");
+      setNotes(o.notes || "");
       // Fetch sync status (best-effort)
-      getOrderSyncStatus(orderId).then(setSyncStatus).catch(() => {});
+      getOrderSyncStatus(orderId)
+        .then(setSyncStatus)
+        .catch(() => {});
       // Fetch tracking info if tracking number exists
       if (o.tracking_number) {
-        getTrackingInfo(o.tracking_number).then(setTrackingInfo).catch(() => {});
+        getTrackingInfo(o.tracking_number)
+          .then(setTrackingInfo)
+          .catch(() => {});
       }
     } catch {
       // handled by loading state
@@ -165,183 +193,220 @@ export default function PrinterOrderDetailPage() {
     fetchData();
   }, [orderId]);
 
+  // Every mutation on this page reports through the status region (30 Oct
+  // 2026): the server's reason on failure, what was saved on success. The
+  // 29 Oct pass found the RGI order number Save answering a 200 with nothing
+  // on screen; it now says "Order details saved".
+  const statusTransition = useAction(
+    "Order status",
+    (id: string, newStatus: string) =>
+      updateOrderStatus(id, { status: newStatus }),
+  );
   const handleStatusTransition = async (newStatus: string) => {
     if (!orderId) return;
-    try {
-      const updated = await updateOrderStatus(orderId, { status: newStatus });
-      setOrder(updated);
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to update status');
-    }
+    const updated = await statusTransition.run(orderId, newStatus);
+    if (updated) setOrder(updated);
   };
 
-  const handleProductionStatusUpdate = async (newStatus: string) => {
-    if (!orderId) return;
-    setUpdatingProduction(true);
-    try {
-      const updated = await updateProductionStatus(orderId, {
+  const productionUpdate = useAction(
+    "Production status",
+    (id: string, newStatus: string) =>
+      updateProductionStatus(id, {
         production_status: newStatus,
         notes: productionNotes || undefined,
-      });
-      setOrder(updated);
-      setProductionNotes('');
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to update production status');
-    } finally {
-      setUpdatingProduction(false);
-    }
+      }),
+  );
+  const updatingProduction = productionUpdate.pending;
+  const handleProductionStatusUpdate = async (newStatus: string) => {
+    if (!orderId) return;
+    const updated = await productionUpdate.run(orderId, newStatus);
+    if (!updated) return;
+    setOrder(updated);
+    setProductionNotes("");
   };
 
+  const saveDetails = useAction("Order details", (id: string) =>
+    updateOrder(id, {
+      tracking_number: trackingNumber || undefined,
+      rgi_order_number: rgiOrderNumber.trim() || null,
+      notes: notes || undefined,
+    }),
+  );
   const handleSaveDetails = async () => {
     if (!orderId) return;
-    try {
-      const updated = await updateOrder(orderId, {
-        tracking_number: trackingNumber || undefined,
-        rgi_order_number: rgiOrderNumber.trim() || null,
-        notes: notes || undefined,
-      });
-      setOrder(updated);
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to save');
-    }
+    const updated = await saveDetails.run(orderId);
+    if (updated) setOrder(updated);
   };
 
-  const handleManualPush = async () => {
-    if (!orderId) return;
-    setPushing(true);
-    try {
-      await manualPushOrder(orderId);
-      const status = await getOrderSyncStatus(orderId);
+  // The push resolves even when DocketManager refused the job; the sync log
+  // says which, so a failed push is reported as one.
+  const push = useAction(
+    "Push to DocketManager",
+    async (id: string) => {
+      await manualPushOrder(id);
+      const status = await getOrderSyncStatus(id);
       setSyncStatus(status);
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to push to MIS');
-    } finally {
-      setPushing(false);
-    }
+      const described = describeSync(status);
+      if (described.tone === "failed") throw new Error(described.headline);
+      return described;
+    },
+    { success: (described) => described.headline },
+  );
+  const pushing = push.pending;
+  const handleManualPush = () => {
+    if (!orderId) return;
+    void push.run(orderId);
   };
 
   // After any release action the order and the DocketManager block both change.
   const afterRelease = async (updated: Order) => {
     setOrder(updated);
     if (orderId) {
-      getOrderSyncStatus(orderId).then(setSyncStatus).catch(() => {});
+      getOrderSyncStatus(orderId)
+        .then(setSyncStatus)
+        .catch(() => {});
     }
   };
 
+  const releaseAction = useAction("Release", (id: string) => releaseOrder(id), {
+    success: "Order released to production",
+  });
+  const linkRelease = useAction(
+    "DocketManager order number",
+    (id: string, number: string) =>
+      linkReleasedOrder(id, { dm_order_number: number }),
+    { success: "DocketManager order number recorded" },
+  );
+  const releaseNotFound = useAction(
+    "Release",
+    (id: string) => confirmReleaseNotFound(id),
+    {
+      success:
+        "Recorded: not in DocketManager. The order can be released again.",
+    },
+  );
+  const releasing =
+    releaseAction.pending || linkRelease.pending || releaseNotFound.pending;
+
   const handleRelease = async () => {
     if (!orderId || releasing) return;
-    setReleasing(true);
-    try {
-      await afterRelease(await releaseOrder(orderId));
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'The release did not go through');
+    const updated = await releaseAction.run(orderId);
+    if (updated) {
+      await afterRelease(updated);
+    } else {
       fetchData();
-    } finally {
-      setReleasing(false);
     }
   };
 
   const handleLinkRelease = async () => {
     if (!orderId || !linkNumber.trim() || releasing) return;
-    setReleasing(true);
-    try {
-      await afterRelease(await linkReleasedOrder(orderId, { dm_order_number: linkNumber.trim() }));
-      setLinkNumber('');
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'Could not record the DocketManager order');
-    } finally {
-      setReleasing(false);
-    }
+    const updated = await linkRelease.run(orderId, linkNumber.trim());
+    if (!updated) return;
+    await afterRelease(updated);
+    setLinkNumber("");
   };
 
   const handleReleaseNotFound = async () => {
     if (!orderId || releasing) return;
-    if (!confirm('You checked DocketManager and the job is not there? The order can then be released again.')) return;
-    setReleasing(true);
-    try {
-      await afterRelease(await confirmReleaseNotFound(orderId));
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'Could not update the order');
-    } finally {
-      setReleasing(false);
-    }
+    if (
+      !confirm(
+        "You checked DocketManager and the job is not there? The order can then be released again.",
+      )
+    )
+      return;
+    const updated = await releaseNotFound.run(orderId);
+    if (updated) await afterRelease(updated);
   };
 
+  const cancel = useAction(
+    "Cancel order",
+    (id: string, reason: string) => cancelOrder(id, { reason }),
+    {
+      success: "Order cancelled",
+    },
+  );
+  const cancelling = cancel.pending;
   const handleCancel = async () => {
     if (!orderId || !cancelReason.trim()) return;
-    setCancelling(true);
-    try {
-      const updated = await cancelOrder(orderId, { reason: cancelReason });
-      setOrder(updated);
-      setShowCancelModal(false);
-      setCancelReason('');
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to cancel order');
-    } finally {
-      setCancelling(false);
-    }
+    const updated = await cancel.run(orderId, cancelReason);
+    if (!updated) return;
+    setOrder(updated);
+    setShowCancelModal(false);
+    setCancelReason("");
   };
 
-  const handleDownloadInvoice = async () => {
-    if (!orderId) return;
-    setDownloadingInvoice(true);
-    try {
-      const blob = await downloadOrderInvoicePdf(orderId);
+  const downloadInvoice = useAction(
+    "Invoice download",
+    async (id: string) => {
+      const blob = await downloadOrderInvoicePdf(id);
       const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = url;
-      a.download = `invoice-${order?.order_number || orderId}.pdf`;
+      a.download = `invoice-${order?.order_number || id}.pdf`;
       a.click();
       URL.revokeObjectURL(url);
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to download invoice');
-    } finally {
-      setDownloadingInvoice(false);
-    }
+    },
+    { success: false }, // the browser's download is the confirmation
+  );
+  const downloadingInvoice = downloadInvoice.pending;
+  const handleDownloadInvoice = () => {
+    if (!orderId) return;
+    void downloadInvoice.run(orderId);
   };
 
+  const proofSubmit = useAction(
+    "Proof",
+    async (id: string, lineItemId: string, fileUrl: string) => {
+      await submitProof(id, { line_item_id: lineItemId, file_url: fileUrl });
+    },
+    { success: "Proof submitted" },
+  );
   const handleSubmitProof = async () => {
     if (!orderId || !selectedLineItem || !proofFileUrl) return;
-    try {
-      await submitProof(orderId, {
-        line_item_id: selectedLineItem,
-        file_url: proofFileUrl,
-      });
-      setProofFileUrl('');
-      setSelectedLineItem('');
-      await fetchData();
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to submit proof');
-    }
+    const result = await proofSubmit.run(
+      orderId,
+      selectedLineItem,
+      proofFileUrl,
+    );
+    if (result === undefined) return;
+    setProofFileUrl("");
+    setSelectedLineItem("");
+    await fetchData();
   };
 
-  const handleApproveProof = async (proofId: string, signatureData?: string) => {
-    try {
+  const proofApprove = useAction(
+    "Proof approval",
+    async (proofId: string, signatureData?: string) => {
       await approveProof(
         proofId,
-        signatureData
-          ? { signature_data: signatureData }
-          : undefined,
+        signatureData ? { signature_data: signatureData } : undefined,
       );
-      setSigningProofId(null);
-      await fetchData();
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to approve');
-    }
+    },
+    { success: "Proof approved" },
+  );
+  const handleApproveProof = async (
+    proofId: string,
+    signatureData?: string,
+  ) => {
+    const result = await proofApprove.run(proofId, signatureData);
+    if (result === undefined) return;
+    setSigningProofId(null);
+    await fetchData();
   };
 
+  const proofReject = useAction(
+    "Proof rejection",
+    async (proofId: string, reason: string) => {
+      await rejectProof(proofId, { reason });
+    },
+    { success: "Proof rejected" },
+  );
   const handleRejectProof = async (proofId: string) => {
-    if (!rejectReason.trim()) {
-      alert('Please enter a reason for rejection');
-      return;
-    }
-    try {
-      await rejectProof(proofId, { reason: rejectReason });
-      setRejectReason('');
-      await fetchData();
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to reject');
-    }
+    if (!rejectReason.trim()) return; // the Reject button says why it is disabled
+    const result = await proofReject.run(proofId, rejectReason);
+    if (result === undefined) return;
+    setRejectReason("");
+    await fetchData();
   };
 
   if (loading) {
@@ -357,45 +422,52 @@ export default function PrinterOrderDetailPage() {
   }
 
   const nextStatuses = VALID_TRANSITIONS[order.status] || [];
-  const showProductionStatus = ['approved', 'in_production'].includes(order.status);
-  const release = describeRelease(order);
+  const showProductionStatus = ["approved", "in_production"].includes(
+    order.status,
+  );
+  const release = describeRelease(order, sync);
   const releaseTone =
-    release?.tone === 'ok'
-      ? 'border-green-200 bg-green-50 text-green-900'
-      : release?.tone === 'ready'
-        ? 'border-teak bg-teak/10 text-teak-dark'
-        : release?.tone === 'human' || release?.tone === 'retry'
-          ? 'border-red-200 bg-red-50 text-red-900'
-          : 'border-amber-200 bg-amber-50 text-amber-900';
+    release?.tone === "ok"
+      ? "border-green-200 bg-green-50 text-green-900"
+      : release?.tone === "ready"
+        ? "border-teak bg-teak/10 text-teak-dark"
+        : release?.tone === "human" || release?.tone === "retry"
+          ? "border-red-200 bg-red-50 text-red-900"
+          : "border-amber-200 bg-amber-50 text-amber-900";
 
   return (
     <div className="space-y-6">
-      <Breadcrumbs items={[
-        { label: 'Dashboard', to: '/dashboard' },
-        { label: 'Orders', to: '/orders' },
-        { label: order.order_number },
-      ]} />
+      <Breadcrumbs
+        items={[
+          { label: "Dashboard", to: "/dashboard" },
+          { label: "Orders", to: "/orders" },
+          { label: order.order_number },
+        ]}
+      />
 
       <div className="flex items-center justify-between">
-        <h2 className="font-heading text-xl font-bold text-brand-dark">{order.order_number}</h2>
+        <h2 className="font-heading text-xl font-bold text-brand-dark">
+          {order.order_number}
+        </h2>
         <div className="flex items-center gap-2">
           {order.production_status && (
             <span
               className={`rounded-full px-3 py-1 text-xs font-medium ${
-                PRODUCTION_STATUS_COLORS[order.production_status] || 'bg-gray-100 text-gray-700'
+                PRODUCTION_STATUS_COLORS[order.production_status] ||
+                "bg-gray-100 text-gray-700"
               }`}
             >
-              {order.production_status.replace(/_/g, ' ')}
+              {order.production_status.replace(/_/g, " ")}
             </span>
           )}
           <span
             className={`rounded-full px-3 py-1 text-xs font-medium ${
-              STATUS_COLORS[order.status] || 'bg-gray-100 text-gray-800'
+              STATUS_COLORS[order.status] || "bg-gray-100 text-gray-800"
             }`}
           >
-            {order.status.replace(/_/g, ' ')}
+            {order.status.replace(/_/g, " ")}
           </span>
-          {release && release.state !== 'released' && (
+          {release && release.state !== "released" && (
             <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-800">
               {release.label}
             </span>
@@ -403,9 +475,25 @@ export default function PrinterOrderDetailPage() {
         </div>
       </div>
 
+      {/* Release units (H v2, 2 Nov 2026): one card per group the printer
+          places as one RGI order. The order-level block below stays only for
+          orders that have no units. */}
+      {order.release_units && order.release_units.length > 0 && (
+        <ReleaseUnitsPanel
+          order={order}
+          units={order.release_units}
+          onChanged={async (updated) => {
+            if (updated) {
+              await afterRelease(updated);
+            } else {
+              await fetchData();
+            }
+          }}
+        />
+      )}
       {/* Hold-and-release (ruling 2026-10-20): a changed order reaches
           DocketManager only through this block. */}
-      {release && (
+      {release && !(order.release_units && order.release_units.length > 0) && (
         <div className={`rounded-lg border p-4 space-y-3 ${releaseTone}`}>
           <h3 className="font-medium">Release to production</h3>
           <p className="text-sm">{release.headline}</p>
@@ -416,13 +504,19 @@ export default function PrinterOrderDetailPage() {
               disabled={releasing}
               className="rounded bg-teak-dark px-3 py-1.5 text-xs font-medium text-white hover:bg-teak disabled:opacity-50"
             >
-              {releasing ? 'Releasing…' : release.state === 'retryable' ? 'Release again' : 'Release to production'}
+              {releasing
+                ? "Releasing…"
+                : release.state === "retryable"
+                  ? "Release again"
+                  : "Release to production"}
             </button>
           )}
           {release.needsHuman && (
             <div className="flex flex-wrap items-end gap-2">
               <div>
-                <label className="block text-xs font-medium">DocketManager order number</label>
+                <label className="block text-xs font-medium">
+                  DocketManager order number
+                </label>
                 <input
                   type="text"
                   value={linkNumber}
@@ -458,7 +552,7 @@ export default function PrinterOrderDetailPage() {
       )}
 
       {/* Cancellation info */}
-      {order.status === 'cancelled' && order.cancellation_reason && (
+      {order.status === "cancelled" && order.cancellation_reason && (
         <div className="rounded-md bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-800">
           <strong>Cancelled:</strong> {order.cancellation_reason}
           {order.cancelled_at && (
@@ -477,7 +571,7 @@ export default function PrinterOrderDetailPage() {
             onClick={() => handleStatusTransition(status)}
             className="rounded-md bg-teak-dark px-3 py-1.5 text-xs font-medium text-white hover:bg-teak"
           >
-            {status.replace(/_/g, ' ')}
+            {status.replace(/_/g, " ")}
           </button>
         ))}
         {CANCELLABLE.has(order.status) && (
@@ -494,7 +588,9 @@ export default function PrinterOrderDetailPage() {
       {showCancelModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
-            <h3 className="text-lg font-semibold text-gray-900">Cancel Order</h3>
+            <h3 className="text-lg font-semibold text-gray-900">
+              Cancel Order
+            </h3>
             <p className="mt-1 text-sm text-gray-500">
               This action cannot be undone. Please provide a reason.
             </p>
@@ -507,7 +603,10 @@ export default function PrinterOrderDetailPage() {
             />
             <div className="mt-4 flex justify-end gap-2">
               <button
-                onClick={() => { setShowCancelModal(false); setCancelReason(''); }}
+                onClick={() => {
+                  setShowCancelModal(false);
+                  setCancelReason("");
+                }}
                 className="rounded px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-100"
               >
                 Go Back
@@ -517,7 +616,7 @@ export default function PrinterOrderDetailPage() {
                 disabled={!cancelReason.trim() || cancelling}
                 className="rounded bg-red-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
               >
-                {cancelling ? 'Cancelling...' : 'Confirm Cancel'}
+                {cancelling ? "Cancelling..." : "Confirm Cancel"}
               </button>
             </div>
           </div>
@@ -538,20 +637,24 @@ export default function PrinterOrderDetailPage() {
               <button
                 key={status}
                 onClick={() => handleProductionStatusUpdate(status)}
-                disabled={updatingProduction || order.production_status === status}
+                disabled={
+                  updatingProduction || order.production_status === status
+                }
                 className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors disabled:opacity-50 ${
                   order.production_status === status
-                    ? 'bg-teak-dark text-white'
-                    : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
+                    ? "bg-teak-dark text-white"
+                    : "border border-gray-300 text-gray-700 hover:bg-gray-50"
                 }`}
               >
-                {status.replace(/_/g, ' ')}
+                {status.replace(/_/g, " ")}
               </button>
             ))}
           </div>
           <div className="flex items-end gap-2">
             <div className="flex-1">
-              <label className="block text-xs font-medium text-gray-500">Production Notes</label>
+              <label className="block text-xs font-medium text-gray-500">
+                Production Notes
+              </label>
               <input
                 type="text"
                 value={productionNotes}
@@ -562,7 +665,9 @@ export default function PrinterOrderDetailPage() {
             </div>
           </div>
           {order.production_notes && (
-            <p className="text-xs text-gray-500">Last note: {order.production_notes}</p>
+            <p className="text-xs text-gray-500">
+              Last note: {order.production_notes}
+            </p>
           )}
         </div>
       )}
@@ -572,20 +677,24 @@ export default function PrinterOrderDetailPage() {
         <h3 className="font-medium text-gray-900">Order</h3>
         <dl className="mt-2 grid gap-x-6 gap-y-1 text-sm sm:grid-cols-2">
           <dt className="text-gray-500">Portal</dt>
-          <dd className="text-gray-900">{portalName || '—'}</dd>
+          <dd className="text-gray-900">{portalName || "—"}</dd>
           <dt className="text-gray-500">Placed by</dt>
-          <dd className="text-gray-900">{placedBy || '—'}</dd>
+          <dd className="text-gray-900">{placedBy || "—"}</dd>
           <dt className="text-gray-500">Customer PO</dt>
-          <dd className="text-gray-900">{order.po_number || '—'}</dd>
+          <dd className="text-gray-900">{order.po_number || "—"}</dd>
           <dt className="text-gray-500">Needed by</dt>
-          <dd className="text-gray-900">{formatNeededBy(order.needed_by) || '—'}</dd>
+          <dd className="text-gray-900">
+            {formatNeededBy(order.needed_by) || "—"}
+          </dd>
           <dt className="text-gray-500">Proofs go to</dt>
           <dd className="text-gray-900">
-            {order.proof_email || '—'}
+            {order.proof_email || "—"}
             {order.proof_cc_email && ` (cc ${order.proof_cc_email})`}
           </dd>
           <dt className="text-gray-500">Placed</dt>
-          <dd className="text-gray-900">{new Date(order.placed_at).toLocaleString()}</dd>
+          <dd className="text-gray-900">
+            {new Date(order.placed_at).toLocaleString()}
+          </dd>
         </dl>
       </div>
 
@@ -594,9 +703,14 @@ export default function PrinterOrderDetailPage() {
         <h3 className="font-medium text-gray-900">Line Items</h3>
         <div className="mt-3 space-y-3">
           {order.line_items.map((item) => (
-            <div key={item.id} className="flex items-center justify-between border-b pb-3 last:border-0">
+            <div
+              key={item.id}
+              className="flex items-center justify-between border-b pb-3 last:border-0"
+            >
               <div>
-                <p className="text-sm font-medium text-gray-900">{item.product_name}</p>
+                <p className="text-sm font-medium text-gray-900">
+                  {item.product_name}
+                </p>
                 <p className="text-xs text-gray-500">
                   {item.product_sku && `SKU: ${item.product_sku} | `}
                   Qty: {item.quantity}
@@ -605,35 +719,50 @@ export default function PrinterOrderDetailPage() {
                 </p>
                 {item.recipients && item.recipients.length > 0 && (
                   <p className="text-xs text-gray-700">
-                    For: {item.recipients.map(recipientText).join('; ')}
+                    For: {item.recipients.map(recipientText).join("; ")}
                   </p>
                 )}
                 <p
                   className={`mt-1 text-xs font-medium ${
-                    item.artwork_disposition === 'changes_new_proof' ? 'text-amber-700' : 'text-gray-700'
+                    item.artwork_disposition === "changes_new_proof"
+                      ? "text-amber-700"
+                      : "text-gray-700"
                   }`}
                 >
                   {staffArtworkLine(item)}
                 </p>
                 {item.artwork_change_note && (
-                  <p className="text-xs text-gray-700">Changes: {item.artwork_change_note}</p>
+                  <p className="text-xs text-gray-700">
+                    Changes: {item.artwork_change_note}
+                  </p>
                 )}
                 {item.artwork_upload_url && (
-                  <a href={item.artwork_upload_url} className="text-xs text-teak-dark hover:text-teak" target="_blank" rel="noreferrer">
+                  <a
+                    href={item.artwork_upload_url}
+                    className="text-xs text-teak-dark hover:text-teak"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
                     New art uploaded by the buyer
                   </a>
                 )}
                 {item.needs_proof && (
-                  <span className={`mt-1 inline-block text-xs font-medium ${
-                    item.proof_status === 'approved' ? 'text-green-600' :
-                    item.proof_status === 'rejected' ? 'text-red-600' :
-                    'text-yellow-600'
-                  }`}>
-                    Proof: {item.proof_status || 'needed'}
+                  <span
+                    className={`mt-1 inline-block text-xs font-medium ${
+                      item.proof_status === "approved"
+                        ? "text-green-600"
+                        : item.proof_status === "rejected"
+                          ? "text-red-600"
+                          : "text-yellow-600"
+                    }`}
+                  >
+                    Proof: {item.proof_status || "needed"}
                   </span>
                 )}
               </div>
-              <p className="text-sm font-medium">${Number(item.line_total).toFixed(2)}</p>
+              <p className="text-sm font-medium">
+                ${Number(item.line_total).toFixed(2)}
+              </p>
             </div>
           ))}
         </div>
@@ -666,13 +795,19 @@ export default function PrinterOrderDetailPage() {
           <div className="mt-2 text-sm text-gray-600 space-y-1">
             <p>{order.shipping_address.name}</p>
             <p>{order.shipping_address.line1}</p>
-            {order.shipping_address.line2 && <p>{order.shipping_address.line2}</p>}
+            {order.shipping_address.line2 && (
+              <p>{order.shipping_address.line2}</p>
+            )}
             <p>
-              {order.shipping_address.city}, {order.shipping_address.state}{' '}
+              {order.shipping_address.city}, {order.shipping_address.state}{" "}
               {order.shipping_address.postal_code}
             </p>
-            {order.shipping_address.attention && <p>Attention: {order.shipping_address.attention}</p>}
-            {order.shipping_address.phone && <p>Phone: {order.shipping_address.phone}</p>}
+            {order.shipping_address.attention && (
+              <p>Attention: {order.shipping_address.attention}</p>
+            )}
+            {order.shipping_address.phone && (
+              <p>Phone: {order.shipping_address.phone}</p>
+            )}
           </div>
 
           {/* Tracking Info */}
@@ -680,10 +815,18 @@ export default function PrinterOrderDetailPage() {
             <div className="mt-4 border-t pt-3">
               <h4 className="text-sm font-medium text-gray-900">Tracking</h4>
               <div className="mt-1 text-xs text-gray-600 space-y-1">
-                <p>Status: <span className="font-medium">{trackingInfo.status}</span></p>
+                <p>
+                  Status:{" "}
+                  <span className="font-medium">{trackingInfo.status}</span>
+                </p>
                 {trackingInfo.carrier && <p>Carrier: {trackingInfo.carrier}</p>}
                 {trackingInfo.estimated_delivery && (
-                  <p>Est. Delivery: {new Date(trackingInfo.estimated_delivery).toLocaleDateString()}</p>
+                  <p>
+                    Est. Delivery:{" "}
+                    {new Date(
+                      trackingInfo.estimated_delivery,
+                    ).toLocaleDateString()}
+                  </p>
                 )}
               </div>
             </div>
@@ -693,7 +836,10 @@ export default function PrinterOrderDetailPage() {
         <div className="rounded-lg border bg-white p-4 space-y-3">
           <h3 className="font-medium text-gray-900">Details</h3>
           <div>
-            <label className="block text-xs font-medium text-gray-500" title="RGI's own order number for this job. Orders without one are listed under “Missing RGI order #”.">
+            <label
+              className="block text-xs font-medium text-gray-500"
+              title="RGI's own order number for this job. Orders without one are listed under “Missing RGI order #”."
+            >
               RGI order #
             </label>
             <input
@@ -706,7 +852,9 @@ export default function PrinterOrderDetailPage() {
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-500">Tracking Number</label>
+            <label className="block text-xs font-medium text-gray-500">
+              Tracking Number
+            </label>
             <input
               type="text"
               value={trackingNumber}
@@ -715,7 +863,9 @@ export default function PrinterOrderDetailPage() {
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-500">Notes</label>
+            <label className="block text-xs font-medium text-gray-500">
+              Notes
+            </label>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
@@ -735,7 +885,7 @@ export default function PrinterOrderDetailPage() {
               disabled={downloadingInvoice}
               className="rounded border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
             >
-              {downloadingInvoice ? 'Downloading...' : 'Download Invoice'}
+              {downloadingInvoice ? "Downloading..." : "Download Invoice"}
             </button>
           </div>
         </div>
@@ -750,13 +900,13 @@ export default function PrinterOrderDetailPage() {
           <h3 className="font-medium text-gray-900">DocketManager</h3>
           <p
             className={`text-sm ${
-              sync.tone === 'ok'
-                ? 'text-green-800'
-                : sync.tone === 'hold'
-                  ? 'text-amber-800'
-                  : sync.tone === 'failed'
-                    ? 'text-red-700'
-                    : 'text-gray-700'
+              sync.tone === "ok"
+                ? "text-green-800"
+                : sync.tone === "hold"
+                  ? "text-amber-800"
+                  : sync.tone === "failed"
+                    ? "text-red-700"
+                    : "text-gray-700"
             }`}
           >
             {sync.headline}
@@ -765,16 +915,19 @@ export default function PrinterOrderDetailPage() {
           <p className="text-xs text-gray-500">
             {syncStatus.last_sync_at
               ? `Last attempt ${new Date(syncStatus.last_sync_at).toLocaleString()}`
-              : 'No attempt yet'}
-            {syncStatus.dm_order_id && ` · DocketManager #${syncStatus.dm_order_id}`}
+              : "No attempt yet"}
+            {syncStatus.dm_order_id &&
+              ` · DocketManager #${syncStatus.dm_order_id}`}
           </p>
-          {release && release.state !== 'released' ? (
+          {release && release.state !== "released" ? (
             <p className="text-xs text-amber-800">
-              This order reaches DocketManager only through “Release to production” above.
+              This order reaches DocketManager only through “Release to
+              production” above.
             </p>
           ) : priceHoldStands ? (
             <p className="text-xs text-amber-800">
-              Push is unavailable until every product on this order has a cost per pack.
+              Push is unavailable until every product on this order has a cost
+              per pack.
             </p>
           ) : (
             <button
@@ -782,7 +935,7 @@ export default function PrinterOrderDetailPage() {
               disabled={pushing}
               className="rounded bg-teak-dark px-3 py-1.5 text-xs font-medium text-white hover:bg-teak disabled:opacity-50"
             >
-              {pushing ? 'Pushing…' : 'Push to DocketManager'}
+              {pushing ? "Pushing…" : "Push to DocketManager"}
             </button>
           )}
         </div>
@@ -796,22 +949,28 @@ export default function PrinterOrderDetailPage() {
           {/* Submit Proof */}
           <div className="mt-3 flex flex-wrap gap-2 items-end">
             <div>
-              <label className="block text-xs font-medium text-gray-500">Line Item</label>
+              <label className="block text-xs font-medium text-gray-500">
+                Line Item
+              </label>
               <select
                 value={selectedLineItem}
                 onChange={(e) => setSelectedLineItem(e.target.value)}
                 className="mt-1 rounded border border-gray-300 px-2 py-1.5 text-sm"
               >
                 <option value="">Select...</option>
-                {order.line_items.filter(i => i.needs_proof).map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.product_name} {item.size && `(${item.size})`}
-                  </option>
-                ))}
+                {order.line_items
+                  .filter((i) => i.needs_proof)
+                  .map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.product_name} {item.size && `(${item.size})`}
+                    </option>
+                  ))}
               </select>
             </div>
             <div className="flex-1">
-              <label className="block text-xs font-medium text-gray-500">Proof File URL</label>
+              <label className="block text-xs font-medium text-gray-500">
+                Proof File URL
+              </label>
               <input
                 type="url"
                 value={proofFileUrl}
@@ -838,30 +997,47 @@ export default function PrinterOrderDetailPage() {
                     <div>
                       <p className="text-sm font-medium">
                         Version {proof.version}
-                        <span className={`ml-2 rounded-full px-2 py-0.5 text-xs ${
-                          proof.status === 'approved' ? 'bg-green-100 text-green-800' :
-                          proof.status === 'rejected' ? 'bg-red-100 text-red-800' :
-                          'bg-yellow-100 text-yellow-800'
-                        }`}>
+                        <span
+                          className={`ml-2 rounded-full px-2 py-0.5 text-xs ${
+                            proof.status === "approved"
+                              ? "bg-green-100 text-green-800"
+                              : proof.status === "rejected"
+                                ? "bg-red-100 text-red-800"
+                                : "bg-yellow-100 text-yellow-800"
+                          }`}
+                        >
                           {proof.status}
                         </span>
                       </p>
                       {proof.file_url && (
-                        <a href={proof.file_url} target="_blank" rel="noreferrer" className="text-xs text-teak-dark hover:underline">
+                        <a
+                          href={proof.file_url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-xs text-teak-dark hover:underline"
+                        >
                           View File
                         </a>
                       )}
                       {proof.rejection_reason && (
-                        <p className="mt-1 text-xs text-red-600">Reason: {proof.rejection_reason}</p>
+                        <p className="mt-1 text-xs text-red-600">
+                          Reason: {proof.rejection_reason}
+                        </p>
                       )}
                     </div>
-                    {proof.status === 'pending' && (
+                    {proof.status === "pending" && (
                       <div className="flex items-center gap-2">
                         <button
-                          onClick={() => setSigningProofId(signingProofId === proof.id ? null : proof.id)}
+                          onClick={() =>
+                            setSigningProofId(
+                              signingProofId === proof.id ? null : proof.id,
+                            )
+                          }
                           className="rounded bg-green-600 px-2 py-1 text-xs text-white hover:bg-green-700"
                         >
-                          {signingProofId === proof.id ? 'Cancel' : 'Approve with Signature'}
+                          {signingProofId === proof.id
+                            ? "Cancel"
+                            : "Approve with Signature"}
                         </button>
                         <div className="flex gap-1">
                           <input
@@ -871,31 +1047,39 @@ export default function PrinterOrderDetailPage() {
                             placeholder="Reason..."
                             className="w-32 rounded border px-2 py-1 text-xs"
                           />
-                          <button
+                          <ActionButton
                             onClick={() => handleRejectProof(proof.id)}
-                            className="rounded bg-red-600 px-2 py-1 text-xs text-white hover:bg-red-700"
+                            reason={
+                              rejectReason.trim()
+                                ? null
+                                : "Enter a reason to reject"
+                            }
+                            reasonClassName="self-center text-xs text-gray-500"
+                            className="rounded bg-red-600 px-2 py-1 text-xs text-white hover:bg-red-700 disabled:opacity-50"
                           >
                             Reject
-                          </button>
+                          </ActionButton>
                         </div>
                       </div>
                     )}
                   </div>
                   {/* Signature Capture for Approval */}
-                  {proof.status === 'pending' && signingProofId === proof.id && (
-                    <div className="mt-3 border-t pt-3">
-                      <SignatureCapture
-                        onSubmit={(signatureData) => handleApproveProof(proof.id, signatureData)}
-                      />
-                    </div>
-                  )}
+                  {proof.status === "pending" &&
+                    signingProofId === proof.id && (
+                      <div className="mt-3 border-t pt-3">
+                        <SignatureCapture
+                          onSubmit={(signatureData) =>
+                            handleApproveProof(proof.id, signatureData)
+                          }
+                        />
+                      </div>
+                    )}
                 </div>
               ))}
             </div>
           )}
         </div>
       )}
-
     </div>
   );
 }

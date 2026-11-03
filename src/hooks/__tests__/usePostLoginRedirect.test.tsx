@@ -14,9 +14,12 @@ vi.mock('react-router-dom', async () => {
 vi.mock('../../api/companyProfiles', () => ({ getCompanyProfileByOrg: vi.fn() }));
 vi.mock('../../api/organizations', () => ({ getMyOrganization: vi.fn() }));
 vi.mock('../../api/portals', () => ({ listPortals: vi.fn() }));
+vi.mock('../../api/auth', () => ({ listMyPortals: vi.fn() }));
 import { getCompanyProfileByOrg } from '../../api/companyProfiles';
 import { getMyOrganization } from '../../api/organizations';
 import { listPortals } from '../../api/portals';
+import { listMyPortals } from '../../api/auth';
+import { CHOOSE_PORTAL_PATH } from '../usePostLoginRedirect';
 
 function fakeJwt(claims: Record<string, unknown>): string {
   const b64 = (o: unknown) => btoa(JSON.stringify(o)).replace(/=+$/, '');
@@ -42,6 +45,8 @@ describe('usePostLoginRedirect', () => {
     vi.stubGlobal('localStorage', memoryStorage());
     vi.mocked(getMyOrganization).mockResolvedValue({ id: 'org-print', name: 'Print', is_managed: false });
     vi.mocked(listPortals).mockResolvedValue([]);
+    // belq (30 Oct 2026): the buyer's own portals come from the server.
+    vi.mocked(listMyPortals).mockResolvedValue([{ id: 'p-raphael', name: 'The Raphael', slug: 'raphael', status: 'active' }]);
   });
 
   it('sends a buyer back to the portal they were on and never asks for a company profile', async () => {
@@ -110,5 +115,68 @@ describe('usePostLoginRedirect', () => {
     const { result } = renderHook(() => usePostLoginRedirect());
     await result.current();
     expect(mockNavigate).toHaveBeenCalledWith('/dashboard');
+  });
+
+  // belq (ruling 30 Oct 2026): one portal → that portal; several → a chooser;
+  // never the public landing page.
+  describe('a buyer with no remembered portal (a fresh browser)', () => {
+    it('goes to the one portal they belong to', async () => {
+      localStorage.setItem('access_token', fakeJwt({ org: 'org-rgi', roles: ['end_user'] }));
+      const { result } = renderHook(() => usePostLoginRedirect());
+      await result.current();
+      expect(mockNavigate).toHaveBeenCalledWith('/p/raphael');
+      expect(mockNavigate).not.toHaveBeenCalledWith('/');
+    });
+
+    it('a portal_admin with one portal goes there too', async () => {
+      localStorage.setItem('access_token', fakeJwt({ org: 'org-rgi', roles: ['portal_admin'] }));
+      const { result } = renderHook(() => usePostLoginRedirect());
+      await result.current();
+      expect(mockNavigate).toHaveBeenCalledWith('/p/raphael');
+    });
+
+    it('is offered a chooser when they belong to several', async () => {
+      localStorage.setItem('access_token', fakeJwt({ org: 'org-rgi', roles: ['end_user'] }));
+      vi.mocked(listMyPortals).mockResolvedValueOnce([
+        { id: 'p1', name: 'The Raphael', slug: 'raphael', status: 'active' },
+        { id: 'p2', name: 'Allegretto', slug: 'allegretto', status: 'active' },
+      ]);
+      const { result } = renderHook(() => usePostLoginRedirect());
+      await result.current();
+      expect(mockNavigate).toHaveBeenCalledWith(CHOOSE_PORTAL_PATH);
+    });
+
+    it('goes to the remembered portal when it is one of several', async () => {
+      localStorage.setItem('access_token', fakeJwt({ org: 'org-rgi', roles: ['end_user'] }));
+      localStorage.setItem('teaky_last_portal', 'allegretto');
+      vi.mocked(listMyPortals).mockResolvedValueOnce([
+        { id: 'p1', name: 'The Raphael', slug: 'raphael', status: 'active' },
+        { id: 'p2', name: 'Allegretto', slug: 'allegretto', status: 'active' },
+      ]);
+      const { result } = renderHook(() => usePostLoginRedirect());
+      await result.current();
+      expect(mockNavigate).toHaveBeenCalledWith('/p/allegretto');
+    });
+
+    it('is sent to the chooser, which says so, when they belong to none — never to the landing page', async () => {
+      localStorage.setItem('access_token', fakeJwt({ org: 'org-rgi', roles: ['end_user'] }));
+      vi.mocked(listMyPortals).mockResolvedValueOnce([]);
+      const { result } = renderHook(() => usePostLoginRedirect());
+      await result.current();
+      expect(mockNavigate).toHaveBeenCalledWith(CHOOSE_PORTAL_PATH);
+      expect(mockNavigate).not.toHaveBeenCalledWith('/');
+    });
+
+    it('falls back to the remembered portal, else the chooser, when the server does not know the route yet', async () => {
+      localStorage.setItem('access_token', fakeJwt({ org: 'org-rgi', roles: ['end_user'] }));
+      vi.mocked(listMyPortals).mockRejectedValueOnce(new Error('404'));
+      const { result } = renderHook(() => usePostLoginRedirect());
+      await result.current();
+      expect(mockNavigate).toHaveBeenCalledWith(CHOOSE_PORTAL_PATH);
+      localStorage.setItem('teaky_last_portal', 'raphael');
+      vi.mocked(listMyPortals).mockRejectedValueOnce(new Error('404'));
+      await result.current();
+      expect(mockNavigate).toHaveBeenLastCalledWith('/p/raphael');
+    });
   });
 });

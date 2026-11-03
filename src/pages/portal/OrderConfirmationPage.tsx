@@ -1,13 +1,12 @@
-import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { getMyOrder } from '../../api/orders';
-import { usePortalContext } from '../../contexts/PortalContext';
-import type { Order } from '../../types/order';
-import { artworkSentence } from '../../lib/artworkCopy';
-import Spinner from '../../components/ui/Spinner';
-import { humanize } from '../../lib/labels';
-
-
+import { useState, useEffect } from "react";
+import { useParams, Link } from "react-router-dom";
+import { getMyOrder } from "../../api/orders";
+import { usePortalContext } from "../../contexts/PortalContext";
+import type { Order } from "../../types/order";
+import { artworkSentence } from "../../lib/artworkCopy";
+import { groupSentences } from "../../lib/releaseGroupCopy";
+import Spinner from "../../components/ui/Spinner";
+import { humanize } from "../../lib/labels";
 
 export default function OrderConfirmationPage() {
   const { slug, orderId } = useParams<{ slug: string; orderId: string }>();
@@ -15,11 +14,14 @@ export default function OrderConfirmationPage() {
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const primaryColor = portal?.brand_config?.primary_color || '#558B2F';
+  const primaryColor = portal?.brand_config?.primary_color || "#558B2F";
   const support = portal?.brand_config;
-  const supportContact = support?.support_email || support?.support_phone
-    ? [support?.support_name, support?.support_email, support?.support_phone].filter(Boolean).join(' · ')
-    : null;
+  const supportContact =
+    support?.support_email || support?.support_phone
+      ? [support?.support_name, support?.support_email, support?.support_phone]
+          .filter(Boolean)
+          .join(" · ")
+      : null;
 
   useEffect(() => {
     if (!slug || !orderId) return;
@@ -48,15 +50,26 @@ export default function OrderConfirmationPage() {
   return (
     <div className="mx-auto max-w-4xl px-6 py-12 text-center">
       <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
-        <svg className="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+        <svg
+          className="h-8 w-8 text-green-600"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M5 13l4 4L19 7"
+          />
         </svg>
       </div>
 
       <h1 className="mt-4 text-2xl font-bold text-gray-900">Order Placed!</h1>
       <p className="mt-2 text-gray-500">
-        Your order <span className="font-medium text-gray-900">{order.order_number}</span> has
-        been placed successfully.
+        Your order{" "}
+        <span className="font-medium text-gray-900">{order.order_number}</span>{" "}
+        has been placed successfully.
       </p>
 
       <div className="mx-auto mt-8 max-w-md rounded-lg border bg-white p-6 text-left">
@@ -73,18 +86,22 @@ export default function OrderConfirmationPage() {
           </div>
           <div className="flex justify-between">
             <span className="text-gray-500">Total</span>
-            <span className="font-medium">${Number(order.total).toFixed(2)}</span>
+            <span className="font-medium">
+              ${Number(order.total).toFixed(2)}
+            </span>
           </div>
           <div className="flex justify-between">
             <span className="text-gray-500">PO number or reference</span>
-            <span className={order.po_number ? 'font-medium' : 'text-gray-400'}>
-              {order.po_number || 'none given'}
+            <span className={order.po_number ? "font-medium" : "text-gray-400"}>
+              {order.po_number || "none given"}
             </span>
           </div>
           {order.notes && (
             <div className="border-t pt-3">
               <p className="text-gray-500">Your notes</p>
-              <p className="mt-1 whitespace-pre-line text-gray-900">{order.notes}</p>
+              <p className="mt-1 whitespace-pre-line text-gray-900">
+                {order.notes}
+              </p>
             </div>
           )}
         </div>
@@ -93,21 +110,50 @@ export default function OrderConfirmationPage() {
       <div className="mx-auto mt-6 max-w-md rounded-lg border bg-white p-6 text-left text-sm">
         <h2 className="font-semibold text-gray-900">What happens next</h2>
         <ol className="mt-2 list-decimal space-y-1 pl-5 text-gray-700">
-          {order.line_items.map((li) => (
-            <li key={li.id}>{artworkSentence(li, order.proof_email ?? null, support?.support_name || 'the printer')}</li>
-          ))}
+          {/* Release units (H v2 §6): on a split order, one sentence per group
+              instead of one per line — the per-line sentences are false for the
+              groups that go now. */}
+          {(() => {
+            const split = groupSentences(order, support?.support_name ?? null);
+            if (!split) {
+              return order.line_items.map((li) => (
+                <li key={li.id}>
+                  {artworkSentence(li, order.proof_email ?? null, support?.support_name || 'the printer')}
+                </li>
+              ));
+            }
+            return (
+              <>
+                {split.groups.map((g) => (
+                  <li key={g.unitId}>
+                    <strong>{g.heading}</strong> {g.lines}.
+                    {g.note ? ` ${g.note}` : ""}
+                  </li>
+                ))}
+                <li>{split.invoiceNote}</li>
+              </>
+            );
+          })()}
           <li>
             You will be invoiced after it ships. No payment is taken now
-            {order.po_number ? `, and your reference ${order.po_number} will be on the invoice` : ''}.
+            {order.po_number
+              ? `, and your reference ${order.po_number} will be on the invoice`
+              : ""}
+            .
           </li>
-          <li>Freight is billed at cost on that invoice; nothing was charged for it here.</li>
+          <li>
+            Freight is billed at cost on that invoice; nothing was charged for
+            it here.
+          </li>
         </ol>
         <p className="mt-3 text-gray-700">
-          Questions about this order?{' '}
+          Questions about this order?{" "}
           {supportContact ? (
             <span className="font-medium text-gray-900">{supportContact}</span>
           ) : (
-            <span>Contact your account manager and quote {order.order_number}.</span>
+            <span>
+              Contact your account manager and quote {order.order_number}.
+            </span>
           )}
         </p>
       </div>
