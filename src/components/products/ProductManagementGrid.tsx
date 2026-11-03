@@ -19,7 +19,7 @@ interface Props {
 
 interface EditingCell {
   productId: string;
-  field: 'name' | 'category' | 'base_price' | 'base_cost' | 'markup_multiplier' | 'floor_multiplier' | 'pack_size' | 'status' | 'previous_dm_order_number' | 'max_order_quantity';
+  field: 'name' | 'category' | 'base_price' | 'base_cost' | 'markup_multiplier' | 'floor_multiplier' | 'pack_size' | 'status' | 'previous_dm_order_number' | 'max_order_quantity' | 'lead_time_band' | 'outsourced';
   value: string | number;
 }
 
@@ -35,6 +35,8 @@ const FIELD_LABELS: Record<EditingCell['field'], string> = {
   status: 'Status',
   previous_dm_order_number: 'DocketManager order #',
   max_order_quantity: 'Max packs',
+  lead_time_band: 'Lead time',
+  outsourced: 'Outsourced',
 };
 
 export default function ProductManagementGrid({ portalId, onProductsChange }: Props) {
@@ -161,7 +163,11 @@ export default function ProductManagementGrid({ portalId, onProductsChange }: Pr
                 ? String(editingCell.value).trim() || null
                 : editingCell.field === 'max_order_quantity'
                   ? (String(editingCell.value).trim() === '' ? null : Math.max(1, Math.trunc(Number(editingCell.value)) || 1))
-                  : editingCell.value,
+                  : editingCell.field === 'lead_time_band'
+                    ? (String(editingCell.value).trim() === '' ? null : String(editingCell.value))
+                    : editingCell.field === 'outsourced'
+                      ? editingCell.value === 'yes'
+                      : editingCell.value,
     };
 
     // A refusal — a draft cannot be activated without a price (13 Oct 2026) —
@@ -548,6 +554,12 @@ function ProductTable({
             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase" title="The most packs a buyer may order per order (ruling 2026-10-21). Blank = no cap. Above it the storefront refuses and names the support contact. The price never changes.">
               Max packs
             </th>
+            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase" title="RGI's production lead time for this product. Orders are grouped by it: items with the same lead time ship and are invoiced together. A product with no lead time holds its group until someone sets it (H v3).">
+              Lead time
+            </th>
+            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase" title="An outsourced product is always its own group: it never shares a shipment with other items.">
+              Outsourced
+            </th>
             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase" title="The DocketManager order number of this product's last job; an exact reorder's note says “Print as DocketManager order #…”. Filled in by every push Teaky makes; enter it by hand for history.">
               Prev. DM order #
             </th>
@@ -781,6 +793,51 @@ function ProductTable({
                   product.max_order_quantity.toLocaleString('en-US')
                 ) : (
                   <span className="text-gray-400">no cap</span>
+                )}
+              </td>
+              <td
+                className="px-4 py-3 text-sm text-gray-700 cursor-pointer hover:bg-gray-50"
+                onClick={() => onStartEdit(product.id, 'lead_time_band', product.lead_time_band ?? '')}
+              >
+                {editingCell?.productId === product.id && editingCell.field === 'lead_time_band' ? (
+                  <select
+                    value={editingCell.value as string}
+                    onChange={(e) => onEditChange(e.target.value)}
+                    onBlur={onSaveEdit}
+                    autoFocus
+                    className="rounded border border-blue-300 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">not set</option>
+                    <option value="days_2_5">2–5 days</option>
+                    <option value="days_7_10">7–10 days</option>
+                  </select>
+                ) : product.lead_time_band === 'days_2_5' ? (
+                  '2–5 days'
+                ) : product.lead_time_band === 'days_7_10' ? (
+                  '7–10 days'
+                ) : (
+                  <span className="text-amber-700">not set</span>
+                )}
+              </td>
+              <td
+                className="px-4 py-3 text-sm text-gray-700 cursor-pointer hover:bg-gray-50"
+                onClick={() => onStartEdit(product.id, 'outsourced', product.outsourced ? 'yes' : 'no')}
+              >
+                {editingCell?.productId === product.id && editingCell.field === 'outsourced' ? (
+                  <select
+                    value={editingCell.value as string}
+                    onChange={(e) => onEditChange(e.target.value)}
+                    onBlur={onSaveEdit}
+                    autoFocus
+                    className="rounded border border-blue-300 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="no">no</option>
+                    <option value="yes">yes — its own group</option>
+                  </select>
+                ) : product.outsourced ? (
+                  'yes'
+                ) : (
+                  <span className="text-gray-400">no</span>
                 )}
               </td>
               <td
