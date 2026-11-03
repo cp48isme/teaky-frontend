@@ -3,7 +3,7 @@
  *
  * Routed per portal from the start; the content is one shared default — the
  * privacy notice and terms of use published under Single Source RGI's name
- * (operator dispatch 30 Oct 2026, text verbatim). The second printer gets its
+ * (operator's draft, revision 45 of 2 Nov 2026, text verbatim). The second printer gets its
  * own text through BY_SLUG without re-plumbing.
  */
 
@@ -26,7 +26,7 @@ export interface LegalPage {
  * The date the text below shipped. Set when the text changes, not on every
  * build, so the line means what it says.
  */
-export const LEGAL_UPDATED = '2026-10-30';
+export const LEGAL_UPDATED = '2026-11-02';
 
 const PRIVACY: LegalPage = {
   title: 'Privacy notice',
@@ -41,7 +41,7 @@ const PRIVACY: LegalPage = {
     {
       heading: 'What we collect.',
       paragraphs: [
-        'Your name and work email address, so you can sign in. The password you choose, stored only as an irreversible hash. The IP address your account was created from. The delivery address, attention line and telephone number you give us for each order. Your purchase-order number and any notes or artwork instructions you write. Where a product is personalised — business cards, name-line cards — the name and job title you supply for the person it is for.',
+        'Your name and work email address, so you can sign in. The password you choose, stored only as an irreversible hash. The IP address you sign in from, which is recorded in a security log. The delivery address, attention line and telephone number you give us for each order. Your purchase-order number and any notes or artwork instructions you write. Where a product is personalised — business cards, name-line cards — the name and job title you supply for the person it is for.',
       ],
     },
     {
@@ -53,25 +53,25 @@ const PRIVACY: LegalPage = {
     {
       heading: 'Who sees it.',
       paragraphs: [
-        'Single Source RGI’s staff. Single Source, US — a different company, despite the similar name — who print and ship your order and therefore receive the delivery details and anything written on the job. Teaky, who host the portal. Postmark, who deliver the emails we send you. Those are the only parties who receive your order information.',
+        'Single Source RGI’s staff. Single Source, US — a different company, despite the similar name — who print and ship your order and therefore receive the delivery details and anything written on the job. Teaky, who host the portal. Twilio, who deliver the emails we send you. Those are the only parties who receive your order information.',
       ],
     },
     {
       heading: 'How long we keep it.',
       paragraphs: [
-        'Order records for six years, because your property and ours both need them for accounting and tax. Your account for as long as your property uses the portal; when it stops, we close the account, and the order records attached to it are kept for the six years above. The IP address your account was created from is kept with the account as part of its security record, and is used only to look into a problem with the account itself.',
+        'Order records for six years, because your property and ours both need them for accounting and tax. Your account for as long as your property uses the portal; when it stops, we close the account, and the order records attached to it are kept for the six years above. Sign-ins, sign-outs and order releases are recorded in a security log with the date, the time and the IP address they came from, used only to look into a problem with the account itself. When an account is closed, that log keeps the record that something happened and when; your name and the IP address are removed from it.',
       ],
     },
     {
       heading: 'Your choices.',
       paragraphs: [
-        'You can ask what we hold about you, ask us to correct it, or ask us to delete your account. Depending on where you work you may have a legal right to all three. Write to Single Source RGI, LLC, 13915 W. 107th Street, Lenexa, KS 66215, and we will come back to you within 45 days. We will still have to keep order records we need for tax and accounting.',
+        'You can ask what we hold about you, ask us to correct it, or ask us to delete your account. Depending on where you work you may have a legal right to all three. Write to Single Source RGI, LLC, 13915 W. 107th Street, Lenexa, KS 66215, and we will come back to you within 45 days. We will still have to keep order records we need for tax and accounting, and the security log described above, with your name and the IP address removed from it.',
       ],
     },
     {
       heading: 'Cookies.',
       paragraphs: [
-        'This portal sets no cookies at all, not even to keep you signed in. When you sign in, your browser stores a token on your own device. The portal loads its typefaces from Google Fonts, so Google receives your IP address when a page loads; nothing else about you is shared with them.',
+        'This portal sets no cookies at all, not even to keep you signed in. When you sign in, your browser stores a token on your own device. Its typefaces are served from the portal itself, so loading a page tells no other company anything about you.',
       ],
     },
     {
