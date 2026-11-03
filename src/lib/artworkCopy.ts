@@ -23,13 +23,17 @@ export function staffArtworkLine(li: LineItem): string {
   }
 }
 
-export function artworkSentence(li: LineItem, proofEmail: string | null): string {
+/**
+ * `printerName` is who sends the proof: the portal's support contact name
+ * when it has one, else the organisation. Ruling 2026-10-21 (A1): the proof
+ * loop runs through the printer — the buyer does not approve in the portal.
+ * No company name is written here (30 Oct 2026); it comes from the portal.
+ */
+export function artworkSentence(li: LineItem, proofEmail: string | null, printerName: string): string {
   const name = li.product_name;
   switch (li.artwork_disposition) {
     case 'changes_new_proof':
-      // Ruling 2026-10-21 (A1): the proof loop runs through Single Source
-      // Concierge — the buyer does not approve in the portal. Say what is true.
-      return `${name}: you asked for changes, so a proof will come from Single Source Concierge${
+      return `${name}: you asked for changes, so a proof will come from ${printerName}${
         proofEmail ? ` (sent to ${proofEmail})` : ''
       }. Nothing prints until it is approved.`;
     case 'reuse_unchanged':

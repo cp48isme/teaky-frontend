@@ -3,7 +3,6 @@ import { useState, useEffect, type ChangeEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { listProducts, createProduct, updateProduct, deleteProduct } from '../../api/products';
 import { KeepPriceButton, MarkupBadge, PriceOptionsEditor } from './ProductPricingCells';
-import { createProductsFromDescription } from '../../api/portals';
 import { useAction } from '../../hooks/useAction';
 import { uploadFile } from '../../api/uploads';
 import type { Product, CreateProductRequest } from '../../types/product';
@@ -20,7 +19,7 @@ interface Props {
 
 interface EditingCell {
   productId: string;
-  field: 'name' | 'category' | 'base_price' | 'base_cost' | 'markup_multiplier' | 'floor_multiplier' | 'pack_size' | 'status' | 'previous_dm_order_number' | 'max_order_quantity';
+  field: 'name' | 'category' | 'base_price' | 'base_cost' | 'markup_multiplier' | 'floor_multiplier' | 'pack_size' | 'status' | 'previous_dm_order_number' | 'max_order_quantity' | 'lead_time_band' | 'outsourced';
   value: string | number;
 }
 
@@ -36,6 +35,8 @@ const FIELD_LABELS: Record<EditingCell['field'], string> = {
   status: 'Status',
   previous_dm_order_number: 'DocketManager order #',
   max_order_quantity: 'Max packs',
+  lead_time_band: 'Lead time',
+  outsourced: 'Outsourced',
 };
 
 export default function ProductManagementGrid({ portalId, onProductsChange }: Props) {
@@ -46,8 +47,6 @@ export default function ProductManagementGrid({ portalId, onProductsChange }: Pr
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'name' | 'category' | 'base_price' | 'status'>('name');
   const [sortAsc, setSortAsc] = useState(true);
-  const [showAIInput, setShowAIInput] = useState(false);
-  const [aiPrompt, setAiPrompt] = useState('');
   const [groupByCategory, setGroupByCategory] = useState(false);
   // The missing-number view (ruling 2026-10-20): products whose exact-reorder
   // note cannot name a DocketManager order yet.
@@ -99,14 +98,6 @@ export default function ProductManagementGrid({ portalId, onProductsChange }: Pr
       Promise.all(ids.map((id) => updateProduct(portalId, id, data))),
     { success: (updated) => `${updated.length} product${updated.length === 1 ? '' : 's'} updated` },
   );
-  const aiCreate = useAction(
-    'Create products',
-    async (prompt: string) => {
-      await createProductsFromDescription(portalId, prompt);
-      await loadProducts();
-    },
-    { success: 'Products created' },
-  );
   const fileUpload = useAction('Upload', (file: File) => uploadFile(file), {
     success: 'File uploaded. Processing will be implemented soon.',
   });
@@ -125,7 +116,6 @@ export default function ProductManagementGrid({ portalId, onProductsChange }: Pr
       }),
     { success: 'New product added' },
   );
-  const aiCreating = aiCreate.pending;
   const uploadingFile = fileUpload.pending;
 
   // Bulk select handlers
@@ -173,7 +163,11 @@ export default function ProductManagementGrid({ portalId, onProductsChange }: Pr
                 ? String(editingCell.value).trim() || null
                 : editingCell.field === 'max_order_quantity'
                   ? (String(editingCell.value).trim() === '' ? null : Math.max(1, Math.trunc(Number(editingCell.value)) || 1))
-                  : editingCell.value,
+                  : editingCell.field === 'lead_time_band'
+                    ? (String(editingCell.value).trim() === '' ? null : String(editingCell.value))
+                    : editingCell.field === 'outsourced'
+                      ? editingCell.value === 'yes'
+                      : editingCell.value,
     };
 
     // A refusal — a draft cannot be activated without a price (13 Oct 2026) —
@@ -239,14 +233,6 @@ export default function ProductManagementGrid({ portalId, onProductsChange }: Pr
   };
 
   // AI product creation
-  const handleAICreate = async () => {
-    if (!aiPrompt.trim()) return;
-    const created = await aiCreate.run(aiPrompt);
-    if (created === undefined) return;
-    setAiPrompt('');
-    setShowAIInput(false);
-  };
-
   // File upload handler
   const handleFileUpload = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -357,13 +343,6 @@ export default function ProductManagementGrid({ portalId, onProductsChange }: Pr
             />
           </label>
 
-          <button
-            onClick={() => setShowAIInput(true)}
-            className="rounded-md border border-purple-200 bg-purple-50 px-4 py-2 text-sm font-medium text-purple-700 hover:bg-purple-100"
-          >
-            Ask AI to Add Products
-          </button>
-
           <Link
             to={`/portals/${portalId}/products/reprice`}
             className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
@@ -382,38 +361,6 @@ export default function ProductManagementGrid({ portalId, onProductsChange }: Pr
           </label>
         </div>
       </div>
-
-      {/* AI Input */}
-      {showAIInput && (
-        <div className="rounded-lg border border-purple-200 bg-purple-50 p-4">
-          <h3 className="text-sm font-semibold text-purple-900">Describe products to add</h3>
-          <textarea
-            value={aiPrompt}
-            onChange={(e) => setAiPrompt(e.target.value)}
-            placeholder="e.g., Add #10 window envelopes, pack of 1,000 at $252 per pack, and parking passes, pack of 1,000 at $215"
-            rows={3}
-            className="mt-2 w-full rounded-md border border-purple-200 px-3 py-2 text-sm focus:border-purple-400 focus:outline-none focus:ring-purple-400"
-          />
-          <div className="mt-3 flex gap-2">
-            <button
-              onClick={handleAICreate}
-              disabled={aiCreating || !aiPrompt.trim()}
-              className="rounded-md bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700 disabled:opacity-50"
-            >
-              {aiCreating ? 'Creating...' : 'Create Products'}
-            </button>
-            <button
-              onClick={() => {
-                setShowAIInput(false);
-                setAiPrompt('');
-              }}
-              className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Bulk Actions Bar */}
       {selectedIds.size > 0 && (
@@ -607,6 +554,12 @@ function ProductTable({
             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase" title="The most packs a buyer may order per order (ruling 2026-10-21). Blank = no cap. Above it the storefront refuses and names the support contact. The price never changes.">
               Max packs
             </th>
+            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase" title="RGI's production lead time for this product. Orders are grouped by it: items with the same lead time ship and are invoiced together. A product with no lead time holds its group until someone sets it (H v3).">
+              Lead time
+            </th>
+            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase" title="An outsourced product is always its own group: it never shares a shipment with other items.">
+              Outsourced
+            </th>
             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase" title="The DocketManager order number of this product's last job; an exact reorder's note says “Print as DocketManager order #…”. Filled in by every push Teaky makes; enter it by hand for history.">
               Prev. DM order #
             </th>
@@ -740,6 +693,8 @@ function ProductTable({
                     autoFocus
                     className="w-24 rounded border border-blue-300 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
+                ) : product.cost_unknown ?? product.base_cost == null ? (
+                  <span className="text-amber-700">cost not recorded</span>
                 ) : (
                   formatMoney(product.base_cost)
                 )}
@@ -838,6 +793,51 @@ function ProductTable({
                   product.max_order_quantity.toLocaleString('en-US')
                 ) : (
                   <span className="text-gray-400">no cap</span>
+                )}
+              </td>
+              <td
+                className="px-4 py-3 text-sm text-gray-700 cursor-pointer hover:bg-gray-50"
+                onClick={() => onStartEdit(product.id, 'lead_time_band', product.lead_time_band ?? '')}
+              >
+                {editingCell?.productId === product.id && editingCell.field === 'lead_time_band' ? (
+                  <select
+                    value={editingCell.value as string}
+                    onChange={(e) => onEditChange(e.target.value)}
+                    onBlur={onSaveEdit}
+                    autoFocus
+                    className="rounded border border-blue-300 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">not set</option>
+                    <option value="days_2_5">2–5 days</option>
+                    <option value="days_7_10">7–10 days</option>
+                  </select>
+                ) : product.lead_time_band === 'days_2_5' ? (
+                  '2–5 days'
+                ) : product.lead_time_band === 'days_7_10' ? (
+                  '7–10 days'
+                ) : (
+                  <span className="text-amber-700">not set</span>
+                )}
+              </td>
+              <td
+                className="px-4 py-3 text-sm text-gray-700 cursor-pointer hover:bg-gray-50"
+                onClick={() => onStartEdit(product.id, 'outsourced', product.outsourced ? 'yes' : 'no')}
+              >
+                {editingCell?.productId === product.id && editingCell.field === 'outsourced' ? (
+                  <select
+                    value={editingCell.value as string}
+                    onChange={(e) => onEditChange(e.target.value)}
+                    onBlur={onSaveEdit}
+                    autoFocus
+                    className="rounded border border-blue-300 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="no">no</option>
+                    <option value="yes">yes — its own group</option>
+                  </select>
+                ) : product.outsourced ? (
+                  'yes'
+                ) : (
+                  <span className="text-gray-400">no</span>
                 )}
               </td>
               <td
