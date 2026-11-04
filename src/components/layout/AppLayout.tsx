@@ -4,6 +4,8 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../hooks/useNotifications';
 import NotificationBell from './NotificationBell';
 import Sidebar from './Sidebar';
+import LimiterDegradedBanner from './LimiterDegradedBanner';
+import { useLoginLimiterStatus } from '../../hooks/useLoginLimiterStatus';
 
 function getUserEmail(): string {
   const token = localStorage.getItem('access_token');
@@ -30,6 +32,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const { logout } = useAuth();
   const navigate = useNavigate();
   const { unreadCount, refresh } = useNotifications();
+  const limiterStatus = useLoginLimiterStatus();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -99,6 +102,8 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           </div>
         </div>
       </header>
+
+      <LimiterDegradedBanner status={limiterStatus} />
 
       {/* Body: sidebar + main */}
       <div className="flex flex-1 overflow-hidden">
