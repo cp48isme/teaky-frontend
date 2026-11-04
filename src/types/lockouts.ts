@@ -1,6 +1,6 @@
-/** What GET /api/healthcheck reports (no auth). The login rate limiter block
- * is the FAIL_OPEN ruling of 4 Nov 2026: a control that disables itself must
- * say so where staff can see it. */
+/** What GET /api/auth/lockouts/status reports (staff session; team:manage).
+ * Ruling m2i7, 4 Nov 2026: the public healthcheck says nothing about the
+ * login rate limiter; the staff side reads this route instead. */
 export type LimiterRedisState = 'ok' | 'unreachable';
 export type LimiterMode = 'fail_open' | 'fail_closed';
 
@@ -11,10 +11,4 @@ export interface LoginRateLimiterHealth {
   fail_closed_events: number;
   degraded_since: string | null;
   last_event_at: string | null;
-}
-
-export interface HealthcheckResponse {
-  status: string;
-  database: string;
-  login_rate_limiter: LoginRateLimiterHealth;
 }

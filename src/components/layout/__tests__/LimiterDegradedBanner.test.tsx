@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
 import LimiterDegradedBanner from '../LimiterDegradedBanner';
-import type { LoginRateLimiterHealth } from '../../../types/healthcheck';
+import type { LoginRateLimiterHealth } from '../../../types/lockouts';
 
 function health(overrides: Partial<LoginRateLimiterHealth> = {}): LoginRateLimiterHealth {
   return {

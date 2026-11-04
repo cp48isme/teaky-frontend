@@ -1,4 +1,4 @@
-import type { LoginRateLimiterHealth } from '../../types/healthcheck';
+import type { LoginRateLimiterHealth } from '../../types/lockouts';
 
 function sinceText(iso: string | null): string {
   if (!iso) return '';
