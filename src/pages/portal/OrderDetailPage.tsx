@@ -11,6 +11,8 @@ import { useAction } from '../../hooks/useAction';
 import { humanize, countryName } from '../../lib/labels';
 import { packQuantityLabel } from '../../lib/pricing';
 import { isInvoiceOrder, FREIGHT_NOTE } from '../../lib/paymentTerms';
+import { buyerGroupStatus, buyerGroupTitle, buyerGroups } from '../../lib/proofStatusCopy';
+import type { LineItem } from '../../types/order';
 
 const STATUS_STEPS = [
   'submitted',
@@ -32,6 +34,45 @@ const STATUS_COLORS: Record<string, string> = {
   completed: 'bg-gray-100 text-gray-800',
   cancelled: 'bg-red-100 text-red-800',
 };
+
+function LineRow({ item }: { item: LineItem }) {
+  return (
+            <div key={item.id} className="flex items-center justify-between rounded-lg border bg-white p-4">
+              <div>
+                <p className="font-medium text-gray-900">{item.product_name}</p>
+                <div className="mt-1 flex gap-3 text-xs text-gray-500">
+                  <span>{packQuantityLabel(item.quantity, item.pack_size ?? 1)}</span>
+                  {item.price_option && <span>{item.price_option}</span>}
+                {item.size && <span>Size: {item.size}</span>}
+                  {item.color && <span>Color: {item.color}</span>}
+                  {item.needs_proof && (
+                    <span className={
+                      item.proof_status === 'approved'
+                        ? 'text-green-600'
+                        : item.proof_status === 'rejected'
+                        ? 'text-red-600'
+                        : 'text-yellow-600'
+                    }>
+                      Proof: {item.proof_status}
+                    </span>
+                  )}
+                </div>
+                {item.artwork_disposition === 'reuse_unchanged' && (
+                  <p className="mt-1 text-xs text-gray-600">Artwork: reprint unchanged — no proof</p>
+                )}
+                {item.artwork_disposition === 'changes_new_proof' && (
+                  <p className="mt-1 text-xs text-gray-600">
+                    Artwork: changes — new proof required
+                    {item.artwork_change_note ? `: ${item.artwork_change_note}` : ''}
+                  </p>
+                )}
+              </div>
+              <p className="font-medium text-gray-900">
+                ${Number(item.line_total).toFixed(2)}
+              </p>
+            </div>
+  );
+}
 
 export default function OrderDetailPage() {
   const { slug, orderId } = useParams<{ slug: string; orderId: string }>();
@@ -179,47 +220,39 @@ export default function OrderDetailPage() {
         </div>
       )}
 
-      {/* Line Items */}
+      {/* Items — one section per shipment group (RGI build plan group B: the
+          group's proof status, in the buyer's words), or the flat list when
+          the order has no groups yet. */}
       <div className="mt-8">
-        <h2 className="text-lg font-semibold text-gray-900">Items</h2>
-        <div className="mt-3 space-y-3">
-          {order.line_items.map((item) => (
-            <div key={item.id} className="flex items-center justify-between rounded-lg border bg-white p-4">
-              <div>
-                <p className="font-medium text-gray-900">{item.product_name}</p>
-                <div className="mt-1 flex gap-3 text-xs text-gray-500">
-                  <span>{packQuantityLabel(item.quantity, item.pack_size ?? 1)}</span>
-                  {item.price_option && <span>{item.price_option}</span>}
-                {item.size && <span>Size: {item.size}</span>}
-                  {item.color && <span>Color: {item.color}</span>}
-                  {item.needs_proof && (
-                    <span className={
-                      item.proof_status === 'approved'
-                        ? 'text-green-600'
-                        : item.proof_status === 'rejected'
-                        ? 'text-red-600'
-                        : 'text-yellow-600'
-                    }>
-                      Proof: {item.proof_status}
-                    </span>
-                  )}
-                </div>
-                {item.artwork_disposition === 'reuse_unchanged' && (
-                  <p className="mt-1 text-xs text-gray-600">Artwork: reprint unchanged — no proof</p>
+        {buyerGroups(order.release_units, order.line_items).length > 0 ? (
+          buyerGroups(order.release_units, order.line_items).map(({ unit, lines }, _i, all) => (
+            <section key={unit.id} className="mt-6 first:mt-0" data-testid="buyer-group">
+              <h2 className="text-lg font-semibold text-gray-900">
+                {buyerGroupTitle(unit, all.length)}
+                {all.length > 1 && (
+                  <span className="ml-2 text-sm font-normal text-gray-500">ships and is invoiced separately</span>
                 )}
-                {item.artwork_disposition === 'changes_new_proof' && (
-                  <p className="mt-1 text-xs text-gray-600">
-                    Artwork: changes — new proof required
-                    {item.artwork_change_note ? `: ${item.artwork_change_note}` : ''}
-                  </p>
-                )}
-              </div>
-              <p className="font-medium text-gray-900">
-                ${Number(item.line_total).toFixed(2)}
+              </h2>
+              <p className="mt-1 text-sm text-gray-700" data-testid="buyer-group-status">
+                {buyerGroupStatus(unit, lines)}
               </p>
+              <div className="mt-3 space-y-3">
+                {lines.map((item) => (
+                  <LineRow key={item.id} item={item} />
+                ))}
+              </div>
+            </section>
+          ))
+        ) : (
+          <>
+            <h2 className="text-lg font-semibold text-gray-900">Items</h2>
+            <div className="mt-3 space-y-3">
+              {order.line_items.map((item) => (
+                <LineRow key={item.id} item={item} />
+              ))}
             </div>
-          ))}
-        </div>
+          </>
+        )}
       </div>
 
       {/* Order Details */}

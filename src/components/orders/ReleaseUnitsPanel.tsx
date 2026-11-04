@@ -26,6 +26,7 @@ import {
   unitStateLabel,
   unitTitle,
 } from "../../lib/releaseUnitCopy";
+import { proofSummarySentence } from "../../lib/proofStatusCopy";
 
 interface Props {
   order: Order;
@@ -306,6 +307,11 @@ export default function ReleaseUnitsPanel({ order, units, onChanged }: Props) {
               </p>
             )}
             <p className="text-sm">{unitHeadline(unit)}</p>
+            {proofSummarySentence(lines as Order["line_items"]) && (
+              <p className="text-xs font-medium" data-testid="proof-summary">
+                {proofSummarySentence(lines as Order["line_items"])}
+              </p>
+            )}
             {clearedLoudly.map((s) => (
               <p key={s} className="text-xs font-medium text-amber-800">
                 {s}
