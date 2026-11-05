@@ -11,8 +11,16 @@ describe('needed-by date helpers', () => {
     expect(formatNeededBy(undefined)).toBeNull();
     expect(formatNeededBy('')).toBeNull();
   });
-  it("builds today's date for the input's minimum from local calendar fields", () => {
-    expect(todayIsoDate(new Date(2026, 9, 15, 23, 30))).toBe('2026-10-15');
-    expect(todayIsoDate(new Date(2026, 0, 3, 0, 5))).toBe('2026-01-03');
+  it("builds the picker's minimum from the shop's calendar, not the browser's day (fga1)", () => {
+    // 17:59 Chicago is 23:59 UTC, the same day.
+    expect(todayIsoDate('America/Chicago', new Date('2026-11-05T23:59:00Z'))).toBe('2026-11-05');
+    // 18:01 Chicago is 00:01 UTC — UTC is already tomorrow; the shop is not.
+    expect(todayIsoDate('America/Chicago', new Date('2026-11-06T00:01:00Z'))).toBe('2026-11-05');
+    // 23:59 Chicago is 05:59 UTC the next day.
+    expect(todayIsoDate('America/Chicago', new Date('2026-11-06T05:59:00Z'))).toBe('2026-11-05');
+    // 00:01 Chicago is 06:01 UTC, the same day.
+    expect(todayIsoDate('America/Chicago', new Date('2026-11-06T06:01:00Z'))).toBe('2026-11-06');
+    // The same instants read in UTC give UTC's day — the rule the picker no longer follows.
+    expect(todayIsoDate('UTC', new Date('2026-11-06T00:01:00Z'))).toBe('2026-11-06');
   });
 });

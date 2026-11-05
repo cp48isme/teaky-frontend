@@ -67,6 +67,8 @@ export interface PublicPortalResponse {
   status: string;
   // S84: whether a PO number or reference is required at checkout (per portal).
   require_po?: boolean;
+  // fga1: the shop's IANA timezone; the needed-by picker reads "today" in it.
+  timezone: string;
 }
 
 export interface DuplicatePortalRequest {

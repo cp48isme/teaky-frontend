@@ -75,7 +75,7 @@ async function fillAddress(user: ReturnType<typeof userEvent.setup>) {
 describe('CheckoutPage — invoice-terms buyer path', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    portal = { name: 'The Raphael Hotel', slug: 'raphael', brand_config: null, type: 'client', status: 'active', require_po: false };
+    portal = { name: 'The Raphael Hotel', slug: 'raphael', brand_config: null, type: 'client', status: 'active', require_po: false, timezone: 'America/Chicago' };
     vi.mocked(createPortalOrder).mockResolvedValue({ id: 'order-9' } as never);
     vi.mocked(listMyOrders).mockResolvedValue([]);
   });
@@ -159,6 +159,17 @@ describe('CheckoutPage — invoice-terms buyer path', () => {
     expect(vi.mocked(createPortalOrder).mock.calls[0][1]).toMatchObject({ needed_by: '2027-03-01' });
   });
 
+  it("sets the picker's minimum to the shop's today, not the browser's day (fga1)", () => {
+    // 00:01 UTC on 6 Nov is 18:01 on 5 Nov in Chicago: the shop's today is the 5th.
+    vi.useFakeTimers({ now: new Date('2026-11-06T00:01:00Z'), toFake: ['Date'] });
+    try {
+      renderPage();
+      expect(screen.getByLabelText('When do you need these by?')).toHaveAttribute('min', '2026-11-05');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('sends no needed_by at all when the buyer leaves the date blank', async () => {
     const user = userEvent.setup();
     renderPage();
@@ -204,7 +215,7 @@ describe('CheckoutPage — invoice-terms buyer path', () => {
 describe('CheckoutPage — the ship-to phone must be dialable (30 Oct 2026, ruling R4)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    portal = { name: 'The Raphael Hotel', slug: 'raphael', brand_config: null, type: 'client', status: 'active', require_po: false };
+    portal = { name: 'The Raphael Hotel', slug: 'raphael', brand_config: null, type: 'client', status: 'active', require_po: false, timezone: 'America/Chicago' };
     vi.mocked(createPortalOrder).mockResolvedValue({ id: 'order-9' } as never);
     vi.mocked(listMyOrders).mockResolvedValue([]);
   });

@@ -616,7 +616,7 @@ export default function CheckoutPage() {
                   id="needed-by"
                   type="date"
                   value={neededBy}
-                  min={todayIsoDate()}
+                  min={portal ? todayIsoDate(portal.timezone) : undefined}
                   onChange={(e) => setNeededBy(e.target.value)}
                   disabled={showPayment}
                   className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-teak focus:ring-1 focus:ring-teak disabled:bg-gray-50 disabled:text-gray-500 sm:w-60"
