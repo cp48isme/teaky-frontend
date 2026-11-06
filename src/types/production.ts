@@ -109,3 +109,66 @@ export interface TaylorPoolLine {
   held_by: string[];
   stock: string;
 }
+
+/** The spec library (board 5): where a product's stock came from. */
+export type SpecSource = 'person' | 'import' | 'history' | 'docket';
+
+export interface StockEvidence {
+  kind: 'prior_units' | 'customer_products' | 'description_tokens' | 'person_note' | string;
+  stock: string;
+  detail: string;
+}
+
+export interface SpecAssertion {
+  id: string;
+  organization_id: string;
+  product_key: string;
+  attribute: string;
+  value: string;
+  source: SpecSource;
+  asserted_by_id: string | null;
+  asserted_at: string;
+  evidence: StockEvidence[];
+  superseded_by: string | null;
+}
+
+export interface SpecHistoryEntry extends SpecAssertion {
+  asserted_by: string | null;
+}
+
+export interface SpecLibraryRow {
+  product_key: string;
+  value: string;
+  not_batched: boolean;
+  source: SpecSource;
+  asserted_by_id: string | null;
+  asserted_by: string | null;
+  asserted_at: string;
+  evidence: StockEvidence[];
+  prior_units: number;
+  agrees: boolean | null;
+}
+
+export interface StockSuggestion {
+  stock: string;
+  evidence: StockEvidence[];
+}
+
+export interface SpecSuggestion {
+  product_key: string;
+  library: SpecAssertion | null;
+  proposals: SpecAssertion[];
+  history: StockSuggestion[];
+  leading_source: 'library' | 'history' | 'none' | string;
+  leading_value: string | null;
+  agrees: boolean | null;
+}
+
+/** #197's shop settings: the press-run switches, hold age, name, timezone. */
+export interface ProductionSettings {
+  split_when_unplaceable: boolean;
+  gang_whole_orders: boolean;
+  hold_age_days: number;
+  shop_name: string;
+  timezone: string;
+}
