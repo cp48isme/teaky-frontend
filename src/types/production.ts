@@ -32,6 +32,7 @@ export interface BatchSummary {
   cancelled: boolean;
   fill_candidates: FillCandidateSummary[];
   fillable_slots: number;
+  line_item_ids: string[];
 }
 
 export interface PushOutFile {
@@ -106,4 +107,5 @@ export interface TaylorPoolLine {
   art_state: 'missing' | 'fetched' | 'hold';
   art_error: string | null;
   held_by: string[];
+  stock: string;
 }

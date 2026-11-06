@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { listBatches } from '../../api/production';
 import ProductionLayout, { colors } from '../../components/production/ProductionLayout';
 import { ageText, slotStrip } from '../../lib/production';
+import { channelLabel } from './AllChannelOrdersPage';
 import type { BatchSummary } from '../../types/production';
 
 /** Board 2: a batch is 24 slots on one stock. The strip shows what is
@@ -156,7 +157,7 @@ function BatchCard({ batch, featured = false, onPushOut }: { batch: BatchSummary
             <div key={c.order_ref} style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center', fontSize: 14 }}>
               <span style={mono}>{c.order_ref}</span>
               <span>
-                {c.channel || 'portal'} · {c.stock || batch.stock} · {c.slots} slot{c.slots === 1 ? '' : 's'} · {ageText(c.age_seconds)} old · currently waiting, not yet batched
+                {channelLabel(c.channel)} · {c.stock || batch.stock} · {c.slots} slot{c.slots === 1 ? '' : 's'} · {ageText(c.age_seconds)} old · currently waiting, not yet batched
               </span>
             </div>
           ))}

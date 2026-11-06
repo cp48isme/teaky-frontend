@@ -24,7 +24,7 @@ export interface OrderRow {
   slots: number;
   stock: string;
   status: string;
-  statusKind: 'placed' | 'held' | 'waiting' | 'released';
+  statusKind: 'placed' | 'unbatched' | 'held' | 'waiting' | 'released';
   batch: number | null;
   batchUnitId: string | null;
 }
@@ -55,17 +55,29 @@ const STATUS_PILL: Record<OrderRow['statusKind'], { background: string; color: s
   placed: { background: '#e6f3ee', color: '#558b2f' },
   held: { background: '#fdebe6', color: '#a3331d' },
   waiting: { background: '#fbf1d9', color: '#7a5a12' },
+  unbatched: { background: '#fbf1d9', color: '#7a5a12' },
   released: { background: '#e9ebef', color: '#3f4854' },
 };
 
+export function channelLabel(channel: string): OrderRow['channel'] {
+  if (channel === 'taylor' || channel === 'press_run') return 'Taylor';
+  if (channel === 'pagedna') return 'PageDNA';
+  if (channel === 'email') return 'Email';
+  return 'RGI portal';
+}
+
 export function rowsFromOrders(orders: Order[], batches: BatchSummary[], now: Date): OrderRow[] {
-  const byUnit = new Map(batches.map((b) => [b.unit_id, b]));
+  // A line's batch is the production unit that lists it (the batches list carries the ids).
+  const byLine = new Map<string, BatchSummary>();
+  for (const b of batches) for (const id of b.line_item_ids ?? []) byLine.set(id, b);
+  // A waiting line's stock is what the fill advice asserted for it (the spec library's value in force).
+  const stockByLine = new Map<string, string>();
+  for (const b of batches) for (const c of b.fill_candidates ?? []) for (const id of c.line_item_ids ?? []) stockByLine.set(id, c.stock);
   const rows: OrderRow[] = [];
   for (const order of orders) {
-    const units = order.release_units ?? [];
     for (const li of order.line_items) {
-      const production = units.find((u) => u.kind === 'production' && u.line_item_ids?.includes(li.id));
-      const batch = production ? byUnit.get(production.id) ?? null : null;
+      const batch = byLine.get(li.id) ?? null;
+      const production = batch ? { id: batch.unit_id, release_state: batch.release_state, ordinal: batch.batch_number } : null;
       const cards = li.quantity * (li.pack_size ?? 1);
       const held = (order.release_state ?? '') === 'held_for_proof';
       const released = production?.release_state === 'released';
@@ -73,9 +85,11 @@ export function rowsFromOrders(orders: Order[], batches: BatchSummary[], now: Da
         ? `Pushed out${batch?.docket_number ? ` · Docket ${batch.docket_number}` : ''}`
         : held
           ? 'Held · proof'
-          : batch && !batch.full
-            ? `Waiting · batch ${batch.batch_number} at ${batch.used}/${batch.capacity}`
-            : 'Placed';
+          : batch == null
+            ? 'Waiting for a batch'
+            : !batch.full
+              ? `Waiting · batch ${batch.batch_number} at ${batch.used}/${batch.capacity}`
+              : 'Placed';
       rows.push({
         id: li.id,
         received: order.placed_at,
@@ -87,9 +101,9 @@ export function rowsFromOrders(orders: Order[], batches: BatchSummary[], now: Da
         qty: li.quantity,
         pack: li.pack_size ?? 1,
         slots: slotsFor(cards),
-        stock: batch?.stock || (production?.partition_key as { stock?: string } | null | undefined)?.stock || '',
+        stock: batch?.stock || stockByLine.get(li.id) || '',
         status,
-        statusKind: released ? 'released' : held ? 'held' : batch && !batch.full ? 'waiting' : 'placed',
+        statusKind: released ? 'released' : held ? 'held' : batch == null ? 'unbatched' : !batch.full ? 'waiting' : 'placed',
         batch: batch?.batch_number ?? production?.ordinal ?? null,
         batchUnitId: production?.id ?? null,
       });
@@ -110,9 +124,9 @@ export function rowsFromTaylor(lines: TaylorPoolLine[], now: Date): OrderRow[] {
     qty: l.quantity,
     pack: l.pack,
     slots: slotsFor(l.cards),
-    stock: '',
-    status: l.art_state === 'hold' ? `Held · art: ${l.art_error ?? 'missing'}` : 'Placed',
-    statusKind: l.art_state === 'hold' ? 'held' : 'placed',
+    stock: l.stock || '',
+    status: l.art_state === 'hold' ? `Held · art: ${l.art_error ?? 'missing'}` : 'Waiting for a batch',
+    statusKind: l.art_state === 'hold' ? 'held' : 'unbatched',
     batch: null,
     batchUnitId: null,
   }));
@@ -153,8 +167,8 @@ export default function AllChannelOrdersPage() {
   }, [all, channel, show, search]);
   const rows = useMemo(() => sortRows(filtered, sort.key, sort.direction), [filtered, sort]);
 
-  const waiting = all.filter((r) => r.statusKind === 'placed' && r.batch == null).length;
-  const waitingOld = all.filter((r) => r.statusKind === 'placed' && r.batch == null && r.age > 2 * 86400).length;
+  const waiting = all.filter((r) => r.statusKind === 'unbatched').length;
+  const waitingOld = all.filter((r) => r.statusKind === 'unbatched' && r.age > 2 * 86400).length;
   const inOpen = all.filter((r) => r.batch != null && r.statusKind !== 'released').length;
   const openBatches = batches.filter((b) => b.release_state == null && !b.cancelled);
   const held = all.filter((r) => r.statusKind === 'held').length;
