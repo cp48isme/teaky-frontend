@@ -16,3 +16,10 @@ export async function pushOut(unitId: string): Promise<PushOutResult> {
 export async function listTaylorPool(): Promise<TaylorPoolLine[]> {
   return apiRequest<TaylorPoolLine[]>('/intake/taylor/pool');
 }
+
+/** Andrew, 6 Nov 2026: a batch at 12 or fewer slots used becomes a half
+ * batch (capacity 12, 125 sheets); the push still goes through the
+ * confirmation, whose preview this returns. */
+export async function markHalfBatch(unitId: string): Promise<PushOutPreview> {
+  return apiRequest<PushOutPreview>(`/release-units/${unitId}/half-batch`, { method: 'POST' });
+}

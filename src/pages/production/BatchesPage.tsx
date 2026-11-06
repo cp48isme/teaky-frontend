@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { listBatches } from '../../api/production';
+import { listBatches, markHalfBatch } from '../../api/production';
 import ProductionLayout, { colors } from '../../components/production/ProductionLayout';
 import { ageText, slotStrip } from '../../lib/production';
 import { channelLabel } from './AllChannelOrdersPage';
@@ -46,6 +46,15 @@ export default function BatchesPage() {
   const [show, setShow] = useState('Open');
   const navigate = useNavigate();
 
+  async function halfBatch(batch: BatchSummary) {
+    try {
+      await markHalfBatch(batch.unit_id);
+      navigate(`/production/batches/${batch.unit_id}/push-out`);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'The half batch was refused');
+    }
+  }
+
   useEffect(() => {
     listBatches()
       .then(setBatches)
@@ -75,11 +84,11 @@ export default function BatchesPage() {
         </label>
       </div>
       {error ? <div role="alert" style={{ color: '#a3331d' }}>{error}</div> : null}
-      {first ? <BatchCard batch={first} featured onPushOut={() => navigate(`/production/batches/${first.unit_id}/push-out`)} /> : <div style={{ color: '#4b5563' }}>No batches to show.</div>}
+      {first ? <BatchCard batch={first} featured onPushOut={() => navigate(`/production/batches/${first.unit_id}/push-out`)} onHalfBatch={() => halfBatch(first)} /> : <div style={{ color: '#4b5563' }}>No batches to show.</div>}
       {rest.length ? (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 16 }}>
           {rest.map((b) => (
-            <BatchCard key={b.unit_id} batch={b} onPushOut={() => navigate(`/production/batches/${b.unit_id}/push-out`)} />
+            <BatchCard key={b.unit_id} batch={b} onPushOut={() => navigate(`/production/batches/${b.unit_id}/push-out`)} onHalfBatch={() => halfBatch(b)} />
           ))}
         </div>
       ) : null}
@@ -101,7 +110,14 @@ export default function BatchesPage() {
   );
 }
 
-function BatchCard({ batch, featured = false, onPushOut }: { batch: BatchSummary; featured?: boolean; onPushOut: () => void }) {
+export const HALF_CAPACITY = 12;
+export const HALF_SHEETS = 125;
+
+export function halfBatchOffered(batch: BatchSummary): boolean {
+  return !batch.half && !batch.full && !batch.cancelled && !batch.docket_number && batch.release_state !== 'releasing' && batch.release_state !== 'released' && batch.used > 0 && batch.used <= HALF_CAPACITY;
+}
+
+function BatchCard({ batch, featured = false, onPushOut, onHalfBatch }: { batch: BatchSummary; featured?: boolean; onPushOut: () => void; onHalfBatch?: () => void }) {
   const state = stateText(batch);
   const pushable = !batch.cancelled && !batch.docket_number && batch.release_state !== 'releasing' && batch.release_state !== 'released' && batch.used > 0;
   return (
@@ -121,7 +137,7 @@ function BatchCard({ batch, featured = false, onPushOut }: { batch: BatchSummary
         <div>
           <span style={lbl}>Slots</span>
           <div style={{ fontSize: 16, fontWeight: 500 }}>
-            {batch.used} / {batch.capacity} · <span style={{ color: state.color }}>{state.text}</span>
+            {batch.used} / {batch.capacity}{batch.half ? ' · half' : ''} · <span style={{ color: state.color }}>{state.text}</span>
           </div>
         </div>
         <div>
@@ -143,6 +159,11 @@ function BatchCard({ batch, featured = false, onPushOut }: { batch: BatchSummary
           {pushable ? (
             <button type="button" onClick={onPushOut} style={batch.full ? { ...btn, ...btnPrimary } : btn}>
               {batch.full ? `Push out ${batch.batch_number} →` : `Push out with ${batch.blanks} blank${batch.blanks === 1 ? '' : 's'}…`}
+            </button>
+          ) : null}
+          {onHalfBatch && halfBatchOffered(batch) ? (
+            <button type="button" onClick={onHalfBatch} style={btn} title={`A half batch holds ${HALF_CAPACITY} slots and runs ${HALF_SHEETS} sheets; every order still gets its 250 cards`}>
+              Half batch ({HALF_CAPACITY} at {HALF_SHEETS} sheets)…
             </button>
           ) : null}
         </div>

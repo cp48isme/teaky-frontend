@@ -63,7 +63,8 @@ export default function PushOutConfirmPage() {
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16 }}>
               <Fact label="Batch" value={String(preview.batch_number)} mono />
               <Fact label="Stock" value={preview.stock || 'unknown'} />
-              <Fact label="Slots" value={`${preview.used} / ${preview.capacity}`} />
+              <Fact label="Slots" value={`${preview.used} / ${preview.capacity}${preview.half ? ' · half batch' : ''}`} />
+              <Fact label="Sheets per run" value={String(preview.sheets_per_run ?? 250)} />
               <Fact label="Blanks" value={String(preview.blanks)} color={preview.blanks ? '#7a5a12' : undefined} />
               <Fact label="Orders · lines" value={`${preview.orders} · ${preview.lines}`} />
               <Fact label="Docket send" value={preview.docket_send_enabled ? `ON → ${preview.docket_host ?? 'no site configured'}` : 'OFF — the payload is recorded, nothing is sent'} color={preview.docket_send_enabled ? colors.vein : '#7a5a12'} />
