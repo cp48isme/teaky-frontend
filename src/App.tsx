@@ -6,6 +6,9 @@ import { PreviewProvider } from './context/PreviewContext';
 import StatusProvider from './contexts/StatusProvider';
 import ProtectedRoute from './components/ProtectedRoute';
 import AppLayout from './components/layout/AppLayout';
+import AllChannelOrdersPage from './pages/production/AllChannelOrdersPage';
+import BatchesPage from './pages/production/BatchesPage';
+import PushOutConfirmPage from './pages/production/PushOutConfirmPage';
 import PortalLayout from './components/layout/PortalLayout';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
@@ -132,6 +135,31 @@ function App() {
                 <AppLayout>
                   <ProductRepricePage />
                 </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          {/* The production side (canvas boards 1–2, 6 Nov 2026): its own shell, staff auth */}
+          <Route
+            path="/production/orders"
+            element={
+              <ProtectedRoute>
+                <AllChannelOrdersPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/production/batches"
+            element={
+              <ProtectedRoute>
+                <BatchesPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/production/batches/:unitId/push-out"
+            element={
+              <ProtectedRoute>
+                <PushOutConfirmPage />
               </ProtectedRoute>
             }
           />
