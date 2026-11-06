@@ -35,8 +35,12 @@ export async function getSpecHistory(productKey: string): Promise<SpecHistoryEnt
   return apiRequest<SpecHistoryEntry[]>(`/spec-library/${encodeURIComponent(productKey)}/history`);
 }
 
-export async function getSpecSuggestion(productKey: string): Promise<SpecSuggestion> {
-  return apiRequest<SpecSuggestion>(`/spec-library/${encodeURIComponent(productKey)}/suggest`);
+export async function getSpecSuggestion(productKey: string, context: { portalId?: string | null; description?: string } = {}): Promise<SpecSuggestion> {
+  const params = new URLSearchParams();
+  if (context.portalId) params.set('portal_id', context.portalId);
+  if (context.description) params.set('description', context.description);
+  const query = params.toString();
+  return apiRequest<SpecSuggestion>(`/spec-library/${encodeURIComponent(productKey)}/suggest${query ? `?${query}` : ''}`);
 }
 
 export async function correctStock(productKey: string, value: string, note: string): Promise<SpecAssertion> {

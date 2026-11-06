@@ -41,6 +41,9 @@ export interface HeldRow {
   lineItemId: string | null;
   /** A Taylor pool line held on its art: "fetch now" is the pull. */
   taylorLineId: string | null;
+  /** The order's portal and the product's name: the suggestion's same-customer and description evidence. */
+  portalId: string | null;
+  description: string;
 }
 
 export interface HeldLists {
@@ -73,6 +76,8 @@ export function splitHeld(entries: HeldQueueEntry[], orders: Order[], taylor: Ta
     for (const hold of entry.open_holds) {
       const meta = REASONS[hold.reason] ?? { kind: 'decision' as HeldKind, title: hold.reason, waitingOn: 'a person' as WaitingOn, clears: '' };
       const order = entry.source_order_id ? byOrder.get(entry.source_order_id) : undefined;
+      const line = order && hold.line_item_id ? order.line_items.find((l) => l.id === hold.line_item_id) : order?.line_items[0];
+      const ageSeconds = hold.opened_at ? Math.max(0, Math.floor((now.getTime() - new Date(hold.opened_at).getTime()) / 1000)) : entry.age_seconds;
       rows.push({
         key: hold.hold_id,
         kind: meta.kind,
@@ -83,12 +88,14 @@ export function splitHeld(entries: HeldQueueEntry[], orders: Order[], taylor: Ta
         order: order?.po_number || order?.order_number || entry.order_number || entry.reference,
         summary: lineSummary(order, hold.line_item_id),
         detail: hold.detail,
-        ageSeconds: entry.age_seconds,
+        ageSeconds,
         unitId: entry.unit_id,
         holdId: hold.hold_id,
         productKey: productKeyOf(hold),
         lineItemId: hold.line_item_id,
         taylorLineId: null,
+        portalId: order?.portal_id ?? null,
+        description: line?.product_name ?? '',
       });
     }
   }
@@ -111,6 +118,8 @@ export function splitHeld(entries: HeldQueueEntry[], orders: Order[], taylor: Ta
       productKey: null,
       lineItemId: null,
       taylorLineId: line.id,
+      portalId: null,
+      description: line.product,
     });
   }
   rows.sort((a, b) => b.ageSeconds - a.ageSeconds);

@@ -204,7 +204,7 @@ export default function HeldPage() {
   useEffect(() => {
     for (const row of lists.needsDecision) {
       if (row.reason === 'stock_unknown' && row.productKey && !(row.productKey in suggestions)) {
-        getSpecSuggestion(row.productKey)
+        getSpecSuggestion(row.productKey, { portalId: row.portalId, description: row.description })
           .then((s) => setSuggestions((prev) => ({ ...prev, [row.productKey as string]: s })))
           .catch(() => undefined);
       }
