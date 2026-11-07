@@ -102,6 +102,8 @@ export interface QueueHold {
   line_item_id: string | null;
   case_key: string | null;
   prior_decision: PriorDecision | null;
+  /** When the hold opened; Held's age is the hold's, not the unit's. */
+  opened_at?: string | null;
 }
 
 export interface HeldQueueEntry {

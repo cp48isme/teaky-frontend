@@ -9,6 +9,8 @@ import AppLayout from './components/layout/AppLayout';
 import AllChannelOrdersPage from './pages/production/AllChannelOrdersPage';
 import BatchesPage from './pages/production/BatchesPage';
 import PushOutConfirmPage from './pages/production/PushOutConfirmPage';
+import HeldPage from './pages/production/HeldPage';
+import ProductsPage from './pages/production/ProductsPage';
 import PortalLayout from './components/layout/PortalLayout';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
@@ -138,7 +140,7 @@ function App() {
               </ProtectedRoute>
             }
           />
-          {/* The production side (canvas boards 1–2, 6 Nov 2026): its own shell, staff auth */}
+          {/* The production side (canvas boards 1–5, 6 Nov 2026): its own shell, staff auth */}
           <Route
             path="/production/orders"
             element={
@@ -160,6 +162,22 @@ function App() {
             element={
               <ProtectedRoute>
                 <PushOutConfirmPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/production/held"
+            element={
+              <ProtectedRoute>
+                <HeldPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/production/products"
+            element={
+              <ProtectedRoute>
+                <ProductsPage />
               </ProtectedRoute>
             }
           />
