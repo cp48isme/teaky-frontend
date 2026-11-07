@@ -4,6 +4,7 @@ import { createOrderOnBehalf, getPrinterOrder } from '../api/orders';
 import { listPortals } from '../api/portals';
 import { listProducts } from '../api/products';
 import type { CreateOrderOnBehalfRequest, Order, OrderContact, ShippingAddress } from '../types/order';
+import { money, priceNow } from '../lib/orderEntry';
 import type { Portal } from '../types/portal';
 import type { Product } from '../types/product';
 
@@ -28,19 +29,6 @@ interface Line {
 const emptyContact = (): OrderContact => ({ name: '', title: '', email: '', phone: '' });
 const emptyAddress = (): ShippingAddress => ({ name: '', attention: '', line1: '', line2: '', city: '', state: '', postal_code: '', country: 'US', phone: '' });
 const newLine = (): Line => ({ product_id: '', quantity: 1, proof_required: false, last_price: null, show_lead_time: false });
-
-export function priceNow(product: Product | undefined, quantity: number): number | null {
-  if (!product) return null;
-  const tiers = [...(product.pricing_tiers ?? [])].sort((a, b) => a.min_qty - b.min_qty);
-  const tier = tiers.filter((t) => quantity >= t.min_qty && (t.max_qty == null || quantity <= t.max_qty)).pop();
-  if (tier) return tier.unit_price;
-  if (tiers.length) return tiers[tiers.length - 1].unit_price;
-  return product.base_price ?? null;
-}
-
-export function money(value: number | null | undefined): string {
-  return value == null ? '—' : `$${value.toFixed(2)}`;
-}
 
 function contactOf(source: OrderContact | null | undefined): OrderContact {
   return source ? { name: source.name ?? '', title: source.title ?? '', email: source.email ?? '', phone: source.phone ?? '' } : emptyContact();

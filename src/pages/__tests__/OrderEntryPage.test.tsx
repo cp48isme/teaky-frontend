@@ -2,7 +2,8 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
-import OrderEntryPage, { priceNow } from '../OrderEntryPage';
+import { priceNow } from '../../lib/orderEntry';
+import OrderEntryPage from '../OrderEntryPage';
 
 /** Day 5, Part C — Jeni's order entry (board 6) on the widened on-behalf
  * path: a reorder copies the people, the ship-to and the lines with the
@@ -17,7 +18,7 @@ const past = {
   for_whom: { name: 'Sam Front', title: 'Front desk', email: null, phone: null },
   line_items: [{ id: 'l1', product_id: 'p-bc', product_name: 'Business cards, 3.5 x 2', quantity: 2, pack_size: 250, unit_price: 62, line_total: 124 }],
 };
-const createOrderOnBehalf = vi.fn((_request: unknown) => Promise.resolve({ id: 'o-new', order_number: 'T-10443' }));
+const createOrderOnBehalf = vi.fn(() => Promise.resolve({ id: 'o-new', order_number: 'T-10443' }));
 vi.mock('../../api/orders', () => ({
   getPrinterOrder: vi.fn(() => Promise.resolve(past)),
   createOrderOnBehalf: (...args: unknown[]) => createOrderOnBehalf(...(args as [])),
@@ -39,7 +40,7 @@ describe('Order entry, the reorder', () => {
     expect((screen.getByLabelText("Hotel's PO (if they gave one)") as HTMLInputElement).value).toBe('');
     await userEvent.click(screen.getByTestId('save-order'));
     await waitFor(() => expect(createOrderOnBehalf).toHaveBeenCalledTimes(1));
-    const sent = createOrderOnBehalf.mock.calls[0][0] as Record<string, unknown>;
+    const [sent] = createOrderOnBehalf.mock.calls[0] as unknown as [Record<string, unknown>];
     expect(sent.reordered_from_order_id).toBe('o-10391');
     expect(sent.needed_by).toBeNull();
     expect(sent.ordering_contact).toEqual({ name: 'Pat Buyer', title: 'GM', email: 'pat@example.com', phone: '404-555-0100' });
