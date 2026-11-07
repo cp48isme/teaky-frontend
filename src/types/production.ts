@@ -176,3 +176,59 @@ export interface ProductionSettings {
   shop_name: string;
   timezone: string;
 }
+
+/** Day 5 (7 Nov 2026), Part B — the station view (canvas board 3). */
+export interface RouteStep {
+  id: string;
+  production_unit_id: string;
+  position: number;
+  name: string;
+  owner_kind: 'station' | 'vendor';
+  owner_id: string | null;
+  state: 'pending' | 'at' | 'done' | 'skipped';
+  entered_at: string | null;
+  left_at: string | null;
+  note: string | null;
+}
+
+export interface StationView {
+  unit_id: string;
+  batch_number: number;
+  stock: string | null;
+  docket_number: string | null;
+  steps: RouteStep[];
+  expected: RouteStep | null;
+  expected_scan: 'arrived' | 'done' | null;
+  held: boolean;
+}
+
+export interface StationScan {
+  at: string;
+  scan: 'arrived' | 'done' | 'refused' | 'hold';
+  unit_id: string;
+  batch_number: number | null;
+  position: number | null;
+  step: string | null;
+  scanned_by: string;
+  station: string;
+  detail: string;
+}
+
+export interface ScanResult {
+  unit_id: string;
+  batch_number: number;
+  step: RouteStep;
+  scanned_at: string;
+  scanned_by: string;
+  station: string;
+  next_expected: RouteStep | null;
+}
+
+export interface StationHoldResult {
+  unit_id: string;
+  batch_number: number;
+  hold_id: string;
+  step: RouteStep | null;
+  opened_by: string;
+  detail: string;
+}
