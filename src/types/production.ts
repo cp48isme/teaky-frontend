@@ -19,6 +19,8 @@ export interface BatchSummary {
   used: number;
   capacity: number;
   blanks: number;
+  /** Andrew, 6 Nov 2026: a half batch is 12 slots at 125 sheets. */
+  half?: boolean;
   full: boolean;
   orders: number;
   lines: number;
@@ -70,6 +72,8 @@ export interface PushOutPreview {
   used: number;
   capacity: number;
   blanks: number;
+  half?: boolean;
+  sheets_per_run?: number;
   orders: number;
   lines: number;
   docket_send_enabled: boolean;
