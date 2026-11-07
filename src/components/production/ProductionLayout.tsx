@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { NavLink } from 'react-router-dom';
 
-/** The production side's shell (canvas boards 1–2, 5 Nov 2026): the
+/** The production side's shell (canvas boards 1–5, 5–6 Nov 2026): the
  * co-branded header (Single Source, powered by Teaky) and the teak sidebar
  * with the production vocabulary — orders, batches, held, products, floor. */
 
@@ -13,8 +13,8 @@ const STEM = '#5d4037';
 const NAV: { to: string; label: string; built: boolean }[] = [
   { to: '/production/orders', label: 'All Channel Orders', built: true },
   { to: '/production/batches', label: 'Batches', built: true },
-  { to: '/production/held', label: 'Held', built: false },
-  { to: '/production/products', label: 'Products', built: false },
+  { to: '/production/held', label: 'Held', built: true },
+  { to: '/production/products', label: 'Products', built: true },
   { to: '/production/floor', label: 'Floor', built: false },
 ];
 
