@@ -15,7 +15,7 @@ const NAV: { to: string; label: string; built: boolean }[] = [
   { to: '/production/batches', label: 'Batches', built: true },
   { to: '/production/held', label: 'Held', built: true },
   { to: '/production/products', label: 'Products', built: true },
-  { to: '/production/floor', label: 'Floor', built: false },
+  { to: '/production/floor', label: 'Floor', built: true },
 ];
 
 export default function ProductionLayout({ children, footnote }: { children: ReactNode; footnote?: string }) {

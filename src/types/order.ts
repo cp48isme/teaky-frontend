@@ -78,6 +78,9 @@ export interface Order {
   po_number: string | null;
   /** The buyer's wanted-by date (YYYY-MM-DD), optional; information only. */
   needed_by?: string | null;
+  ordering_contact?: OrderContact | null;
+  for_whom?: OrderContact | null;
+  reordered_from_order_id?: string | null;
   notes: string | null;
   tags: string[];
   /** Where proofs go (the portal's support contact by default) and the buyer's copy. */
@@ -142,6 +145,16 @@ export interface OnBehalfLineItem {
   quantity: number;
   size?: string;
   color?: string;
+  /** Day 5 (7 Nov 2026): the artwork declaration taken from the customer (S88). */
+  artwork_disposition?: 'reuse_unchanged' | 'changes_new_proof' | 'no_artwork';
+}
+
+/** A person on an order (#198, Part B 5 Nov 2026): a name plus title, email, phone. */
+export interface OrderContact {
+  name: string;
+  title?: string | null;
+  email?: string | null;
+  phone?: string | null;
 }
 
 export interface CreateOrderOnBehalfRequest {
@@ -154,6 +167,12 @@ export interface CreateOrderOnBehalfRequest {
   payment_method: "invoice_later" | "stripe";
   po_number?: string;
   notes?: string;
+  /** Day 5: the widened on-behalf path (#198). needed_by is never copied on a reorder. */
+  needed_by?: string | null;
+  channel?: 'standard' | 'managed';
+  ordering_contact?: OrderContact | null;
+  for_whom?: OrderContact | null;
+  reordered_from_order_id?: string | null;
 }
 
 export interface LinkDocketManagerOrderRequest {

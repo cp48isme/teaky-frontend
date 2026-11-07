@@ -11,6 +11,7 @@ import BatchesPage from './pages/production/BatchesPage';
 import PushOutConfirmPage from './pages/production/PushOutConfirmPage';
 import HeldPage from './pages/production/HeldPage';
 import ProductsPage from './pages/production/ProductsPage';
+import FloorPage from './pages/production/FloorPage';
 import PortalLayout from './components/layout/PortalLayout';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
@@ -27,6 +28,7 @@ import ProductRepricePage from './pages/ProductRepricePage';
 import PrinterOrdersPage from './pages/PrinterOrdersPage';
 import PrinterOrderDetailPage from './pages/PrinterOrderDetailPage';
 import NewOrderOnBehalfPage from './pages/NewOrderOnBehalfPage';
+import OrderEntryPage from './pages/OrderEntryPage';
 import AnalyticsPage from './pages/AnalyticsPage';
 import AgentControlCenterPage from './pages/AgentControlCenterPage';
 import AgentTaskDetailPage from './pages/AgentTaskDetailPage';
@@ -181,6 +183,14 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/production/floor"
+            element={
+              <ProtectedRoute>
+                <FloorPage />
+              </ProtectedRoute>
+            }
+          />
           {/* Printer admin order routes */}
           <Route
             path="/orders"
@@ -198,6 +208,16 @@ function App() {
               <ProtectedRoute>
                 <AppLayout>
                   <NewOrderOnBehalfPage />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/orders/entry"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <OrderEntryPage />
                 </AppLayout>
               </ProtectedRoute>
             }

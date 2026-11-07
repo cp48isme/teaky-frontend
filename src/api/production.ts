@@ -1,5 +1,9 @@
 import { apiRequest } from './client';
 import type {
+  ScanResult,
+  StationHoldResult,
+  StationScan,
+  StationView,
   BatchSummary,
   ProductionSettings,
   PushOutPreview,
@@ -78,4 +82,36 @@ export async function updateProductionSettings(settings: ProductionSettings): Pr
 /** "fetch now" on Held: the manual pull (the switch stays off). */
 export async function pullTaylorNow(): Promise<unknown> {
   return apiRequest<unknown>('/intake/taylor/pull-now', { method: 'POST' });
+}
+
+/** Day 5, Part B — the station view. The scanned text is the unit id (the
+ * job ticket's barcode is Code 128 of the unit id only). */
+export async function getStationView(unitId: string): Promise<StationView> {
+  return apiRequest<StationView>(`/release-units/${encodeURIComponent(unitId)}/station`);
+}
+
+export async function listStationScans(station: string): Promise<StationScan[]> {
+  const q = station ? `?station=${encodeURIComponent(station)}` : '';
+  return apiRequest<StationScan[]>(`/production/floor/scans${q}`);
+}
+
+export async function scanArrived(unitId: string, position: number, scannedBy: string, station: string): Promise<ScanResult> {
+  return apiRequest<ScanResult>(`/release-units/${unitId}/steps/${position}/arrived`, {
+    method: 'POST',
+    body: JSON.stringify({ scanned_by: scannedBy, station }),
+  });
+}
+
+export async function scanDone(unitId: string, position: number, scannedBy: string, station: string): Promise<ScanResult> {
+  return apiRequest<ScanResult>(`/release-units/${unitId}/steps/${position}/done`, {
+    method: 'POST',
+    body: JSON.stringify({ scanned_by: scannedBy, station }),
+  });
+}
+
+export async function holdFromStation(unitId: string, position: number, scannedBy: string, station: string, note: string): Promise<StationHoldResult> {
+  return apiRequest<StationHoldResult>(`/release-units/${unitId}/steps/${position}/hold`, {
+    method: 'POST',
+    body: JSON.stringify({ scanned_by: scannedBy, station, note }),
+  });
 }
