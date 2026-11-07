@@ -49,6 +49,22 @@ export async function clearUnitHold(
   );
 }
 
+/** Held's one-time split (day 4, 7 Nov 2026): a mixed-stock or over-capacity
+ * hold answered "split this order once"; the shop rule is untouched. */
+export async function splitHoldOnce(
+  unitId: string,
+  holdId: string,
+  resolution: HoldResolution,
+): Promise<ReleaseUnit> {
+  return apiRequest<ReleaseUnit>(
+    `/release-units/${unitId}/holds/${holdId}/split`,
+    {
+      method: "POST",
+      body: JSON.stringify(resolution),
+    },
+  );
+}
+
 export async function cancelHeldUnits(
   orderId: string,
   reason: string,
