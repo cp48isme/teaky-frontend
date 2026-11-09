@@ -14,7 +14,7 @@ function entry(reason: string, extra: Partial<HeldQueueEntry> = {}): HeldQueueEn
   };
 }
 
-const taylorHeld: TaylorPoolLine = { id: 't1', po: 'W636301', line_no: 1, product: 'BB-STD-BC', quantity: 1, pack: 250, cards: 250, source_created_at: '2026-11-06T09:00:00Z', received_at: '2026-11-06T09:12:00Z', art_state: 'hold', art_error: '404 on the artwork link', held_by: [], stock: '120#' };
+const taylorHeld: TaylorPoolLine = { id: 't1', po: 'W636301', line_no: 1, product: 'BB-STD-BC', quantity: 1, pack: 250, cards: 250, source_created_at: '2026-11-06T09:00:00Z', received_at: '2026-11-06T09:12:00Z', art_state: 'hold', art_error: '404 on the artwork link', held_by: [], stock: '120#', line_item_id: null, order_number: null, canonical_state: 'pending', canonical_error: null };
 const taylorFine: TaylorPoolLine = { ...taylorHeld, id: 't2', art_state: 'fetched', art_error: null };
 
 describe('the two lists of Held', () => {

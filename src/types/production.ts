@@ -112,6 +112,11 @@ export interface TaylorPoolLine {
   art_error: string | null;
   held_by: string[];
   stock: string;
+  // One pool (9 Nov 2026): the canonical line this raw row became.
+  line_item_id: string | null;
+  order_number: string | null;
+  canonical_state: 'pending' | 'written' | 'blocked';
+  canonical_error: string | null;
 }
 
 /** The spec library (board 5): where a product's stock came from. */
