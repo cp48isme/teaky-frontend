@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { listPrinterOrders } from '../../api/orders';
 import { getProductionSettings, getSpecSuggestion, listTaylorPool, updateProductionSettings } from '../../api/production';
-import { clearUnitHold, listHeldQueue } from '../../api/releaseUnits';
+import { clearUnitHold, listHeldQueue, splitHoldOnce } from '../../api/releaseUnits';
 import ProductionLayout, { colors } from '../../components/production/ProductionLayout';
 import { ageText } from '../../lib/production';
 import { onePressResolution, splitHeld, stockChoices, type HeldRow } from '../../lib/held';
@@ -97,6 +97,7 @@ function DecisionCard({
   settings,
   onAnswer,
   onAlwaysSplit,
+  onSplitOnce,
   busy,
 }: {
   row: HeldRow;
@@ -104,6 +105,7 @@ function DecisionCard({
   settings: ProductionSettings | null;
   onAnswer: (stock: string, evidence: StockEvidence[]) => void;
   onAlwaysSplit: (on: boolean) => void;
+  onSplitOnce: () => void;
   busy: boolean;
 }) {
   const evidence = useMemo(() => {
@@ -156,7 +158,7 @@ function DecisionCard({
           </div>
           {row.detail ? <div style={{ ...mono, color: '#4b5563' }}>{row.detail}</div> : null}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center' }}>
-            <button type="button" disabled title="The planner's one-time split is not wired yet (bead l39y); the shop rule below is" style={{ ...btn, opacity: 0.6 }}>
+            <button type="button" disabled={busy || !row.unitId || !row.holdId} onClick={onSplitOnce} style={primary} data-testid="split-once" title="This order only; the shop rule below stays as it is">
               {row.reason === 'stock_mixed' ? 'Split by stock' : 'Own batch + the remainder into the open one'}
             </button>
             <button type="button" disabled={busy} style={btn} title="Leaves it held; nothing changes">
@@ -226,6 +228,21 @@ export default function HeldPage() {
     }
   }
 
+  async function splitOnce(row: HeldRow) {
+    if (!row.unitId || !row.holdId) return;
+    setBusy(row.key);
+    setNotice(null);
+    try {
+      await splitHoldOnce(row.unitId, row.holdId, { evidence_kind: 'other', evidence_note: `Split once from Held — ${row.reason === 'stock_mixed' ? 'one batch per stock' : 'own batch plus the remainder'}; the shop rule unchanged`, answer: 'split once' });
+      setNotice(`${row.order}: split once — its lines are placed; the shop rule is unchanged.`);
+      await load();
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'The split was refused');
+    } finally {
+      setBusy(null);
+    }
+  }
+
   async function alwaysSplit(on: boolean) {
     if (!settings) return;
     setBusy('settings');
@@ -278,7 +295,7 @@ export default function HeldPage() {
         </div>
         {lists.needsDecision.length ? (
           lists.needsDecision.map((row) => (
-            <DecisionCard key={row.key} row={row} suggestion={row.productKey ? suggestions[row.productKey] ?? null : null} settings={settings} busy={busy === row.key || busy === 'settings'} onAnswer={(stock, evidence) => answer(row, stock, evidence)} onAlwaysSplit={alwaysSplit} />
+            <DecisionCard key={row.key} row={row} suggestion={row.productKey ? suggestions[row.productKey] ?? null : null} settings={settings} busy={busy === row.key || busy === 'settings'} onAnswer={(stock, evidence) => answer(row, stock, evidence)} onAlwaysSplit={alwaysSplit} onSplitOnce={() => splitOnce(row)} />
           ))
         ) : (
           <div style={{ color: '#4b5563' }}>Nothing needs a decision.</div>
