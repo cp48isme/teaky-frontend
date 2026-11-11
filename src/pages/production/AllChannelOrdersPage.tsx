@@ -125,8 +125,13 @@ export function rowsFromTaylor(lines: TaylorPoolLine[], now: Date): OrderRow[] {
     pack: l.pack,
     slots: slotsFor(l.cards),
     stock: l.stock || '',
-    status: l.art_state === 'hold' ? `Held · art: ${l.art_error ?? 'missing'}` : 'Waiting for a batch',
-    statusKind: l.art_state === 'hold' ? 'held' : 'unbatched',
+    status:
+      l.canonical_state === 'blocked'
+        ? `Held · ${l.canonical_error ?? 'needs a person'}`
+        : l.art_state === 'hold'
+          ? `Held · art: ${l.art_error ?? 'missing'}`
+          : 'Waiting for a batch',
+    statusKind: l.canonical_state === 'blocked' || l.art_state === 'hold' ? 'held' : 'unbatched',
     batch: null,
     batchUnitId: null,
   }));
@@ -153,7 +158,13 @@ export default function AllChannelOrdersPage() {
   }, []);
 
   const now = useMemo(() => new Date(), [orders, taylor]);
-  const all = useMemo(() => [...rowsFromOrders(orders, batches, now), ...rowsFromTaylor(taylor, now)], [orders, batches, taylor, now]);
+  // One pool (9 Nov 2026): a Taylor PO is an order (channel 'taylor') whose
+  // lines are pool lines, so every row comes from the orders; the raw Taylor
+  // record is read only for the latency tile and for lines not yet written.
+  const all = useMemo(
+    () => [...rowsFromOrders(orders, batches, now), ...rowsFromTaylor(taylor.filter((l) => l.canonical_state !== 'written'), now)],
+    [orders, batches, taylor, now],
+  );
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return all.filter((r) => {
@@ -270,7 +281,7 @@ export default function AllChannelOrdersPage() {
       </div>
       <div style={{ fontSize: 13, color: '#4b5563' }}>
         Every row is a line, whatever channel it came from. A line's slots are qty × pack ÷ 250. "Waiting" means its batch is open and not yet full; age counts from when the
-        customer placed the order, not from when we received it. PageDNA and email lines have no source yet; the Taylor lines are the pool's.
+        customer placed the order, not from when we received it. PageDNA and email lines have no source yet; a Taylor PO is an order whose lines are pool lines, and a raw Taylor line appears here only until it is written (or while it is blocked).
       </div>
     </ProductionLayout>
   );

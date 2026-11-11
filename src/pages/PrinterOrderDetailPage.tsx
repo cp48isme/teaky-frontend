@@ -761,14 +761,21 @@ export default function PrinterOrderDetailPage() {
                 )}
               </div>
               <p className="text-sm font-medium">
-                ${Number(item.line_total).toFixed(2)}
+                {item.line_total == null || item.unpriced ? 'unpriced' : `$${Number(item.line_total).toFixed(2)}`}
               </p>
             </div>
           ))}
         </div>
         <div className="mt-3 border-t pt-3 space-y-1 text-sm">
           <div className="flex justify-between text-gray-600">
-            <span>Subtotal</span>
+            <span>
+              Subtotal
+              {(order.unpriced_lines ?? 0) > 0 && (
+                <span className="ml-2 text-xs text-amber-700">
+                  excludes {order.unpriced_lines} unpriced line{order.unpriced_lines === 1 ? '' : 's'}
+                </span>
+              )}
+            </span>
             <span>${Number(order.subtotal).toFixed(2)}</span>
           </div>
           <div className="flex justify-between text-gray-600">

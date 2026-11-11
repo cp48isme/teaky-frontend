@@ -35,8 +35,10 @@ export interface LineItem {
   size: string | null;
   price_option?: string | null;
   color: string | null;
-  unit_price: number;
-  line_total: number;
+  /** Null with unpriced set when the channel sent no price (ruling 9 Nov 2026): never 0.00. */
+  unit_price: number | null;
+  line_total: number | null;
+  unpriced?: boolean;
   needs_proof: boolean;
   proof_status: string | null;
   /** The buyer's artwork declaration the line was placed with (S88). */
@@ -87,6 +89,8 @@ export interface Order {
   proof_email?: string | null;
   proof_cc_email?: string | null;
   line_items: LineItem[];
+  /** Lines with no price (ruling 9 Nov 2026); the totals exclude them. */
+  unpriced_lines?: number;
   placed_by_id: string | null;
   placed_at: string;
   approved_at: string | null;
