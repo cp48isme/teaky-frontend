@@ -1,3 +1,13 @@
+# teaky-frontend
+
+The Teaky print portal's web app (React + TypeScript + Vite). Repository: **TeakyDev/teaky-frontend** (transferred from `cp48isme/teaky-frontend`; the old name redirects).
+
+**How it reaches production.** There is no separate frontend deploy. The backend's image build (`TeakyDev/printer-agent2`, `.github/workflows/ci-cd.yml`, job "Build image", step "Checkout frontend repository") checks this repository out at `main`, runs `npm ci && npm run build`, and copies `dist/` into the image, which nginx serves at `/`. So: a change is live only after (1) it is merged to `main` here, (2) a backend push to `main` builds an image, (3) the operator dispatches that image. The build's log line "Checkout frontend repository" names the commit that shipped.
+
+**Checks.** `.github/workflows/ci.yml` runs `lint-and-build` (type check + build) on every push and pull request to `main`; the branch ruleset requires that check, a pull request, no force pushes and no deletions.
+
+---
+
 # React + TypeScript + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
