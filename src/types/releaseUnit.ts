@@ -108,12 +108,16 @@ export interface QueueHold {
 
 export interface HeldQueueEntry {
   unit_id: string;
+  /** The unit's scan code (dispatch 16 Nov 2026, item 5). */
+  scan_code?: string;
   kind: ReleaseUnitKind;
   source_order_id: string | null;
   order_number: string | null;
   reference: string;
   release_state: ReleaseState | null;
   age_seconds: number;
+  /** The unit's business entity code, or null (13 Nov 2026 evening, C). */
+  business_entity?: string | null;
   open_holds: QueueHold[];
 }
 

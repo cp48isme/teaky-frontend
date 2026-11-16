@@ -6,6 +6,7 @@ import ProductionLayout from '../../components/production/ProductionLayout';
 import { ageSeconds, ageText, nextSort, receivedText, slotsFor, sortRows, type SortState } from '../../lib/production';
 import type { Order } from '../../types/order';
 import type { BatchSummary, TaylorPoolLine } from '../../types/production';
+import { isShadowReader } from '../../lib/roles';
 
 /** Board 1: every line from every channel in one list, the moment it is
  * placed. Rows come from the RGI portal's orders and the Taylor pool; PageDNA
@@ -137,7 +138,7 @@ export function rowsFromTaylor(lines: TaylorPoolLine[], now: Date): OrderRow[] {
   }));
 }
 
-export default function AllChannelOrdersPage() {
+export default function AllChannelOrdersPage({ readOnly = isShadowReader() }: { readOnly?: boolean } = {}) {
   const [orders, setOrders] = useState<Order[]>([]);
   const [batches, setBatches] = useState<BatchSummary[]>([]);
   const [taylor, setTaylor] = useState<TaylorPoolLine[]>([]);
@@ -148,22 +149,23 @@ export default function AllChannelOrdersPage() {
   const [search, setSearch] = useState('');
 
   useEffect(() => {
-    Promise.all([listPrinterOrders(), listBatches(), listTaylorPool().catch(() => [] as TaylorPoolLine[])])
+    // A shadow_reader (dispatch 16 Nov 2026, item 5) reads the pool and the batches, not the orders list.
+    Promise.all([readOnly ? Promise.resolve([] as Order[]) : listPrinterOrders(), listBatches(), listTaylorPool().catch(() => [] as TaylorPoolLine[])])
       .then(([o, b, t]) => {
         setOrders(o);
         setBatches(b);
         setTaylor(t);
       })
       .catch((e: unknown) => setError(e instanceof Error ? e.message : 'Could not load the orders'));
-  }, []);
+  }, [readOnly]);
 
   const now = useMemo(() => new Date(), [orders, taylor]);
   // One pool (9 Nov 2026): a Taylor PO is an order (channel 'taylor') whose
   // lines are pool lines, so every row comes from the orders; the raw Taylor
   // record is read only for the latency tile and for lines not yet written.
   const all = useMemo(
-    () => [...rowsFromOrders(orders, batches, now), ...rowsFromTaylor(taylor.filter((l) => l.canonical_state !== 'written'), now)],
-    [orders, batches, taylor, now],
+    () => [...rowsFromOrders(orders, batches, now), ...rowsFromTaylor(readOnly ? taylor : taylor.filter((l) => l.canonical_state !== 'written'), now)],
+    [orders, batches, taylor, now, readOnly],
   );
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -187,7 +189,7 @@ export default function AllChannelOrdersPage() {
   const channels = new Set(all.map((r) => r.channel)).size;
 
   return (
-    <ProductionLayout>
+    <ProductionLayout readOnly={readOnly}>
       <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: 16 }}>
         <h1 style={{ margin: 0, fontSize: 24, fontWeight: 600 }}>All Channel Orders</h1>
         <span style={{ color: '#4b5563', fontSize: 14 }}>

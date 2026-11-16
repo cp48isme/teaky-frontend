@@ -14,6 +14,10 @@ export interface FillCandidateSummary {
 export interface BatchSummary {
   unit_id: string;
   batch_number: number;
+  /** The unit's scan code (ruling 14 Nov 2026): what the ticket's barcode encodes. */
+  scan_code?: string;
+  /** Business entity codes present (13 Nov 2026 evening, C). */
+  business_entities?: string[];
   stock: string;
   channel: string;
   used: number;

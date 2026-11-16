@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { NavLink } from 'react-router-dom';
+import { isShadowReader } from '../../lib/roles';
 
 /** The production side's shell (canvas boards 1–5, 5–6 Nov 2026): the
  * co-branded header (Single Source, powered by Teaky) and the teak sidebar
@@ -18,7 +19,13 @@ const NAV: { to: string; label: string; built: boolean }[] = [
   { to: '/production/floor', label: 'Floor', built: true },
 ];
 
-export default function ProductionLayout({ children, footnote }: { children: ReactNode; footnote?: string }) {
+/** The read-only shell (dispatch 16 Nov 2026, item 5): a shadow_reader sees
+ * All Channel Orders, Batches and Held — what the three routes it may read
+ * return — and no action anywhere. */
+const READ_ONLY_NAV = new Set(['/production/orders', '/production/batches', '/production/held']);
+
+export default function ProductionLayout({ children, footnote, readOnly = isShadowReader() }: { children: ReactNode; footnote?: string; readOnly?: boolean }) {
+  const nav = readOnly ? NAV.filter((item) => READ_ONLY_NAV.has(item.to)) : NAV;
   return (
     <div style={{ minHeight: '100vh', background: '#f4f5f7', color: INK, fontFamily: "'DM Sans', system-ui, sans-serif" }}>
       <header
@@ -35,7 +42,7 @@ export default function ProductionLayout({ children, footnote }: { children: Rea
           style={{ flex: '0 0 200px', background: TEAK, color: '#f6ede0', padding: '24px 0', display: 'flex', flexDirection: 'column', gap: 2 }}
         >
           <div style={{ padding: '0 20px 20px', fontWeight: 600, color: '#fff', fontSize: 15 }}>Single Source US</div>
-          {NAV.map((item) =>
+          {nav.map((item) =>
             item.built ? (
               <NavLink
                 key={item.to}
@@ -57,6 +64,11 @@ export default function ProductionLayout({ children, footnote }: { children: Rea
               </span>
             ),
           )}
+          {readOnly ? (
+            <div data-testid="read-only-note" style={{ padding: '10px 20px', color: '#f0e2cf', fontSize: 13 }}>
+              Read-only view
+            </div>
+          ) : null}
           {footnote ? <div style={{ padding: '10px 20px', color: '#f0e2cf', fontSize: 13, marginTop: 'auto' }}>{footnote}</div> : null}
         </nav>
         <main style={{ flex: '999 1 560px', minWidth: 0, padding: '28px 32px', display: 'flex', flexDirection: 'column', gap: 20 }}>{children}</main>
