@@ -23,3 +23,26 @@ export function isShadowReader(roles: string[] = currentRoles()): boolean {
 
 /** Roles that may act on the production screens. */
 const PRODUCTION_ROLES = new Set(['super_admin', 'printer_admin', 'sales_rep', 'sales_team_lead', 'store_creator']);
+
+/** Buyer roles land on the portal they were invited to; everyone else — the
+ * shop's staff and the read-only shadow_reader — lands on the production
+ * screens. Ruling 17 Nov 2026 (BLOCKS): Andrew's shadow_reader invitation
+ * landed him on the Sandbox Hotel ordering page because the accept page
+ * routed by the invitation's portal, not its role. The sign-in path
+ * (usePostLoginRedirect) already routes a shadow_reader to /production/batches;
+ * this is the one rule for both. */
+const BUYER_ROLES = new Set(['end_user', 'portal_admin', 'sub_portal_admin']);
+
+export const PRODUCTION_LANDING = '/production/batches';
+
+export function isBuyerRole(role: string | null | undefined): boolean {
+  return BUYER_ROLES.has((role ?? '').trim().toLowerCase());
+}
+
+/** Where an accepted invitation lands: a buyer on the invited portal (the
+ * site root when the invitation names none); staff and shadow_reader on the
+ * production screens, portal or no portal. */
+export function landingForInvitation(role: string | null | undefined, portalSlug: string | null | undefined): string {
+  if (isBuyerRole(role)) return portalSlug ? `/p/${portalSlug}` : '/';
+  return PRODUCTION_LANDING;
+}
