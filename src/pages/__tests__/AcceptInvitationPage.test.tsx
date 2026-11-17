@@ -23,6 +23,7 @@ vi.mock('../../api/team', () => ({
 vi.mock('../../lib/portalSession', () => ({ rememberPortal: vi.fn(), rememberSignedInEmail: vi.fn() }));
 import { getInvitationPreview, registerFromInvitation, acceptInvitation } from '../../api/team';
 import { switchOrganization } from '../../api/client';
+import { rememberPortal } from '../../lib/portalSession';
 
 const preview = {
   invited_email: 'frontdesk@example.com',
@@ -62,6 +63,48 @@ describe('AcceptInvitationPage', () => {
     await user.click(screen.getByRole('button', { name: 'Set password and go to The Raphael Hotel' }));
     await waitFor(() => expect(registerFromInvitation).toHaveBeenCalledWith('tok-123', 'Walkthrough-2026!x', ''));
     expect(mockNavigate).toHaveBeenCalledWith('/p/raphael', { replace: true });
+  });
+
+  // Ruling 17 Nov 2026 (BLOCKS): the landing is the role's, not the portal's.
+  it('lands a shadow_reader on the production screens, not the portal, and remembers no portal', async () => {
+    authed = false;
+    vi.mocked(getInvitationPreview).mockResolvedValue({
+      ...preview,
+      role: 'shadow_reader',
+      organization_name: 'Teaky Sandbox (not a customer)',
+      portal_slug: 'sandbox-hotel',
+      portal_name: 'Sandbox Hotel (test portal)',
+    });
+    const user = userEvent.setup();
+    renderPage();
+    await screen.findByLabelText('Password');
+    await user.type(screen.getByLabelText('Password'), 'Walkthrough-2026!x');
+    await user.click(screen.getByRole('button', { name: /Set password/ }));
+    await waitFor(() => expect(registerFromInvitation).toHaveBeenCalledWith('tok-123', 'Walkthrough-2026!x', ''));
+    expect(mockNavigate).toHaveBeenCalledWith('/production/batches', { replace: true });
+    expect(mockNavigate).not.toHaveBeenCalledWith('/p/sandbox-hotel', { replace: true });
+    expect(rememberPortal).not.toHaveBeenCalled();
+  });
+
+  it('lands invited staff (printer_admin with a portal attached) on the production screens too', async () => {
+    authed = true;
+    vi.mocked(getInvitationPreview).mockResolvedValue({ ...preview, role: 'printer_admin' });
+    const user = userEvent.setup();
+    renderPage();
+    await user.click(await screen.findByRole('button', { name: 'Accept invitation' }));
+    await waitFor(() => expect(acceptInvitation).toHaveBeenCalledWith('tok-123'));
+    expect(mockNavigate).toHaveBeenCalledWith('/production/batches', { replace: true });
+    expect(rememberPortal).not.toHaveBeenCalled();
+  });
+
+  it('still lands a buyer on the invited portal and remembers it', async () => {
+    authed = true;
+    vi.mocked(getInvitationPreview).mockResolvedValue({ ...preview, role: 'portal_admin' });
+    const user = userEvent.setup();
+    renderPage();
+    await user.click(await screen.findByRole('button', { name: 'Accept invitation' }));
+    await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/p/raphael', { replace: true }));
+    expect(rememberPortal).toHaveBeenCalledWith('raphael');
   });
 
   it('moves a signed-in visitor into the inviting organisation and lands on the portal', async () => {

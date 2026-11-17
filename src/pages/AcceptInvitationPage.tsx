@@ -4,6 +4,7 @@ import { isAuthenticated, switchOrganization } from '../api/client';
 import { acceptInvitation, getInvitationPreview, registerFromInvitation } from '../api/team';
 import type { InvitationPreview } from '../types/team';
 import { rememberPortal, rememberSignedInEmail } from '../lib/portalSession';
+import { isBuyerRole, landingForInvitation } from '../lib/roles';
 import {
   forgetInviteToken,
   inviteFragmentPath,
@@ -49,12 +50,21 @@ export default function AcceptInvitationPage() {
       .finally(() => setLoading(false));
   }, [token, pathToken, hash]);
 
-  const landing = preview?.portal_slug ? `/p/${preview.portal_slug}` : '/';
-  const destinationName = preview?.portal_name ?? preview?.organization_name ?? '';
+  // By role, not by portal (ruling 17 Nov 2026): a buyer lands on the invited
+  // portal; staff and the shadow_reader land on the production screens even
+  // when the invitation names a portal.
+  const landing = landingForInvitation(preview?.role, preview?.portal_slug);
+  // A buyer is going to the portal; staff and the shadow_reader are going to
+  // the shop's production screens, so the name and the verb follow the role.
+  const buyer = isBuyerRole(preview?.role);
+  const destinationName = (buyer ? preview?.portal_name : null) ?? preview?.organization_name ?? '';
+  const purpose = buyer ? `order for ${destinationName}` : `work with ${destinationName}`;
 
   const finish = () => {
     forgetInviteToken();
-    if (preview?.portal_slug) rememberPortal(preview.portal_slug);
+    // Only a buyer's portal is remembered for the next sign-in; a staff or
+    // shadow_reader sign-in must not be pulled back to the storefront.
+    if (preview?.portal_slug && isBuyerRole(preview.role)) rememberPortal(preview.portal_slug);
     navigate(landing, { replace: true });
   };
 
@@ -120,7 +130,7 @@ export default function AcceptInvitationPage() {
         <p className="mt-3 text-sm text-gray-600">
           {preview.state === 'accepted' ? (
             <>
-              Sign in to order for {destinationName}.{' '}
+              Sign in to {purpose}.{' '}
               <Link to={`/login?next=${encodeURIComponent(landing)}`} className="font-medium text-teak-dark">
                 Sign in
               </Link>
@@ -142,7 +152,7 @@ export default function AcceptInvitationPage() {
       <>
         <h1 className="text-xl font-bold text-gray-900">You're invited to {destinationName}</h1>
         <p className="mt-3 text-sm text-gray-600">
-          Accept to order for {destinationName} with the account you're signed in as.
+          Accept to {purpose} with the account you're signed in as.
         </p>
         {errorBox}
         <button
