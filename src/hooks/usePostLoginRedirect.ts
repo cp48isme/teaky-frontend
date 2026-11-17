@@ -5,6 +5,7 @@ import { listMyPortals, type MyPortal } from '../api/auth';
 import { getMyOrganization } from '../api/organizations';
 import { listPortals } from '../api/portals';
 import { isBuyerUser, isPrinterUser, lastPortalPath, safeNextPath } from '../lib/portalSession';
+import { isShadowReader } from '../lib/roles';
 
 interface TokenClaims {
   org: string | null;
@@ -85,6 +86,11 @@ export function usePostLoginRedirect() {
       }
 
       const roles = claims?.roles ?? [];
+      // A shadow_reader (dispatch 16 Nov 2026, item 5) reads the production screens and nothing else.
+      if (isShadowReader(roles)) {
+        navigate('/production/batches');
+        return;
+      }
       if (isBuyerUser(roles) || !isPrinterUser(roles)) {
         navigate(await buyerDestination());
         return;

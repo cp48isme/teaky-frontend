@@ -4,6 +4,7 @@ import { listBatches, markHalfBatch } from '../../api/production';
 import ProductionLayout, { colors } from '../../components/production/ProductionLayout';
 import { ageText, slotStrip } from '../../lib/production';
 import { channelLabel } from './AllChannelOrdersPage';
+import { isShadowReader } from '../../lib/roles';
 import type { BatchSummary } from '../../types/production';
 
 /** Board 2: a batch is 24 slots on one stock. The strip shows what is
@@ -40,7 +41,7 @@ function stateText(b: BatchSummary): { text: string; color?: string } {
   return { text: `${b.blanks} blank if pushed out now`, color: '#7a5a12' };
 }
 
-export default function BatchesPage() {
+export default function BatchesPage({ readOnly = isShadowReader() }: { readOnly?: boolean } = {}) {
   const [batches, setBatches] = useState<BatchSummary[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [show, setShow] = useState('Open');
@@ -68,7 +69,7 @@ export default function BatchesPage() {
   const [first, ...rest] = shown;
 
   return (
-    <ProductionLayout>
+    <ProductionLayout readOnly={readOnly}>
       <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: 16 }}>
         <h1 style={{ margin: 0, fontSize: 24, fontWeight: 600 }}>Batches</h1>
         <span style={{ color: '#4b5563', fontSize: 14 }}>
@@ -84,11 +85,11 @@ export default function BatchesPage() {
         </label>
       </div>
       {error ? <div role="alert" style={{ color: '#a3331d' }}>{error}</div> : null}
-      {first ? <BatchCard batch={first} featured onPushOut={() => navigate(`/production/batches/${first.unit_id}/push-out`)} onHalfBatch={() => halfBatch(first)} /> : <div style={{ color: '#4b5563' }}>No batches to show.</div>}
+      {first ? <BatchCard batch={first} featured readOnly={readOnly} onPushOut={() => navigate(`/production/batches/${first.unit_id}/push-out`)} onHalfBatch={() => halfBatch(first)} /> : <div style={{ color: '#4b5563' }}>No batches to show.</div>}
       {rest.length ? (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 16 }}>
           {rest.map((b) => (
-            <BatchCard key={b.unit_id} batch={b} onPushOut={() => navigate(`/production/batches/${b.unit_id}/push-out`)} onHalfBatch={() => halfBatch(b)} />
+            <BatchCard key={b.unit_id} batch={b} readOnly={readOnly} onPushOut={() => navigate(`/production/batches/${b.unit_id}/push-out`)} onHalfBatch={() => halfBatch(b)} />
           ))}
         </div>
       ) : null}
@@ -117,9 +118,9 @@ export function halfBatchOffered(batch: BatchSummary): boolean {
   return !batch.half && !batch.full && !batch.cancelled && !batch.docket_number && batch.release_state !== 'releasing' && batch.release_state !== 'released' && batch.used > 0 && batch.used <= HALF_CAPACITY;
 }
 
-function BatchCard({ batch, featured = false, onPushOut, onHalfBatch }: { batch: BatchSummary; featured?: boolean; onPushOut: () => void; onHalfBatch?: () => void }) {
+function BatchCard({ batch, featured = false, readOnly = false, onPushOut, onHalfBatch }: { batch: BatchSummary; featured?: boolean; readOnly?: boolean; onPushOut: () => void; onHalfBatch?: () => void }) {
   const state = stateText(batch);
-  const pushable = !batch.cancelled && !batch.docket_number && batch.release_state !== 'releasing' && batch.release_state !== 'released' && batch.used > 0;
+  const pushable = !readOnly && !batch.cancelled && !batch.docket_number && batch.release_state !== 'releasing' && batch.release_state !== 'released' && batch.used > 0;
   return (
     <div
       className="card"
@@ -152,16 +153,26 @@ function BatchCard({ batch, featured = false, onPushOut, onHalfBatch }: { batch:
             {batch.oldest_line_age_seconds != null ? `${ageText(batch.oldest_line_age_seconds)} · ${batch.oldest_line_ref ?? ''}` : '—'}
           </div>
         </div>
+        <div>
+          <span style={lbl}>Scan code</span>
+          <div style={{ ...mono, fontSize: 16 }} data-testid="scan-code">{batch.scan_code || '—'}</div>
+        </div>
+        <div>
+          <span style={lbl}>Entity</span>
+          <div style={{ fontSize: 16 }} data-testid="entity">{(batch.business_entities ?? []).join(', ') || '—'}</div>
+        </div>
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-          <button type="button" style={btn} disabled title="Moving orders is not built yet">
-            Move orders…
-          </button>
+          {readOnly ? null : (
+            <button type="button" style={btn} disabled title="Moving orders is not built yet">
+              Move orders…
+            </button>
+          )}
           {pushable ? (
             <button type="button" onClick={onPushOut} style={batch.full ? { ...btn, ...btnPrimary } : btn}>
               {batch.full ? `Push out ${batch.batch_number} →` : `Push out with ${batch.blanks} blank${batch.blanks === 1 ? '' : 's'}…`}
             </button>
           ) : null}
-          {onHalfBatch && halfBatchOffered(batch) ? (
+          {!readOnly && onHalfBatch && halfBatchOffered(batch) ? (
             <button type="button" onClick={onHalfBatch} style={btn} title={`A half batch holds ${HALF_CAPACITY} slots and runs ${HALF_SHEETS} sheets; every order still gets its 250 cards`}>
               Half batch ({HALF_CAPACITY} at {HALF_SHEETS} sheets)…
             </button>
@@ -186,7 +197,7 @@ function BatchCard({ batch, featured = false, onPushOut, onHalfBatch }: { batch:
       ) : batch.blanks > 0 && !batch.docket_number ? (
         <div style={{ fontSize: 13, color: '#4b5563' }}>No waiting order of this stock fits the blanks; they stay blank unless one arrives.</div>
       ) : null}
-      {featured ? (
+      {featured && !readOnly ? (
         <div style={{ fontSize: 13, color: '#4b5563' }}>
           Pushing out writes the art files and the job ticket, creates the Docket order <span style={mono}>BC Batch{batch.stock} {batch.batch_number}</span> and records its number on the batch. You confirm on the next screen; nothing moves until then.
         </div>

@@ -8,6 +8,7 @@ import { onePressResolution, splitHeld, stockChoices, type HeldRow } from '../..
 import type { Order } from '../../types/order';
 import type { ProductionSettings, SpecSuggestion, StockEvidence, TaylorPoolLine } from '../../types/production';
 import type { HeldQueueEntry } from '../../types/releaseUnit';
+import { isShadowReader } from '../../lib/roles';
 
 /** Board 4: Held — the suggestion, one answer. Two lists: "Waiting for a
  * fact" (nobody decides; it clears when the thing arrives) and "Needs a
@@ -25,7 +26,7 @@ function WaitingPill({ on }: { on: HeldRow['waitingOn'] }) {
   return <span style={{ ...pill, background: hot ? '#fdebe6' : '#e9ebef', color: hot ? '#a3331d' : '#3f4854' }}>Waiting on: {on === 'you' ? 'you' : on}</span>;
 }
 
-function FactRow({ row, onFetchNow, fetching }: { row: HeldRow; onFetchNow: () => void; fetching: boolean }) {
+function FactRow({ row, onFetchNow, fetching, readOnly = false }: { row: HeldRow; onFetchNow: () => void; fetching: boolean; readOnly?: boolean }) {
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 3fr) 80px 170px', gap: 16, alignItems: 'baseline', padding: '10px 0', borderBottom: '1px solid #eef0f3' }}>
       <div>
@@ -37,7 +38,7 @@ function FactRow({ row, onFetchNow, fetching }: { row: HeldRow; onFetchNow: () =
       <div style={{ ...mono, color: row.ageSeconds > 2 * 86400 ? '#a3331d' : undefined }}>{ageText(row.ageSeconds)}</div>
       <div style={{ fontSize: 13, color: '#4b5563' }}>
         {row.clears} ·{' '}
-        {row.taylorLineId ? (
+        {readOnly ? null : row.taylorLineId ? (
           <button type="button" onClick={onFetchNow} disabled={fetching} style={{ all: 'unset', color: colors.vein, cursor: 'pointer', textDecoration: 'underline' }}>
             {fetching ? 'fetching…' : 'fetch now'}
           </button>
@@ -177,7 +178,50 @@ function DecisionCard({
   );
 }
 
-export default function HeldPage() {
+/** The shadow_reader's view of the queue itself (dispatch 16 Nov 2026, item 5):
+ * every unit with its scan code, entity and open holds, and the holds by
+ * reason — what GET /release-units/queue returns, nothing added, no action. */
+function ReadOnlyHeld({ entries, byReason }: { entries: HeldQueueEntry[]; byReason: [string, number][] }) {
+  return (
+    <section style={card} aria-labelledby="held-queue" data-testid="read-only-held">
+      <div>
+        <h2 id="held-queue" style={{ margin: 0, fontSize: 17, fontWeight: 600 }}>The queue, as returned</h2>
+        <div style={{ color: '#4b5563', fontSize: 14 }}>
+          {entries.length} unit{entries.length === 1 ? '' : 's'} · holds by reason:{' '}
+          {byReason.length ? byReason.map(([reason, n]) => `${reason} ${n}`).join(' · ') : 'none'}
+        </div>
+      </div>
+      <div style={{ overflowX: 'auto' }}>
+        <table style={{ borderCollapse: 'collapse', width: '100%', fontSize: 14 }}>
+          <thead>
+            <tr>
+              {['Unit', 'Scan code', 'Entity', 'Order', 'State', 'Age', 'Open holds'].map((h) => (
+                <th key={h} style={{ textAlign: 'left', fontSize: 12, color: '#4b5563', padding: '8px 10px', borderBottom: '1px solid #d9dde3', textTransform: 'uppercase', letterSpacing: '.02em' }}>
+                  {h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {entries.map((e) => (
+              <tr key={e.unit_id} data-testid="queue-row">
+                <td style={{ ...mono, padding: '8px 10px', borderBottom: '1px solid #eef0f3' }}>{e.reference}</td>
+                <td style={{ ...mono, padding: '8px 10px', borderBottom: '1px solid #eef0f3' }}>{e.scan_code || '—'}</td>
+                <td style={{ padding: '8px 10px', borderBottom: '1px solid #eef0f3' }}>{e.business_entity ?? '—'}</td>
+                <td style={{ ...mono, padding: '8px 10px', borderBottom: '1px solid #eef0f3' }}>{e.order_number ?? '—'}</td>
+                <td style={{ padding: '8px 10px', borderBottom: '1px solid #eef0f3' }}>{e.release_state ?? 'held'}</td>
+                <td style={{ ...mono, padding: '8px 10px', borderBottom: '1px solid #eef0f3' }}>{ageText(e.age_seconds)}</td>
+                <td style={{ padding: '8px 10px', borderBottom: '1px solid #eef0f3' }}>{e.open_holds.map((h) => h.reason).join(', ') || '—'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
+export default function HeldPage({ readOnly = isShadowReader() }: { readOnly?: boolean } = {}) {
   const [entries, setEntries] = useState<HeldQueueEntry[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [taylor, setTaylor] = useState<TaylorPoolLine[]>([]);
@@ -187,23 +231,27 @@ export default function HeldPage() {
   const [busy, setBusy] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
+  // A shadow_reader (dispatch 16 Nov 2026, item 5) may read the queue, the batches and the pool, nothing else:
+  // the orders list, the settings and the suggestions are not fetched for it, and no action is offered.
   const load = useCallback(async () => {
-    const [q, o, t] = await Promise.all([listHeldQueue(), listPrinterOrders(), listTaylorPool().catch(() => [] as TaylorPoolLine[])]);
+    const [q, o, t] = await Promise.all([listHeldQueue(), readOnly ? Promise.resolve([] as Order[]) : listPrinterOrders(), listTaylorPool().catch(() => [] as TaylorPoolLine[])]);
     setEntries(q);
     setOrders(o);
     setTaylor(t);
-  }, []);
+  }, [readOnly]);
 
   useEffect(() => {
     load().catch((e: unknown) => setError(e instanceof Error ? e.message : 'Could not load the held lines'));
+    if (readOnly) return;
     getProductionSettings()
       .then(setSettings)
       .catch(() => setSettings(null));
-  }, [load]);
+  }, [load, readOnly]);
 
   const lists = useMemo(() => splitHeld(entries, orders, taylor), [entries, orders, taylor]);
 
   useEffect(() => {
+    if (readOnly) return;
     for (const row of lists.needsDecision) {
       if (row.reason === 'stock_unknown' && row.productKey && !(row.productKey in suggestions)) {
         getSpecSuggestion(row.productKey, { portalId: row.portalId, description: row.description })
@@ -211,7 +259,13 @@ export default function HeldPage() {
           .catch(() => undefined);
       }
     }
-  }, [lists.needsDecision, suggestions]);
+  }, [lists.needsDecision, suggestions, readOnly]);
+
+  const byReason = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const e of entries) for (const h of e.open_holds) counts.set(h.reason, (counts.get(h.reason) ?? 0) + 1);
+    return [...counts.entries()].sort((a, b) => b[1] - a[1]);
+  }, [entries]);
 
   async function answer(row: HeldRow, stock: string, evidence: StockEvidence[]) {
     if (!row.unitId || !row.holdId) return;
@@ -270,7 +324,7 @@ export default function HeldPage() {
   }
 
   return (
-    <ProductionLayout>
+    <ProductionLayout readOnly={readOnly}>
       <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: 16 }}>
         <h1 style={{ margin: 0, fontSize: 24, fontWeight: 600 }}>Held</h1>
         <span style={{ color: '#4b5563', fontSize: 14 }}>
@@ -280,12 +334,16 @@ export default function HeldPage() {
       {error ? <div role="alert" style={{ color: '#a3331d' }}>{error}</div> : null}
       {notice ? <div role="status" style={{ color: colors.vein }}>{notice}</div> : null}
 
+      {readOnly ? (
+        <ReadOnlyHeld entries={entries} byReason={byReason} />
+      ) : null}
+
       <section style={card} aria-labelledby="held-facts">
         <div>
           <h2 id="held-facts" style={{ margin: 0, fontSize: 17, fontWeight: 600 }}>Waiting for a fact</h2>
           <div style={{ color: '#4b5563', fontSize: 14 }}>Nobody decides these. They clear the moment the thing arrives; the age is the only thing to watch.</div>
         </div>
-        {lists.waitingForFact.length ? lists.waitingForFact.map((row) => <FactRow key={row.key} row={row} fetching={busy === row.key} onFetchNow={() => fetchNow(row)} />) : <div style={{ color: '#4b5563' }}>Nothing is waiting for a fact.</div>}
+        {lists.waitingForFact.length ? lists.waitingForFact.map((row) => <FactRow key={row.key} row={row} readOnly={readOnly} fetching={busy === row.key} onFetchNow={() => fetchNow(row)} />) : <div style={{ color: '#4b5563' }}>Nothing is waiting for a fact.</div>}
       </section>
 
       <section aria-labelledby="held-decisions" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -294,9 +352,23 @@ export default function HeldPage() {
           <div style={{ color: '#4b5563', fontSize: 14 }}>The facts are known; the shop has to choose. Answer once, or tick "always" and it never asks again.</div>
         </div>
         {lists.needsDecision.length ? (
-          lists.needsDecision.map((row) => (
-            <DecisionCard key={row.key} row={row} suggestion={row.productKey ? suggestions[row.productKey] ?? null : null} settings={settings} busy={busy === row.key || busy === 'settings'} onAnswer={(stock, evidence) => answer(row, stock, evidence)} onAlwaysSplit={alwaysSplit} onSplitOnce={() => splitOnce(row)} />
-          ))
+          lists.needsDecision.map((row) =>
+            readOnly ? (
+              <div key={row.key} style={card} data-testid={`held-${row.reason}`}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'baseline' }}>
+                  <span style={{ fontWeight: 600 }}>{row.title}</span>
+                  <span style={mono}>{row.order}</span>
+                  <span style={{ color: '#4b5563', fontSize: 14 }}>{row.summary} · received {ageText(row.ageSeconds)} ago</span>
+                  <span style={{ marginLeft: 'auto' }}>
+                    <WaitingPill on={row.waitingOn} />
+                  </span>
+                </div>
+                {row.detail ? <div style={{ ...mono, color: '#4b5563' }}>{row.detail}</div> : null}
+              </div>
+            ) : (
+              <DecisionCard key={row.key} row={row} suggestion={row.productKey ? suggestions[row.productKey] ?? null : null} settings={settings} busy={busy === row.key || busy === 'settings'} onAnswer={(stock, evidence) => answer(row, stock, evidence)} onAlwaysSplit={alwaysSplit} onSplitOnce={() => splitOnce(row)} />
+            ),
+          )
         ) : (
           <div style={{ color: '#4b5563' }}>Nothing needs a decision.</div>
         )}
