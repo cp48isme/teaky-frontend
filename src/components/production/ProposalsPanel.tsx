@@ -63,6 +63,7 @@ function ProposalCard({
   busy,
   onApprove,
   onDecline,
+  readOnly = false,
 }: {
   proposal: ActionProposal;
   who: (id: string | null) => string;
@@ -70,6 +71,7 @@ function ProposalCard({
   busy: boolean;
   onApprove: (note: string) => void;
   onDecline: (note: string) => void;
+  readOnly?: boolean;
 }) {
   const [note, setNote] = useState('');
   const [confirmDone, setConfirmDone] = useState(false);
@@ -105,6 +107,10 @@ function ProposalCard({
           {proposal.decided_at ? ` · ${new Date(proposal.decided_at).toLocaleString('en-US')}` : ''}
           {proposal.decision_note ? ` · ${proposal.decision_note}` : ''}
           {proposal.failure ? <div style={{ color: '#a3331d' }}>The action refused: {proposal.failure}</div> : null}
+        </div>
+      ) : readOnly ? (
+        <div style={{ fontSize: 13, color: '#4b5563' }} data-testid="waiting-for-a-decision">
+          Waiting for a decision by a staff member.
         </div>
       ) : (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center' }}>
@@ -224,14 +230,18 @@ export default function ProposalsPanel({ targets, readOnly = false }: { targets:
   }, []);
 
   useEffect(() => {
-    if (readOnly) return;
     load().catch((e: unknown) => setError(e instanceof Error ? e.message : 'Could not load the proposals'));
+    // The team list is staff-only; a read-only sign-in shows "a staff member" instead of a name.
+    if (readOnly) return;
     listMembers()
       .then((members) => setNames(Object.fromEntries(members.map((m) => [m.user_id, m.display_name || m.email]))))
       .catch(() => setNames({}));
   }, [load, readOnly]);
 
-  const who = useCallback((id: string | null) => (id ? names[id] ?? id.slice(0, 8) : 'the system'), [names]);
+  const who = useCallback(
+    (id: string | null) => (id ? names[id] ?? (readOnly ? 'a staff member' : id.slice(0, 8)) : 'the system'),
+    [names, readOnly],
+  );
 
   async function run(key: string, fn: () => Promise<unknown>, done: string) {
     setBusy(key);
@@ -248,8 +258,6 @@ export default function ProposalsPanel({ targets, readOnly = false }: { targets:
     }
   }
 
-  if (readOnly) return null;
-
   const open = proposals.filter((p) => p.status === 'proposed');
   const decided = proposals.filter((p) => p.status !== 'proposed');
   return (
@@ -262,6 +270,11 @@ export default function ProposalsPanel({ targets, readOnly = false }: { targets:
       </div>
       {error ? <div role="alert" style={{ color: '#a3331d' }}>{error}</div> : null}
       {notice ? <div role="status" style={{ color: colors.vein }}>{notice}</div> : null}
+      {readOnly ? (
+        <div style={{ fontSize: 13, color: '#4b5563' }} data-testid="read-only-note">
+          Read-only: proposals are shown as staff see them; proposing and deciding are staff actions.
+        </div>
+      ) : (
       <div style={card}>
         <div style={{ fontWeight: 500 }}>Propose an action</div>
         <ProposeForm
@@ -276,12 +289,14 @@ export default function ProposalsPanel({ targets, readOnly = false }: { targets:
           }
         />
       </div>
+      )}
       {open.map((p) => (
         <ProposalCard
           key={p.id}
           proposal={p}
           who={who}
           me={me}
+          readOnly={readOnly}
           busy={busy === p.id}
           onApprove={(note) => run(p.id, () => approveProposal(p.id, note), `${KIND_LABEL[p.kind]} for ${p.facts.reference}: approved and applied.`)}
           onDecline={(note) => run(p.id, () => declineProposal(p.id, note), `${KIND_LABEL[p.kind]} for ${p.facts.reference}: ${me && p.proposed_by === me ? 'withdrawn' : 'declined'}.`)}

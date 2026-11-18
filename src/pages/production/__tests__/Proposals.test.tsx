@@ -9,7 +9,7 @@ import type { ActionProposal, ProposeActionRequest } from '../../../types/propos
  * 2026, item 1): the list shows each proposal's facts and who proposed it;
  * approve and decline call the routes; one's own proposal offers "Withdraw";
  * "mark done" sits behind a second confirmation on propose and on approve;
- * a read-only sign-in fetches nothing and sees no action. */
+ * a read-only sign-in (#265, ruling 18 Nov 2026) sees the proposals and no action. */
 
 const facts = (over: Partial<ActionProposal['facts']> = {}): ActionProposal['facts'] => ({
   captured_at: '2026-11-18T01:00:00Z', target_kind: 'order', target_id: 'o1', reference: 'W7001234', channel: 'taylor', customer: 'Sprouts', portal_id: null, business_entity_id: null,
@@ -25,8 +25,11 @@ const mine = base({ id: 'p2', kind: 'mark_done', target_kind: 'release_unit', ta
 const declined = base({ id: 'p3', status: 'declined', decided_by: 'u-me', decided_at: '2026-11-18T02:00:00Z', decision_note: 'not this week' });
 
 const listProposals = vi.fn(() => Promise.resolve([theirs, mine, declined]));
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const proposeAction = vi.fn((_body: ProposeActionRequest) => Promise.resolve(theirs));
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const approveProposal = vi.fn((_id: string, _note: string) => Promise.resolve({ ...theirs, status: 'approved' }));
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const declineProposal = vi.fn((_id: string, _note: string) => Promise.resolve({ ...theirs, status: 'declined' }));
 vi.mock('../../../api/proposals', () => ({
   listProposals: (...a: unknown[]) => listProposals(...(a as [])),
@@ -134,12 +137,23 @@ describe('the proposals panel', () => {
     expect(proposeAction.mock.calls[0]?.[0]).toMatchObject({ kind: 'mark_done', target_kind: 'release_unit', target_id: 'u1', reason: 'finished on the old press' });
   });
 
-  it('a read-only sign-in: nothing fetched, nothing shown, no action (the API refuses the role on every proposals route)', async () => {
+  it('a read-only sign-in sees the proposals, their facts and who waits on them, and no action (#265: the reads answer the role, the writes refuse it)', async () => {
     mount(true);
-    await new Promise((r) => setTimeout(r, 0));
-    expect(screen.queryByTestId('proposals-panel')).toBeNull();
-    expect(screen.queryByRole('button')).toBeNull();
-    expect(listProposals).not.toHaveBeenCalled();
+    await waitFor(() => expect(screen.getAllByTestId('proposal-facts').length).toBe(2));
+    expect(listProposals).toHaveBeenCalledTimes(1);
     expect(listMembers).not.toHaveBeenCalled();
+    expect(screen.getByTestId('read-only-note')).toBeTruthy();
+    expect(screen.getAllByTestId('proposed-by').map((n) => n.textContent)).toEqual(['a staff member', 'a staff member']);
+    expect(screen.getAllByTestId('waiting-for-a-decision').length).toBe(2);
+    expect(screen.queryByTestId('propose-form')).toBeNull();
+    expect(screen.queryByTestId('approve')).toBeNull();
+    expect(screen.queryByTestId('approve-first')).toBeNull();
+    expect(screen.queryByTestId('decline')).toBeNull();
+    expect(screen.queryByLabelText('Decision note')).toBeNull();
+    // The one button is the decided toggle; the decided card shows its decision, no control.
+    expect(screen.getAllByRole('button').map((b) => b.textContent)).toEqual(['Show 1 decided']);
+    expect(proposeAction).not.toHaveBeenCalled();
+    expect(approveProposal).not.toHaveBeenCalled();
+    expect(declineProposal).not.toHaveBeenCalled();
   });
 });
