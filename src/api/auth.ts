@@ -95,3 +95,41 @@ export async function listMyPortals(): Promise<MyPortal[]> {
 export async function getSignupAvailability(): Promise<{ public_signup_enabled: boolean }> {
   return apiRequest<{ public_signup_enabled: boolean }>('/auth/signup');
 }
+
+/** The account surface (t01, 18 Nov 2026). */
+export interface SessionSummary {
+  id: string;
+  created_at: string;
+  expires_at: string;
+}
+
+export interface PasswordChangedResponse extends TokenResponse {
+  other_sessions_ended: number;
+  credentials_changed_at: string;
+}
+
+export async function listSessions(): Promise<SessionSummary[]> {
+  return apiRequest<SessionSummary[]>('/auth/sessions');
+}
+
+/** Change the password with the current one in hand; every other session ends
+ * at its next request; this browser keeps going on the fresh pair returned. */
+export async function changePassword(currentPassword: string, newPassword: string): Promise<PasswordChangedResponse> {
+  const changed = await apiRequest<PasswordChangedResponse>('/auth/change-password', {
+    method: 'POST',
+    body: JSON.stringify({ current_password: currentPassword, new_password: newPassword }),
+  });
+  setTokens(changed);
+  return changed;
+}
+
+/** Sign out everywhere: every refresh token revoked on the server, then this
+ * browser's tokens cleared. */
+export async function logoutAll(): Promise<void> {
+  try {
+    await apiRequest('/auth/logout-all', { method: 'POST' });
+  } catch {
+    // Best-effort; the tokens are cleared either way.
+  }
+  clearTokens();
+}

@@ -86,6 +86,13 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                   <p className="truncate text-sm font-medium text-brand-dark">{email}</p>
                 </div>
                 <Link
+                  to="/account"
+                  onClick={() => setMenuOpen(false)}
+                  className="block px-4 py-2 text-sm text-gray-700 transition hover:bg-gray-50"
+                >
+                  Account
+                </Link>
+                <Link
                   to="/settings/team"
                   onClick={() => setMenuOpen(false)}
                   className="block px-4 py-2 text-sm text-gray-700 transition hover:bg-gray-50"

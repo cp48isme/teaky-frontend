@@ -7,6 +7,7 @@ import StatusProvider from './contexts/StatusProvider';
 import ProtectedRoute from './components/ProtectedRoute';
 import ContentPage from './pages/ContentPage';
 import ReportBugPage from './pages/ReportBugPage';
+import AccountPage from './pages/AccountPage';
 import AppLayout from './components/layout/AppLayout';
 import AllChannelOrdersPage from './pages/production/AllChannelOrdersPage';
 import WhereaboutsPage from './pages/production/WhereaboutsPage';
@@ -78,6 +79,14 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/invite/:token" element={<AcceptInvitationPage />} />
+          <Route
+            path="/account"
+            element={
+              <ProtectedRoute>
+                <AccountPage />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/choose-portal"
             element={
