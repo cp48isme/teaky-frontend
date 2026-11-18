@@ -1,7 +1,8 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import { ApiError, isAuthenticated } from '../api/client';
+import SignInForm from '../components/auth/SignInForm';
+import { useSignupAvailability } from '../hooks/useSignupAvailability';
+import { isAuthenticated } from '../api/client';
 import Spinner from '../components/ui/Spinner';
 import { usePostLoginRedirect } from '../hooks/usePostLoginRedirect';
 
@@ -69,37 +70,16 @@ const FEATURES = [
 ];
 
 export default function LandingPage() {
-  const { login } = useAuth();
   const navigate = useNavigate();
   const postLoginRedirect = usePostLoginRedirect();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  // t04 (18 Nov 2026): every sign-up offer on this page is shown only when the server says public sign-up is on.
+  const signupOn = useSignupAvailability();
   // belq (30 Oct 2026): this page carries a sign-in form, so it must never be
   // where a signed-in user lands. One is sent on to their own place instead.
   const signedIn = isAuthenticated();
   useEffect(() => {
     if (signedIn) void postLoginRedirect();
   }, [signedIn, postLoginRedirect]);
-
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
-    try {
-      await login({ email, password });
-      await postLoginRedirect();
-    } catch (err) {
-      if (err instanceof ApiError) {
-        setError(err.message);
-      } else {
-        setError('An unexpected error occurred');
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
 
   if (signedIn) {
     return (
@@ -135,12 +115,14 @@ export default function LandingPage() {
             >
               Sign In
             </button>
-            <button
-              onClick={() => navigate('/register')}
-              className="rounded-full bg-coral px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:brightness-110 hover:shadow-md"
-            >
-              Start Free
-            </button>
+            {signupOn && (
+              <button
+                onClick={() => navigate('/register')}
+                className="rounded-full bg-coral px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:brightness-110 hover:shadow-md"
+              >
+                Start Free
+              </button>
+            )}
           </div>
         </div>
       </nav>
@@ -180,12 +162,14 @@ export default function LandingPage() {
               </p>
 
               <div className="mt-10 flex flex-wrap gap-4">
-                <button
-                  onClick={() => navigate('/register')}
-                  className="rounded-full bg-coral px-8 py-3.5 text-sm font-semibold text-white shadow-lg shadow-coral/25 transition hover:brightness-110 hover:shadow-xl hover:shadow-coral/30"
-                >
-                  Start Free Trial
-                </button>
+                {signupOn && (
+                  <button
+                    onClick={() => navigate('/register')}
+                    className="rounded-full bg-coral px-8 py-3.5 text-sm font-semibold text-white shadow-lg shadow-coral/25 transition hover:brightness-110 hover:shadow-xl hover:shadow-coral/30"
+                  >
+                    Start Free Trial
+                  </button>
+                )}
                 <a
                   href="#features"
                   className="rounded-full border border-teak/30 px-8 py-3.5 text-sm font-semibold text-teak-dark transition hover:border-teak hover:bg-teak/5"
@@ -203,92 +187,19 @@ export default function LandingPage() {
                   <h2 className="font-heading text-2xl font-bold text-brand-dark">Sign in to Teaky</h2>
                   <p className="mt-1 text-sm text-wood">Access your portals, orders, and AI agents</p>
 
-                  <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
-                    {error && (
-                      <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                        {error}
-                      </div>
-                    )}
+                  <SignInForm onSignedIn={() => postLoginRedirect()} emailPlaceholder="you@yourshop.com" />
 
-                    <div>
-                      <label
-                        htmlFor="email"
-                        className="block text-sm font-medium text-brand-dark"
+                  {signupOn && (
+                    <p className="mt-6 text-center text-sm text-wood">
+                      New to Teaky?{' '}
+                      <Link
+                        to="/register"
+                        className="font-medium text-teak-dark transition hover:text-teak"
                       >
-                        Email
-                      </label>
-                      <input
-                        id="email"
-                        type="email"
-                        required
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="mt-1.5 block w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-brand-dark placeholder-gray-400 transition focus:border-teak focus:outline-none focus:ring-1 focus:ring-teak"
-                        placeholder="you@yourshop.com"
-                      />
-                    </div>
-
-                    <div>
-                      <label
-                        htmlFor="password"
-                        className="block text-sm font-medium text-brand-dark"
-                      >
-                        Password
-                      </label>
-                      <input
-                        id="password"
-                        type="password"
-                        required
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="mt-1.5 block w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-brand-dark placeholder-gray-400 transition focus:border-teak focus:outline-none focus:ring-1 focus:ring-teak"
-                        placeholder="Min 8 characters"
-                      />
-                    </div>
-
-                    <button
-                      type="submit"
-                      disabled={loading}
-                      className="w-full rounded-lg bg-teak-dark py-2.5 text-sm font-semibold text-white shadow transition hover:bg-teak disabled:opacity-50"
-                    >
-                      {loading ? (
-                        <span className="inline-flex items-center gap-2">
-                          <svg
-                            className="h-4 w-4 animate-spin"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                          >
-                            <circle
-                              className="opacity-25"
-                              cx="12"
-                              cy="12"
-                              r="10"
-                              stroke="currentColor"
-                              strokeWidth="4"
-                            />
-                            <path
-                              className="opacity-75"
-                              fill="currentColor"
-                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                            />
-                          </svg>
-                          Signing in...
-                        </span>
-                      ) : (
-                        'Sign in'
-                      )}
-                    </button>
-                  </form>
-
-                  <p className="mt-6 text-center text-sm text-wood">
-                    New to Teaky?{' '}
-                    <Link
-                      to="/register"
-                      className="font-medium text-teak-dark transition hover:text-teak"
-                    >
-                      Create a free account
-                    </Link>
-                  </p>
+                        Create a free account
+                      </Link>
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -346,12 +257,14 @@ export default function LandingPage() {
             customers.
           </p>
           <div className="mt-10 flex flex-wrap justify-center gap-4">
-            <button
-              onClick={() => navigate('/register')}
-              className="rounded-full bg-white px-10 py-3.5 text-sm font-semibold text-teak-dark shadow-lg transition hover:shadow-xl"
-            >
-              Get Started Free
-            </button>
+            {signupOn && (
+              <button
+                onClick={() => navigate('/register')}
+                className="rounded-full bg-white px-10 py-3.5 text-sm font-semibold text-teak-dark shadow-lg transition hover:shadow-xl"
+              >
+                Get Started Free
+              </button>
+            )}
             <button
               onClick={() =>
                 document.getElementById('login-form')?.scrollIntoView({ behavior: 'smooth' })
