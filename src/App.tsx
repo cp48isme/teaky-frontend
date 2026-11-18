@@ -7,6 +7,7 @@ import StatusProvider from './contexts/StatusProvider';
 import ProtectedRoute from './components/ProtectedRoute';
 import AppLayout from './components/layout/AppLayout';
 import AllChannelOrdersPage from './pages/production/AllChannelOrdersPage';
+import WhereaboutsPage from './pages/production/WhereaboutsPage';
 import BatchesPage from './pages/production/BatchesPage';
 import PushOutConfirmPage from './pages/production/PushOutConfirmPage';
 import HeldPage from './pages/production/HeldPage';
@@ -148,6 +149,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <AllChannelOrdersPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/production/orders/:orderId/whereabouts"
+            element={
+              <ProtectedRoute>
+                <WhereaboutsPage />
               </ProtectedRoute>
             }
           />

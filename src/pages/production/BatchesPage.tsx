@@ -5,6 +5,7 @@ import ProductionLayout, { colors } from '../../components/production/Production
 import { ageText, slotStrip } from '../../lib/production';
 import { channelLabel } from './AllChannelOrdersPage';
 import { isShadowReader } from '../../lib/roles';
+import ProposalsPanel, { type ProposalTarget } from '../../components/production/ProposalsPanel';
 import type { BatchSummary } from '../../types/production';
 
 /** Board 2: a batch is 24 slots on one stock. The strip shows what is
@@ -67,6 +68,8 @@ export default function BatchesPage({ readOnly = isShadowReader() }: { readOnly?
   const shown = show === 'Open' ? open : show === 'Pushed out' ? pushedOut : batches;
   const nextNumber = batches.reduce((m, b) => Math.max(m, b.batch_number), 0) + 1;
   const [first, ...rest] = shown;
+  // Proposals (dispatch 17–18 Nov 2026, item 1): every open batch is a target (a short run, mark done).
+  const proposalTargets = useMemo<ProposalTarget[]>(() => open.map((b) => ({ target_kind: 'release_unit' as const, target_id: b.unit_id, label: `Batch ${b.batch_number}` })), [open]);
 
   return (
     <ProductionLayout readOnly={readOnly}>
@@ -93,6 +96,7 @@ export default function BatchesPage({ readOnly = isShadowReader() }: { readOnly?
           ))}
         </div>
       ) : null}
+      <ProposalsPanel targets={proposalTargets} readOnly={readOnly} />
       <div style={{ background: '#f9fafb', border: '1px solid #e1e5ea', borderRadius: 8, padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
         <div style={{ fontWeight: 500 }}>Pushed out</div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 24, fontSize: 14 }}>

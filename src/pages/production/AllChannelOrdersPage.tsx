@@ -7,6 +7,7 @@ import { ageSeconds, ageText, nextSort, receivedText, slotsFor, sortRows, type S
 import type { Order } from '../../types/order';
 import type { BatchSummary, TaylorPoolLine } from '../../types/production';
 import { isShadowReader } from '../../lib/roles';
+import { EMPTY_TAG_FILTER, cycleTag, passesTagFilter, tagFilterText, tagMode, tagUniverse, type TagFilter } from '../../lib/tags';
 
 /** Board 1: every line from every channel in one list, the moment it is
  * placed. Rows come from the RGI portal's orders and the Taylor pool; PageDNA
@@ -28,6 +29,10 @@ export interface OrderRow {
   statusKind: 'placed' | 'unbatched' | 'held' | 'waiting' | 'released';
   batch: number | null;
   batchUnitId: string | null;
+  /** The order the line belongs to (null for a raw Taylor line not yet written) — the whereabouts link's target. */
+  orderId: string | null;
+  /** The order's tags (Andrew, 17 Nov 2026): the include/exclude chips read these. */
+  tags: string[];
 }
 
 type SortKey = keyof Pick<OrderRow, 'received' | 'age' | 'channel' | 'order' | 'product' | 'slots' | 'stock' | 'status' | 'batch'>;
@@ -107,6 +112,8 @@ export function rowsFromOrders(orders: Order[], batches: BatchSummary[], now: Da
         statusKind: released ? 'released' : held ? 'held' : batch == null ? 'unbatched' : !batch.full ? 'waiting' : 'placed',
         batch: batch?.batch_number ?? production?.ordinal ?? null,
         batchUnitId: production?.id ?? null,
+        orderId: order.id,
+        tags: order.tags ?? [],
       });
     }
   }
@@ -135,6 +142,8 @@ export function rowsFromTaylor(lines: TaylorPoolLine[], now: Date): OrderRow[] {
     statusKind: l.canonical_state === 'blocked' || l.art_state === 'hold' ? 'held' : 'unbatched',
     batch: null,
     batchUnitId: null,
+    orderId: null,
+    tags: [],
   }));
 }
 
@@ -147,6 +156,7 @@ export default function AllChannelOrdersPage({ readOnly = isShadowReader() }: { 
   const [channel, setChannel] = useState('All');
   const [show, setShow] = useState('Waiting and held');
   const [search, setSearch] = useState('');
+  const [tagFilter, setTagFilter] = useState<TagFilter>(EMPTY_TAG_FILTER);
 
   useEffect(() => {
     // A shadow_reader (dispatch 16 Nov 2026, item 5) reads the pool and the batches, not the orders list.
@@ -175,9 +185,11 @@ export default function AllChannelOrdersPage({ readOnly = isShadowReader() }: { 
       if (show === 'In an open batch' && !(r.batch && r.statusKind !== 'released')) return false;
       if (show === 'Pushed out' && r.statusKind !== 'released') return false;
       if (q && ![r.order, r.product, r.stock, r.status].some((v) => v.toLowerCase().includes(q))) return false;
+      if (!passesTagFilter(tagFilter, r.tags)) return false;
       return true;
     });
-  }, [all, channel, show, search]);
+  }, [all, channel, show, search, tagFilter]);
+  const tags = useMemo(() => tagUniverse(orders.map((o) => o.tags)), [orders]);
   const rows = useMemo(() => sortRows(filtered, sort.key, sort.direction), [filtered, sort]);
 
   const waiting = all.filter((r) => r.statusKind === 'unbatched').length;
@@ -219,6 +231,46 @@ export default function AllChannelOrdersPage({ readOnly = isShadowReader() }: { 
           <input type="search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="PO, product, any field" style={{ ...selectStyle, flex: 1 }} />
         </label>
       </div>
+      {tags.length ? (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', fontSize: 14 }} data-testid="tag-chips">
+          <span style={{ color: '#4b5563' }}>Tags</span>
+          {tags.map((tag) => {
+            const mode = tagMode(tagFilter, tag);
+            return (
+              <button
+                key={tag}
+                type="button"
+                onClick={() => setTagFilter((f) => cycleTag(f, tag))}
+                aria-pressed={mode !== null}
+                data-mode={mode ?? 'off'}
+                title={mode === null ? `Only ${tag}` : mode === 'include' ? `Hide ${tag}` : 'Clear'}
+                style={{
+                  ...pill,
+                  padding: '4px 10px',
+                  border: '1px solid',
+                  cursor: 'pointer',
+                  font: 'inherit',
+                  fontSize: 13,
+                  minHeight: 32,
+                  ...(mode === 'include' ? { background: '#e6f3ee', color: '#558b2f', borderColor: '#558b2f' } : mode === 'exclude' ? { background: '#fdebe6', color: '#a3331d', borderColor: '#a3331d', textDecoration: 'line-through' } : { background: '#fff', color: '#3f4854', borderColor: '#c9cfd6' }),
+                }}
+              >
+                {mode === 'include' ? `only ${tag}` : mode === 'exclude' ? `no ${tag}` : tag}
+              </button>
+            );
+          })}
+          {tagFilter.include.length || tagFilter.exclude.length ? (
+            <span style={{ color: '#4b5563' }} data-testid="tag-filter-text">
+              {tagFilterText(tagFilter)} ·{' '}
+              <button type="button" onClick={() => setTagFilter(EMPTY_TAG_FILTER)} style={{ all: 'unset', color: '#558b2f', cursor: 'pointer', textDecoration: 'underline' }}>
+                clear
+              </button>
+            </span>
+          ) : (
+            <span style={{ color: '#4b5563' }}>press once to keep only, twice to hide</span>
+          )}
+        </div>
+      ) : null}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 12 }}>
         <Tile label="Waiting for a batch" value={String(waiting)} note={`${waitingOld} older than 2 days`} />
         <Tile label="In open batches" value={String(inOpen)} note={`${openBatches.length} batches, ${openBatches.filter((b) => b.full).length} full`} />
@@ -256,7 +308,24 @@ export default function AllChannelOrdersPage({ readOnly = isShadowReader() }: { 
                 <td style={tdStyle}>
                   <span style={{ ...pill, ...CHANNEL_PILL[r.channel] }}>{r.channel}</span>
                 </td>
-                <td style={{ ...tdStyle, ...mono }}>{r.order}</td>
+                <td style={{ ...tdStyle, ...mono }}>
+                  {r.orderId ? (
+                    <Link to={`/production/orders/${r.orderId}/whereabouts`} style={{ color: '#558b2f' }} title="Where did this order go" data-testid="whereabouts-link">
+                      {r.order}
+                    </Link>
+                  ) : (
+                    r.order
+                  )}
+                  {r.tags.length ? (
+                    <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 2 }}>
+                      {r.tags.map((t) => (
+                        <span key={t} style={{ ...pill, background: '#eef2f6', color: '#3f4854', fontSize: 11 }} data-testid="row-tag">
+                          {t}
+                        </span>
+                      ))}
+                    </div>
+                  ) : null}
+                </td>
                 <td style={{ ...tdStyle, ...mono }}>{r.line}</td>
                 <td style={tdStyle}>{r.product}</td>
                 <td style={{ ...tdStyle, ...mono }}>
