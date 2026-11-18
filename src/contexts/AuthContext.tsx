@@ -7,6 +7,10 @@ interface AuthContextType {
   authenticated: boolean;
   login: (payload: LoginPayload) => Promise<void>;
   register: (payload: RegisterPayload) => Promise<void>;
+  /** The tokens were stored by another path (a registration from an
+   * invitation): tell the guarded routes so, instead of sending the new
+   * user through /login (walk of 18 Nov 2026). */
+  markSignedIn: () => void;
   logout: () => Promise<void>;
 }
 
@@ -25,13 +29,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setAuthenticated(true);
   }, []);
 
+  const markSignedIn = useCallback(() => {
+    setAuthenticated(isAuthenticated());
+  }, []);
+
   const logout = useCallback(async () => {
     await apiLogout();
     setAuthenticated(false);
   }, []);
 
   return (
-    <AuthContext.Provider value={{ authenticated, login, register, logout }}>
+    <AuthContext.Provider value={{ authenticated, login, register, markSignedIn, logout }}>
       {children}
     </AuthContext.Provider>
   );

@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import AcceptInvitationPage from '../AcceptInvitationPage';
+import { AuthProvider, useAuth } from '../../contexts/AuthContext';
 
 // S86, the proper invited-buyer path: a visitor without an account sets a
 // password and lands on the invited portal; nobody is sent to the printer
@@ -36,14 +37,23 @@ const preview = {
 };
 
 // The token travels in the fragment (nt7z); the path form is the pre-29-Oct link.
+/** What ProtectedRoute reads: the context's flag, not the storage. */
+function AuthProbe() {
+  const { authenticated } = useAuth();
+  return <span data-testid="auth-probe">{authenticated ? 'signed in' : 'signed out'}</span>;
+}
+
 function renderPage(entry = '/invite#token=tok-123') {
   return render(
-    <MemoryRouter initialEntries={[entry]}>
-      <Routes>
-        <Route path="/invite" element={<AcceptInvitationPage />} />
-        <Route path="/invite/:token" element={<AcceptInvitationPage />} />
-      </Routes>
-    </MemoryRouter>,
+    <AuthProvider>
+      <MemoryRouter initialEntries={[entry]}>
+        <AuthProbe />
+        <Routes>
+          <Route path="/invite" element={<AcceptInvitationPage />} />
+          <Route path="/invite/:token" element={<AcceptInvitationPage />} />
+        </Routes>
+      </MemoryRouter>
+    </AuthProvider>,
   );
 }
 
@@ -84,6 +94,21 @@ describe('AcceptInvitationPage', () => {
     expect(mockNavigate).toHaveBeenCalledWith('/production/batches', { replace: true });
     expect(mockNavigate).not.toHaveBeenCalledWith('/p/sandbox-hotel', { replace: true });
     expect(rememberPortal).not.toHaveBeenCalled();
+  });
+
+  it('a new user is signed in for the guarded landing the moment the registration answers — no hop through /login (walk of 18 Nov 2026)', async () => {
+    vi.mocked(getInvitationPreview).mockResolvedValue({ ...preview, role: 'shadow_reader' });
+    vi.mocked(registerFromInvitation).mockImplementation(async () => {
+      authed = true; // the tokens are in storage now, as registerFromInvitation leaves them
+    });
+    const user = userEvent.setup();
+    renderPage();
+    expect(await screen.findByTestId('auth-probe')).toHaveTextContent('signed out');
+    await user.type(await screen.findByLabelText('Password'), 'Walkthrough-2026!x');
+    await user.click(screen.getByRole('button', { name: /^Set password/ }));
+    await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/production/batches', { replace: true }));
+    expect(screen.getByTestId('auth-probe')).toHaveTextContent('signed in');
+    authed = false;
   });
 
   it('lands invited staff (printer_admin with a portal attached) on the production screens too', async () => {

@@ -13,6 +13,7 @@ import {
   resolveInviteToken,
 } from '../lib/inviteLink';
 import Spinner from '../components/ui/Spinner';
+import { useAuth } from '../contexts/AuthContext';
 
 // S86, the proper invited-buyer path: the page reads the invitation, a visitor
 // without an account sets a password and lands on the invited portal, and a
@@ -26,6 +27,7 @@ export default function AcceptInvitationPage() {
   const { hash } = useLocation();
   const token = resolveInviteToken(hash, pathToken);
   const navigate = useNavigate();
+  const { markSignedIn } = useAuth();
   const [preview, setPreview] = useState<InvitationPreview | null>(null);
   const [loading, setLoading] = useState(true);
   const [password, setPassword] = useState('');
@@ -76,6 +78,9 @@ export default function AcceptInvitationPage() {
     try {
       await registerFromInvitation(token, password, displayName.trim());
       if (preview) rememberSignedInEmail(preview.invited_email);
+      // The registration issued the session; the guarded landing must see it
+      // now, or it bounces the new user through /login (walk of 18 Nov 2026).
+      markSignedIn();
       finish();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not set your password');
