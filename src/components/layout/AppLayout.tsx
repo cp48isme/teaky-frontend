@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../hooks/useNotifications';
 import NotificationBell from './NotificationBell';
+import SiteFooter from './SiteFooter';
 import Sidebar from './Sidebar';
 import LimiterDegradedBanner from './LimiterDegradedBanner';
 import { useLoginLimiterStatus } from '../../hooks/useLoginLimiterStatus';
@@ -108,8 +109,9 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       {/* Body: sidebar + main */}
       <div className="flex flex-1 overflow-hidden">
         <Sidebar />
-        <main className="flex-1 overflow-y-auto bg-brand-light p-4 sm:p-6">
-          {children}
+        <main className="flex flex-1 flex-col overflow-y-auto bg-brand-light">
+          <div className="flex-1 p-4 sm:p-6">{children}</div>
+          <SiteFooter />
         </main>
       </div>
     </div>
