@@ -132,6 +132,10 @@ export default function PortalLayout() {
               <span className="ml-2 border-l border-white/30 pl-3 text-xs text-white/80">
                 {email ? <span title={email}>{email}</span> : 'Signed in'}
                 {' · '}
+                <Link to="/account" className="font-medium text-white/90 underline-offset-2 hover:underline">
+                  Account
+                </Link>
+                {' · '}
                 <button
                   type="button"
                   onClick={signOut}

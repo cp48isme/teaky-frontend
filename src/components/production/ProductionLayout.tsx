@@ -90,6 +90,9 @@ export default function ProductionLayout({ children, footnote, readOnly = isShad
             </div>
           ) : null}
           {footnote ? <div style={{ padding: '10px 20px', color: '#f0e2cf', fontSize: 13, marginTop: 'auto' }}>{footnote}</div> : null}
+          <NavLink to="/account" style={{ display: 'block', padding: '10px 20px', color: '#d7dbe0', textDecoration: 'none', marginTop: footnote ? 0 : 'auto' }} data-testid="account-link">
+            Account · sign out
+          </NavLink>
         </nav>
         <main style={{ flex: '999 1 560px', minWidth: 0, padding: '28px 32px', display: 'flex', flexDirection: 'column', gap: 20 }}>{children}</main>
       </div>
