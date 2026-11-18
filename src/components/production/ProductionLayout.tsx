@@ -1,10 +1,16 @@
 import type { ReactNode } from 'react';
 import { NavLink } from 'react-router-dom';
 import { isShadowReader } from '../../lib/roles';
+import { useProductionShell } from '../../hooks/useProductionShell';
 
 /** The production side's shell (canvas boards 1–5, 5–6 Nov 2026): the
- * co-branded header (Single Source, powered by Teaky) and the teak sidebar
- * with the production vocabulary — orders, batches, held, products, floor. */
+ * co-branded header and the teak sidebar with the production vocabulary —
+ * orders, batches, held, products, floor. The mark and the name are the
+ * signed-in organisation's (ruling 18 Nov 2026, from the +shadowprobe walk):
+ * the shop's own mark with "Powered by Teaky" beside it, or Teaky's own mark
+ * alone when the shop has none; nothing is shown while they load. */
+
+const TEAKY_WORDMARK = '/production/teaky-wordmark-white.png';
 
 const INK = '#1c1917';
 const LEAF = '#7cb342';
@@ -26,22 +32,34 @@ const READ_ONLY_NAV = new Set(['/production/orders', '/production/batches', '/pr
 
 export default function ProductionLayout({ children, footnote, readOnly = isShadowReader() }: { children: ReactNode; footnote?: string; readOnly?: boolean }) {
   const nav = readOnly ? NAV.filter((item) => READ_ONLY_NAV.has(item.to)) : NAV;
+  const shell = useProductionShell();
+  const teakysOwn = shell !== null && shell.mark.source === 'teaky';
   return (
     <div style={{ minHeight: '100vh', background: '#f4f5f7', color: INK, fontFamily: "'DM Sans', system-ui, sans-serif" }}>
       <header
         style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 16, padding: '10px 24px', background: INK, borderBottom: `3px solid ${LEAF}` }}
       >
-        <img src="/production/single-source-logo.png" alt="Single Source Printing" style={{ height: 44, width: 'auto', display: 'block' }} />
-        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: '#cfc9c2' }}>
-          Powered by <img src="/production/teaky-wordmark-white.png" alt="Teaky" style={{ height: 30, width: 'auto', display: 'block' }} />
-        </div>
+        {shell === null ? (
+          <div style={{ height: 44 }} data-testid="shell-loading" />
+        ) : teakysOwn ? (
+          <img src={TEAKY_WORDMARK} alt="Teaky" style={{ height: 36, width: 'auto', display: 'block' }} data-testid="shell-mark" data-source="teaky" />
+        ) : (
+          <img src={shell.mark.url} alt={shell.mark.alt} style={{ height: 44, width: 'auto', display: 'block' }} data-testid="shell-mark" data-source={shell.mark.source} />
+        )}
+        {shell !== null && !teakysOwn ? (
+          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: '#cfc9c2' }} data-testid="powered-by">
+            Powered by <img src={TEAKY_WORDMARK} alt="Teaky" style={{ height: 30, width: 'auto', display: 'block' }} />
+          </div>
+        ) : null}
       </header>
       <div style={{ display: 'flex', flexWrap: 'wrap', minHeight: 'calc(100vh - 67px)' }}>
         <nav
           aria-label="Production"
           style={{ flex: '0 0 200px', background: TEAK, color: '#f6ede0', padding: '24px 0', display: 'flex', flexDirection: 'column', gap: 2 }}
         >
-          <div style={{ padding: '0 20px 20px', fontWeight: 600, color: '#fff', fontSize: 15 }}>Single Source US</div>
+          <div style={{ padding: '0 20px 20px', fontWeight: 600, color: '#fff', fontSize: 15, minHeight: 38 }} data-testid="shell-name">
+            {shell?.name ?? ''}
+          </div>
           {nav.map((item) =>
             item.built ? (
               <NavLink

@@ -33,6 +33,10 @@ const listPrinterOrders = vi.fn(() => Promise.reject(new Error('403 should not b
 const getProductionSettings = vi.fn(() => Promise.reject(new Error('403 should not be called')));
 const getSpecSuggestion = vi.fn(() => Promise.reject(new Error('403 should not be called')));
 vi.mock('../../../api/orders', () => ({ listPrinterOrders: () => listPrinterOrders() }));
+vi.mock('../../../api/organizations', () => ({
+  getMyOrganization: vi.fn(() => Promise.reject(new Error('403 should not be called'))),
+  getProductionShell: vi.fn(() => Promise.resolve({ organization_id: 'org', name: 'Teaky Sandbox (not a customer)', mark: { url: 'https://x/email/teaky-logo.png', alt: 'Teaky', source: 'teaky' } })),
+}));
 vi.mock('../../../api/releaseUnits', () => ({
   listHeldQueue: vi.fn(() => Promise.resolve([held])),
   clearUnitHold: vi.fn(),
