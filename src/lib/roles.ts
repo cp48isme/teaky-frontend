@@ -46,3 +46,20 @@ export function landingForInvitation(role: string | null | undefined, portalSlug
   if (isBuyerRole(role)) return portalSlug ? `/p/${portalSlug}` : '/';
   return PRODUCTION_LANDING;
 }
+
+/** The signed-in user's id (the token's `sub`), so a proposal the caller made
+ * offers "Withdraw" where another person's offers "Decline" (ruling 17 Nov
+ * 2026: under require_second_approver the proposer's own decline is a
+ * withdrawal). Null when no token is held or it does not parse. */
+export function currentUserId(): string | null {
+  try {
+    const token = localStorage.getItem('access_token');
+    if (!token) return null;
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+    const payload = JSON.parse(atob(parts[1]!.replace(/-/g, '+').replace(/_/g, '/')));
+    return typeof payload.sub === 'string' ? payload.sub : null;
+  } catch {
+    return null;
+  }
+}

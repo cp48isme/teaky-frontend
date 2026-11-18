@@ -48,9 +48,25 @@ export async function checkSafeOrder(
 }
 
 // Printer admin orders
-export async function listPrinterOrders(status?: string): Promise<Order[]> {
-  const params = status ? `?status=${encodeURIComponent(status)}` : '';
-  return apiRequest<Order[]>(`/orders${params}`);
+export interface PrinterOrdersFilter {
+  status?: string;
+  /** Order tags (ruling 18 Nov 2026): keep orders carrying any of these… */
+  tag?: string[];
+  /** …and drop orders carrying any of these; repeatable on the wire as tag= / exclude_tag=. */
+  excludeTag?: string[];
+  /** The search needle (backend item 2): order number, PO, Docket number, customer, product, scan code. */
+  q?: string;
+}
+
+export async function listPrinterOrders(filter: string | PrinterOrdersFilter = {}): Promise<Order[]> {
+  const f: PrinterOrdersFilter = typeof filter === 'string' ? { status: filter } : filter;
+  const params = new URLSearchParams();
+  if (f.status) params.set('status', f.status);
+  for (const tag of f.tag ?? []) params.append('tag', tag);
+  for (const tag of f.excludeTag ?? []) params.append('exclude_tag', tag);
+  if (f.q) params.set('q', f.q);
+  const query = params.toString();
+  return apiRequest<Order[]>(`/orders${query ? `?${query}` : ''}`);
 }
 
 export async function getPrinterOrder(orderId: string): Promise<Order> {
