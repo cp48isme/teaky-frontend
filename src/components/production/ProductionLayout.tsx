@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { NavLink } from 'react-router-dom';
+import AccountMenu from '../layout/AccountMenu';
 import SiteFooter from '../layout/SiteFooter';
 import { isShadowReader } from '../../lib/roles';
 import { useProductionShell } from '../../hooks/useProductionShell';
@@ -48,11 +49,16 @@ export default function ProductionLayout({ children, footnote, readOnly = isShad
         ) : (
           <img src={shell.mark.url} alt={shell.mark.alt} style={{ height: 44, width: 'auto', display: 'block' }} data-testid="shell-mark" data-source={shell.mark.source} />
         )}
-        {shell !== null && !teakysOwn ? (
-          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: '#cfc9c2' }} data-testid="powered-by">
-            Powered by <img src={TEAKY_WORDMARK} alt="Teaky" style={{ height: 30, width: 'auto', display: 'block' }} />
-          </div>
-        ) : null}
+        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 16 }}>
+          {shell !== null && !teakysOwn ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: '#cfc9c2' }} data-testid="powered-by">
+              Powered by <img src={TEAKY_WORDMARK} alt="Teaky" style={{ height: 30, width: 'auto', display: 'block' }} />
+            </div>
+          ) : null}
+          {/* The same account menu as the admin shell (dispatch 19 Nov 2026);
+              Settings is staff's, a read-only reader gets Account and Sign out. */}
+          <AccountMenu showSettings={!readOnly} />
+        </div>
       </header>
       <div style={{ display: 'flex', flexWrap: 'wrap', minHeight: 'calc(100vh - 67px)' }}>
         <nav

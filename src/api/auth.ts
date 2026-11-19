@@ -1,4 +1,5 @@
 import { apiRequest, setTokens, clearTokens } from './client';
+import { forgetSignedInDisplayName, forgetSignedInEmail, rememberSignedInEmail } from '../lib/portalSession';
 
 interface TokenResponse {
   access_token: string;
@@ -26,6 +27,7 @@ export async function register(payload: RegisterPayload): Promise<void> {
     body: JSON.stringify(payload),
   });
   setTokens(tokens);
+  rememberSignedInEmail(payload.email);
 }
 
 export async function login(payload: LoginPayload): Promise<void> {
@@ -34,6 +36,7 @@ export async function login(payload: LoginPayload): Promise<void> {
     body: JSON.stringify(payload),
   });
   setTokens(tokens);
+  rememberSignedInEmail(payload.email);
 }
 
 export async function logout(): Promise<void> {
@@ -49,6 +52,8 @@ export async function logout(): Promise<void> {
     }
   }
   clearTokens();
+  forgetSignedInEmail();
+  forgetSignedInDisplayName();
 }
 
 export interface PasswordResetRequestResponse {
@@ -134,4 +139,6 @@ export async function logoutAll(): Promise<void> {
     // Best-effort; the tokens are cleared either way.
   }
   clearTokens();
+  forgetSignedInEmail();
+  forgetSignedInDisplayName();
 }

@@ -45,6 +45,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 }
 
+/** The context when a provider is above, else null — for a component that
+ * both shells render and that the production page tests mount bare. */
+export function useOptionalAuth(): AuthContextType | null {
+  return useContext(AuthContext);
+}
+
 export function useAuth(): AuthContextType {
   const context = useContext(AuthContext);
   if (!context) {
