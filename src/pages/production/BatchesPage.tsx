@@ -1,6 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { listBatches, markHalfBatch } from '../../api/production';
+import { getProductionSettings, listBatches, markHalfBatch } from '../../api/production';
+import BatchesTable from '../../components/production/BatchesTable';
+import type { SortKey } from '../../lib/batchesList';
+import { cycleTag, EMPTY_TAG_FILTER, passesTagFilter, tagMode, tagUniverse, type TagFilter } from '../../lib/tags';
+import { readViewPreference, resolveView, writeViewPreference, type ProductionView } from '../../lib/productionView';
 import ProductionLayout, { colors } from '../../components/production/ProductionLayout';
 import { ageText, slotStrip } from '../../lib/production';
 import { channelLabel } from './AllChannelOrdersPage';
@@ -48,7 +52,18 @@ export default function BatchesPage({ readOnly = isShadowReader() }: { readOnly?
   const [error, setError] = useState<string | null>(null);
   const [noRole, setNoRole] = useState(false);
   const [show, setShow] = useState('Open');
+  // a26 (18 Nov 2026): cards or list — the shop's default, overridden by this browser's toggle.
+  const [shopDefault, setShopDefault] = useState<ProductionView | null>(null);
+  const [browserView, setBrowserView] = useState<ProductionView | null>(readViewPreference);
+  const view = resolveView(shopDefault, browserView);
+  const [tagFilter, setTagFilter] = useState<TagFilter>(EMPTY_TAG_FILTER);
+  const [sort, setSort] = useState<{ key: SortKey; direction: 'asc' | 'desc' }>({ key: 'oldest', direction: 'desc' });
   const navigate = useNavigate();
+
+  function chooseView(next: ProductionView) {
+    writeViewPreference(next);
+    setBrowserView(next);
+  }
 
   async function halfBatch(batch: BatchSummary) {
     try {
@@ -65,9 +80,20 @@ export default function BatchesPage({ readOnly = isShadowReader() }: { readOnly?
       .catch((e: unknown) => (isNoFloorRole(e) ? setNoRole(true) : setError(loadFailureText(e, 'Could not load the batches'))));
   }, []);
 
+  useEffect(() => {
+    // The shop's default is a production setting (staff-only); a reader who
+    // cannot read it opens on cards, with the toggle still theirs.
+    if (readOnly) return;
+    getProductionSettings()
+      .then((s) => setShopDefault(s.production_view ?? 'cards'))
+      .catch(() => setShopDefault('cards'));
+  }, [readOnly]);
+
   const open = useMemo(() => batches.filter((b) => !b.cancelled && !b.docket_number && b.release_state !== 'released'), [batches]);
   const pushedOut = useMemo(() => batches.filter((b) => b.docket_number || b.release_state === 'released'), [batches]);
-  const shown = show === 'Open' ? open : show === 'Pushed out' ? pushedOut : batches;
+  const bySection = show === 'Open' ? open : show === 'Pushed out' ? pushedOut : batches;
+  const tags = useMemo(() => tagUniverse(batches.map((b) => b.tags)), [batches]);
+  const shown = useMemo(() => bySection.filter((b) => passesTagFilter(tagFilter, b.tags)), [bySection, tagFilter]);
   const nextNumber = batches.reduce((m, b) => Math.max(m, b.batch_number), 0) + 1;
   const [first, ...rest] = shown;
   // Proposals (dispatch 17–18 Nov 2026, item 1): every open batch is a target (a short run, mark done).
@@ -80,7 +106,20 @@ export default function BatchesPage({ readOnly = isShadowReader() }: { readOnly?
         <span style={{ color: '#4b5563', fontSize: 14 }}>
           {open.length} open · {open.filter((b) => b.full).length} full and ready · next number {nextNumber}
         </span>
-        <label style={{ marginLeft: 'auto', fontSize: 14, display: 'flex', gap: 8, alignItems: 'center' }}>
+        <div role="group" aria-label="View" style={{ marginLeft: 'auto', display: 'flex', gap: 2, fontSize: 13 }} data-testid="view-toggle">
+          {(['cards', 'list'] as const).map((v) => (
+            <button
+              key={v}
+              type="button"
+              onClick={() => chooseView(v)}
+              aria-pressed={view === v}
+              style={{ padding: '6px 10px', border: '1px solid #c9cfd6', background: view === v ? colors.stem : '#fff', color: view === v ? '#fff' : '#1c1917', font: 'inherit', cursor: 'pointer', borderRadius: v === 'cards' ? '6px 0 0 6px' : '0 6px 6px 0' }}
+            >
+              {v === 'cards' ? 'Cards' : 'List'}
+            </button>
+          ))}
+        </div>
+        <label style={{ fontSize: 14, display: 'flex', gap: 8, alignItems: 'center' }}>
           Show
           <select value={show} onChange={(e) => setShow(e.target.value)} style={{ padding: '7px 10px', border: '1px solid #c9cfd6', borderRadius: 6, background: '#fff', font: 'inherit' }}>
             {['Open', 'Pushed out', 'All'].map((o) => (
@@ -89,10 +128,34 @@ export default function BatchesPage({ readOnly = isShadowReader() }: { readOnly?
           </select>
         </label>
       </div>
+      {tags.length ? (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', fontSize: 14 }} data-testid="tag-chips">
+          <span style={{ color: '#4b5563' }}>Tags</span>
+          {tags.map((tag) => {
+            const mode = tagMode(tagFilter, tag);
+            return (
+              <button
+                key={tag}
+                type="button"
+                onClick={() => setTagFilter((f) => cycleTag(f, tag))}
+                aria-pressed={mode !== null}
+                data-mode={mode ?? 'off'}
+                title={mode === null ? `Only ${tag}` : mode === 'include' ? `Hide ${tag}` : 'Clear'}
+                style={{ padding: '4px 10px', border: '1px solid', borderRadius: 999, cursor: 'pointer', font: 'inherit', background: mode === 'include' ? colors.leaf : mode === 'exclude' ? '#fde8e4' : '#fff', color: mode === 'include' ? '#fff' : mode === 'exclude' ? '#a3331d' : '#1c1917', borderColor: mode === 'exclude' ? '#e5a79a' : '#c9cfd6', textDecoration: mode === 'exclude' ? 'line-through' : 'none' }}
+              >
+                {tag}
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
       {error ? <div role="alert" style={{ color: '#a3331d' }}>{error}</div> : null}
       {noRole ? <div role="status" style={{ color: '#4b5563' }} data-testid="no-floor-role">{NO_FLOOR_ROLE}</div> : null}
-      {first ? <BatchCard batch={first} featured readOnly={readOnly} onPushOut={() => navigate(`/production/batches/${first.unit_id}/push-out`)} onHalfBatch={() => halfBatch(first)} /> : <div style={{ color: '#4b5563' }}>No batches to show.</div>}
-      {rest.length ? (
+      {view === 'list' ? (
+        <BatchesTable batches={shown} readOnly={readOnly} sort={sort} onSort={(key) => setSort((s) => (s.key === key ? { key, direction: s.direction === 'asc' ? 'desc' : 'asc' } : { key, direction: key === 'oldest' || key === 'batch' ? 'desc' : 'asc' }))} />
+      ) : null}
+      {view === 'cards' && first ? <BatchCard batch={first} featured readOnly={readOnly} onPushOut={() => navigate(`/production/batches/${first.unit_id}/push-out`)} onHalfBatch={() => halfBatch(first)} /> : view === 'cards' ? <div style={{ color: '#4b5563' }}>No batches to show.</div> : null}
+      {view === 'cards' && rest.length ? (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 16 }}>
           {rest.map((b) => (
             <BatchCard key={b.unit_id} batch={b} readOnly={readOnly} onPushOut={() => navigate(`/production/batches/${b.unit_id}/push-out`)} onHalfBatch={() => halfBatch(b)} />

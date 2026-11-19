@@ -18,6 +18,8 @@ export interface BatchSummary {
   scan_code?: string;
   /** Business entity codes present (13 Nov 2026 evening, C). */
   business_entities?: string[];
+  /** The union of its orders' tags (a26, 18 Nov 2026). */
+  tags?: string[];
   stock: string;
   channel: string;
   used: number;
@@ -184,6 +186,8 @@ export interface ProductionSettings {
   hold_age_days: number;
   shop_name: string;
   timezone: string;
+  /** a26 (18 Nov 2026): how the Batches page opens for the shop; a browser's toggle overrides it. */
+  production_view?: 'cards' | 'list';
 }
 
 /** Day 5 (7 Nov 2026), Part B — the station view (canvas board 3). */
