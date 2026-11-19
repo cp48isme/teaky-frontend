@@ -1,0 +1,177 @@
+import { render, screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { MemoryRouter } from 'react-router-dom';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import AdminPage from '../AdminPage';
+import SettingsLayout from '../SettingsLayout';
+import type { AdminMember, AdminProposal, AdminSettings } from '../../../types/adminSurface';
+
+// The shop admin surface (t03, ruled 19 Nov 2026): every act is a proposal
+// with a reason; never on oneself; the guards' refusals are shown as the
+// server words them; the two switches; nothing for a non-admin.
+
+const ME = 'u-me';
+const OTHER = 'u-other';
+
+function token(roles: string[], sub = ME): string {
+  const payload = btoa(JSON.stringify({ sub, roles, org: 'o1' })).replace(/=+$/, '');
+  return `h.${payload}.s`;
+}
+
+const members: AdminMember[] = [
+  { user_id: ME, email: 'me@shop.test', display_name: 'Me Admin', roles: ['printer_admin'], portal_assignments: [], reports_to: null, assigned_at: '2026-11-01T00:00:00Z', is_active: true, last_sign_in_at: '2026-11-19T10:00:00Z', open_sessions: 1 },
+  { user_id: OTHER, email: 'other@shop.test', display_name: 'Other Person', roles: ['sales_rep'], portal_assignments: [], reports_to: null, assigned_at: '2026-11-02T00:00:00Z', is_active: true, last_sign_in_at: null, open_sessions: 0 },
+];
+const invitations = [
+  { id: 'inv-1', organization_id: 'o1', invited_email: 'pending@shop.test', invited_by: ME, role: 'sales_rep', portal_ids: [], expires_at: '2099-01-01T00:00:00Z', accepted_at: null, revoked_at: null, created_at: '2026-11-19T00:00:00Z', updated_at: '2026-11-19T00:00:00Z' },
+];
+let settings: AdminSettings = { require_second_approver_floor: false, require_second_approver_admin: false };
+let proposals: AdminProposal[] = [];
+
+const api = {
+  listAdminMembers: vi.fn(() => Promise.resolve(members)),
+  getAdminSettings: vi.fn(() => Promise.resolve(settings)),
+  updateAdminSettings: vi.fn((body: AdminSettings) => { settings = body; return Promise.resolve(body); }),
+  listAdminProposals: vi.fn(() => Promise.resolve(proposals)),
+  proposeAdminAction: vi.fn(),
+  approveAdminProposal: vi.fn(),
+  declineAdminProposal: vi.fn(),
+};
+vi.mock('../../../api/adminSurface', () => ({
+  listAdminMembers: (...a: unknown[]) => api.listAdminMembers(...(a as [])),
+  getAdminSettings: (...a: unknown[]) => api.getAdminSettings(...(a as [])),
+  updateAdminSettings: (...a: unknown[]) => api.updateAdminSettings(...(a as [AdminSettings])),
+  listAdminProposals: (...a: unknown[]) => api.listAdminProposals(...(a as [])),
+  proposeAdminAction: (...a: unknown[]) => api.proposeAdminAction(...(a as [])),
+  approveAdminProposal: (...a: unknown[]) => api.approveAdminProposal(...(a as [])),
+  declineAdminProposal: (...a: unknown[]) => api.declineAdminProposal(...(a as [])),
+}));
+vi.mock('../../../api/team', () => ({
+  listInvitations: vi.fn(() => Promise.resolve(invitations)),
+}));
+
+function proposal(overrides: Partial<AdminProposal> = {}): AdminProposal {
+  return {
+    id: 'p-1', organization_id: 'o1', kind: 'deactivate_member', target_kind: 'member', target_id: OTHER,
+    reason: 'left the company', note: '', new_role: null,
+    facts: { captured_at: '2026-11-19T11:00:00Z', target_kind: 'member', target_id: OTHER, member: { user_id: OTHER, email: 'other@shop.test', display_name: 'Other Person', roles: ['sales_rep'], is_active: true, last_sign_in_at: null, open_sessions: 0 }, invitation: null, new_role: null },
+    status: 'proposed', proposed_by: ME, proposed_at: '2026-11-19T11:00:00Z', decided_by: null, decided_at: null, decision_note: '', result: null, failure: '',
+    ...overrides,
+  };
+}
+
+function renderPage() {
+  return render(
+    <MemoryRouter initialEntries={['/settings/admin']}>
+      <AdminPage />
+    </MemoryRouter>,
+  );
+}
+
+describe('AdminPage', () => {
+  beforeEach(() => {
+    localStorage.setItem('access_token', token(['printer_admin']));
+    settings = { require_second_approver_floor: false, require_second_approver_admin: false };
+    proposals = [];
+    Object.values(api).forEach((fn) => fn.mockClear());
+    api.proposeAdminAction.mockResolvedValue(proposal());
+    api.approveAdminProposal.mockResolvedValue(proposal({ status: 'approved' }));
+    api.declineAdminProposal.mockResolvedValue(proposal({ status: 'declined' }));
+  });
+
+  it('shows members with roles, active state, last sign-in and sessions, and never offers acts on oneself', async () => {
+    renderPage();
+    const me = within(await screen.findByTestId(`member-${ME}`));
+    expect(me.getByText('Me Admin (you)')).toBeInTheDocument();
+    expect(me.getByTestId('never-on-oneself')).toBeInTheDocument();
+    expect(me.queryByRole('button', { name: 'Deactivate' })).not.toBeInTheDocument();
+    const other = within(screen.getByTestId(`member-${OTHER}`));
+    expect(other.getByText('sales_rep')).toBeInTheDocument();
+    expect(other.getByText('Yes')).toBeInTheDocument();
+    expect(other.getByText('—')).toBeInTheDocument(); // no sign-in yet
+    expect(other.getByRole('button', { name: 'Deactivate' })).toBeInTheDocument();
+    expect(other.getByRole('button', { name: 'Remove' })).toBeInTheDocument();
+    expect(other.getByRole('button', { name: 'Change role' })).toBeInTheDocument();
+  });
+
+  it('a deactivate is a proposal with a reason; nothing is sent before the reason and the click', async () => {
+    renderPage();
+    await userEvent.click(within(await screen.findByTestId(`member-${OTHER}`)).getByRole('button', { name: 'Deactivate' }));
+    const form = within(screen.getByTestId('propose-form'));
+    expect(form.getByText(/Deactivate: Other Person/)).toBeInTheDocument();
+    expect(form.getByText(/ends every session now and blocks sign-in/)).toBeInTheDocument();
+    expect(form.getByTestId('propose-submit')).toBeDisabled();
+    expect(api.proposeAdminAction).not.toHaveBeenCalled();
+    await userEvent.type(form.getByLabelText('Reason'), 'left the company');
+    await userEvent.click(form.getByTestId('propose-submit'));
+    expect(api.proposeAdminAction).toHaveBeenCalledWith({ kind: 'deactivate_member', target_kind: 'member', target_id: OTHER, reason: 'left the company' });
+  });
+
+  it('a role change names the new role; an invitation resend and revoke are proposals too', async () => {
+    renderPage();
+    await userEvent.click(within(await screen.findByTestId(`member-${OTHER}`)).getByRole('button', { name: 'Change role' }));
+    await userEvent.selectOptions(screen.getByLabelText('New role'), 'sales_team_lead');
+    await userEvent.type(screen.getByLabelText('Reason'), 'promoted');
+    await userEvent.click(screen.getByTestId('propose-submit'));
+    expect(api.proposeAdminAction).toHaveBeenLastCalledWith({ kind: 'change_role', target_kind: 'member', target_id: OTHER, reason: 'promoted', new_role: 'sales_team_lead' });
+    await userEvent.click(within(screen.getByTestId('invitation-inv-1')).getByRole('button', { name: 'Resend' }));
+    await userEvent.type(screen.getByLabelText('Reason'), 'bounced');
+    await userEvent.click(screen.getByTestId('propose-submit'));
+    expect(api.proposeAdminAction).toHaveBeenLastCalledWith({ kind: 'resend_invitation', target_kind: 'invitation', target_id: 'inv-1', reason: 'bounced' });
+    await userEvent.click(within(screen.getByTestId('invitation-inv-1')).getByRole('button', { name: 'Revoke' }));
+    await userEvent.type(screen.getByLabelText('Reason'), 'wrong address');
+    await userEvent.click(screen.getByTestId('propose-submit'));
+    expect(api.proposeAdminAction).toHaveBeenLastCalledWith({ kind: 'revoke_invitation', target_kind: 'invitation', target_id: 'inv-1', reason: 'wrong address' });
+  });
+
+  it("shows the guards' refusals as the server words them", async () => {
+    api.proposeAdminAction.mockRejectedValueOnce(new Error("the shop's last printer_admin cannot be removed, deactivated or demoted"));
+    renderPage();
+    await userEvent.click(within(await screen.findByTestId(`member-${OTHER}`)).getByRole('button', { name: 'Remove' }));
+    await userEvent.type(screen.getByLabelText('Reason'), 'leaving');
+    await userEvent.click(screen.getByTestId('propose-submit'));
+    expect(await screen.findByRole('alert')).toHaveTextContent("last printer_admin cannot be removed, deactivated or demoted");
+  });
+
+  it('the ledger approves and declines; under the admin switch the proposer sees Withdraw', async () => {
+    proposals = [proposal()];
+    renderPage();
+    const row = within(await screen.findByTestId('proposal-p-1'));
+    expect(row.getByText(/Deactivate: Other Person/)).toBeInTheDocument();
+    expect(row.getByText(/"left the company"/)).toBeInTheDocument();
+    expect(row.getByTestId('decline')).toHaveTextContent('Decline');
+    await userEvent.click(row.getByTestId('approve'));
+    expect(api.approveAdminProposal).toHaveBeenCalledWith('p-1', '');
+    settings = { require_second_approver_floor: false, require_second_approver_admin: true };
+    proposals = [proposal({ id: 'p-2' })];
+    renderPage();
+    const mine = within(await screen.findByTestId('proposal-p-2'));
+    expect(mine.getByTestId('decline')).toHaveTextContent('Withdraw');
+    await userEvent.click(mine.getByTestId('decline'));
+    expect(api.declineAdminProposal).toHaveBeenCalledWith('p-2', '');
+  });
+
+  it('the two switches are off by default and each saves on its own', async () => {
+    renderPage();
+    const floor = await screen.findByLabelText('Require a second approver on the floor');
+    const admin = screen.getByLabelText('Require a second approver on admin acts');
+    expect(floor).not.toBeChecked();
+    expect(admin).not.toBeChecked();
+    await userEvent.click(admin);
+    expect(api.updateAdminSettings).toHaveBeenCalledWith({ require_second_approver_floor: false, require_second_approver_admin: true });
+    await waitFor(() => expect(screen.getByLabelText('Require a second approver on admin acts')).toBeChecked());
+  });
+
+  it('a non-admin gets a line and no page; the Admin tab is hidden for them and shown for an admin', async () => {
+    localStorage.setItem('access_token', token(['shadow_reader'], 'u-shadow'));
+    renderPage();
+    expect(await screen.findByTestId('admin-no-access')).toBeInTheDocument();
+    expect(screen.queryByTestId('admin-page')).not.toBeInTheDocument();
+    expect(api.listAdminMembers).not.toHaveBeenCalled();
+    render(<MemoryRouter initialEntries={['/settings/team']}><SettingsLayout /></MemoryRouter>);
+    expect(screen.queryByRole('link', { name: 'Admin' })).not.toBeInTheDocument();
+    localStorage.setItem('access_token', token(['printer_admin']));
+    render(<MemoryRouter initialEntries={['/settings/team']}><SettingsLayout /></MemoryRouter>);
+    expect(screen.getByRole('link', { name: 'Admin' })).toBeInTheDocument();
+  });
+});

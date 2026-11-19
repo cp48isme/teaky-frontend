@@ -70,3 +70,9 @@ export function currentUserId(): string | null {
 export function canEditCompany(roles: string[] = currentRoles()): boolean {
   return roles.includes('printer_admin') || roles.includes('super_admin');
 }
+
+/** The shop admin surface (t03, ruled 19 Nov 2026) is the printer_admin's:
+ * team:manage. The shadow_reader never sees it; buyers never do. */
+export function canAdministerShop(roles: string[] = currentRoles()): boolean {
+  return roles.includes('printer_admin') || roles.includes('super_admin');
+}
