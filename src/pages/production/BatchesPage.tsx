@@ -5,6 +5,7 @@ import ProductionLayout, { colors } from '../../components/production/Production
 import { ageText, slotStrip } from '../../lib/production';
 import { channelLabel } from './AllChannelOrdersPage';
 import { isShadowReader } from '../../lib/roles';
+import { NO_FLOOR_ROLE, isNoFloorRole, loadFailureText } from '../../lib/productionAccess';
 import ProposalsPanel, { type ProposalTarget } from '../../components/production/ProposalsPanel';
 import type { BatchSummary } from '../../types/production';
 
@@ -45,6 +46,7 @@ function stateText(b: BatchSummary): { text: string; color?: string } {
 export default function BatchesPage({ readOnly = isShadowReader() }: { readOnly?: boolean } = {}) {
   const [batches, setBatches] = useState<BatchSummary[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [noRole, setNoRole] = useState(false);
   const [show, setShow] = useState('Open');
   const navigate = useNavigate();
 
@@ -60,7 +62,7 @@ export default function BatchesPage({ readOnly = isShadowReader() }: { readOnly?
   useEffect(() => {
     listBatches()
       .then(setBatches)
-      .catch((e: unknown) => setError(e instanceof Error ? e.message : 'Could not load the batches'));
+      .catch((e: unknown) => (isNoFloorRole(e) ? setNoRole(true) : setError(loadFailureText(e, 'Could not load the batches'))));
   }, []);
 
   const open = useMemo(() => batches.filter((b) => !b.cancelled && !b.docket_number && b.release_state !== 'released'), [batches]);
@@ -88,6 +90,7 @@ export default function BatchesPage({ readOnly = isShadowReader() }: { readOnly?
         </label>
       </div>
       {error ? <div role="alert" style={{ color: '#a3331d' }}>{error}</div> : null}
+      {noRole ? <div role="status" style={{ color: '#4b5563' }} data-testid="no-floor-role">{NO_FLOOR_ROLE}</div> : null}
       {first ? <BatchCard batch={first} featured readOnly={readOnly} onPushOut={() => navigate(`/production/batches/${first.unit_id}/push-out`)} onHalfBatch={() => halfBatch(first)} /> : <div style={{ color: '#4b5563' }}>No batches to show.</div>}
       {rest.length ? (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 16 }}>
