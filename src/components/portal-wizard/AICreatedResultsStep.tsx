@@ -13,6 +13,10 @@ export default function AICreatedResultsStep({ result, onCreateNew }: Props) {
   const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
+  // A mockup that fails to load falls back to the same rendered placeholder as
+  // a product without one — rendered by React, never written as HTML (the
+  // category is AI-produced text; 19 Nov 2026 review, finding 4).
+  const [brokenMockups, setBrokenMockups] = useState<Set<string>>(() => new Set());
 
   // Fetch products for the portal
   useEffect(() => {
@@ -141,12 +145,12 @@ export default function AICreatedResultsStep({ result, onCreateNew }: Props) {
             {products.slice(0, 6).map((product) => (
               <div key={product.id} className="rounded-lg border border-gray-200 bg-white p-4 hover:shadow-md transition">
                 <div className="aspect-square rounded-md bg-gray-100 mb-3 flex items-center justify-center overflow-hidden">
-                  {product.mockup_urls && product.mockup_urls.length > 0 ? (
+                  {product.mockup_urls && product.mockup_urls.length > 0 && !brokenMockups.has(product.id) ? (
                     <img
                       src={product.mockup_urls[0]}
                       alt={product.name}
                       className="w-full h-full object-cover rounded-md"
-                      onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.parentElement!.innerHTML = `<div class="flex flex-col items-center justify-center h-full"><span class="text-xs text-gray-400">${product.category || 'Product'}</span></div>`; }}
+                      onError={() => setBrokenMockups((prev) => new Set(prev).add(product.id))}
                     />
                   ) : (
                     <div className="flex flex-col items-center justify-center h-full">
