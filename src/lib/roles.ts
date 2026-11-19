@@ -63,3 +63,10 @@ export function currentUserId(): string | null {
     return null;
   }
 }
+
+/** Who may edit the shop's company page (t06, 19 Nov 2026): the roles that
+ * hold settings:manage on the server — the printer_admin (and the platform's
+ * super_admin). Everyone else on the settings hub reads. */
+export function canEditCompany(roles: string[] = currentRoles()): boolean {
+  return roles.includes('printer_admin') || roles.includes('super_admin');
+}

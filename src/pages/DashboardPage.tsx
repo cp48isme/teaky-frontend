@@ -99,7 +99,7 @@ export default function DashboardPage() {
 
       {/* Profile + Equipment */}
       <div className="grid gap-6 lg:grid-cols-2">
-        <CompanyProfileCard profile={profile} managed={managed} selfServe={showWizardSurfaces} />
+        <CompanyProfileCard profile={profile} name={organization?.name ?? null} managed={managed} selfServe={showWizardSurfaces} />
         {showWizardSurfaces && <EquipmentSummary equipment={equipment} />}
       </div>
     </div>

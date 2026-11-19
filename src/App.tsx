@@ -39,6 +39,7 @@ import StripeOnboardingPage from './pages/StripeOnboardingPage';
 import AcceptInvitationPage from './pages/AcceptInvitationPage';
 import SettingsLayout from './pages/settings/SettingsLayout';
 import TeamPage from './pages/settings/TeamPage';
+import CompanyProfilePage from './pages/settings/CompanyProfilePage';
 import NotificationsPage from './pages/settings/NotificationsPage';
 import IntegrationsPage from './pages/settings/IntegrationsPage';
 import AuditTrailPage from './pages/settings/AuditTrailPage';
@@ -324,6 +325,7 @@ function App() {
             }
           >
             <Route index element={<Navigate to="/settings/team" replace />} />
+            <Route path="company" element={<CompanyProfilePage />} />
             <Route path="team" element={<TeamPage />} />
             <Route path="notifications" element={<NotificationsPage />} />
             <Route path="integrations" element={<IntegrationsPage />} />
