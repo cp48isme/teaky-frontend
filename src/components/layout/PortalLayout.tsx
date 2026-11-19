@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import SiteFooter from './SiteFooter';
 import { Outlet, Link, useParams, useNavigate } from 'react-router-dom';
 import { usePortalContext } from '../../contexts/PortalContext';
 import { useCart } from '../../contexts/CartContext';
@@ -159,6 +160,7 @@ export default function PortalLayout() {
 
       {/* Footer */}
       <footer className="border-t bg-white px-6 py-4 text-center">
+        <SiteFooter />
         {slug && <PortalLegalLinks slug={slug} />}
         {portal.brand_config?.powered_by_teaky !== false && (
           <p className="mt-2 text-xs text-gray-400">

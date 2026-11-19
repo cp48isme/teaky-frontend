@@ -5,6 +5,8 @@ import { CartProvider } from './contexts/CartContext';
 import { PreviewProvider } from './context/PreviewContext';
 import StatusProvider from './contexts/StatusProvider';
 import ProtectedRoute from './components/ProtectedRoute';
+import ContentPage from './pages/ContentPage';
+import ReportBugPage from './pages/ReportBugPage';
 import AppLayout from './components/layout/AppLayout';
 import AllChannelOrdersPage from './pages/production/AllChannelOrdersPage';
 import WhereaboutsPage from './pages/production/WhereaboutsPage';
@@ -63,6 +65,10 @@ function App() {
       <PreviewProvider>
         <AuthProvider>
           <Routes>
+          <Route path="/privacy" element={<ContentPage page="privacy" />} />
+          <Route path="/terms" element={<ContentPage page="terms" />} />
+          <Route path="/contact" element={<ContentPage page="contact" />} />
+          <Route path="/report-a-bug" element={<ReportBugPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/invite" element={<AcceptInvitationPage />} />

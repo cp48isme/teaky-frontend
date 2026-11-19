@@ -4,6 +4,7 @@ import SignInForm from '../components/auth/SignInForm';
 import { useSignupAvailability } from '../hooks/useSignupAvailability';
 import { isAuthenticated } from '../api/client';
 import Spinner from '../components/ui/Spinner';
+import SiteFooter from '../components/layout/SiteFooter';
 import { usePostLoginRedirect } from '../hooks/usePostLoginRedirect';
 
 const FEATURES = [
@@ -294,6 +295,7 @@ export default function LandingPage() {
             </nav>
           </div>
           <div className="mt-8 border-t border-gray-700 pt-6 text-center">
+            <SiteFooter tone="dark" />
             <p className="text-sm text-gray-500">
               &copy; {new Date().getFullYear()} Teaky. All rights reserved.
             </p>

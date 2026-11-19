@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { NavLink } from 'react-router-dom';
+import SiteFooter from '../layout/SiteFooter';
 import { isShadowReader } from '../../lib/roles';
 import { useProductionShell } from '../../hooks/useProductionShell';
 
@@ -91,6 +92,7 @@ export default function ProductionLayout({ children, footnote, readOnly = isShad
         </nav>
         <main style={{ flex: '999 1 560px', minWidth: 0, padding: '28px 32px', display: 'flex', flexDirection: 'column', gap: 20 }}>{children}</main>
       </div>
+      <SiteFooter />
     </div>
   );
 }
