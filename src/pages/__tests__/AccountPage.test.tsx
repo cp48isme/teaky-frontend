@@ -11,7 +11,7 @@ const mockNavigate = vi.fn();
 vi.mock('react-router-dom', async () => ({ ...(await vi.importActual<typeof import('react-router-dom')>('react-router-dom')), useNavigate: () => mockNavigate }));
 const logout = vi.fn(() => Promise.resolve());
 vi.mock('../../contexts/AuthContext', () => ({ useAuth: () => ({ logout }) }));
-const listSessions = vi.fn(() => Promise.resolve([{ id: 's1', created_at: new Date(Date.now() - 120000).toISOString(), expires_at: '2026-11-25T10:00:00Z' }, { id: 's2', created_at: new Date().toISOString(), expires_at: '2026-11-25T11:00:00Z' }]));
+const listSessions = vi.fn(() => Promise.resolve([{ id: 's1', created_at: new Date(Date.now() - 120000).toISOString(), expires_at: '2026-11-25T10:00:00Z', current: false }, { id: 's2', created_at: new Date().toISOString(), expires_at: '2026-11-25T11:00:00Z', current: true }]));
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const changePassword = vi.fn((_c: string, _n: string) => Promise.resolve({ access_token: 'a', refresh_token: 'r', token_type: 'bearer', expires_in: 900, other_sessions_ended: 1, credentials_changed_at: '2026-11-18T23:00:00Z' }));
 const logoutAll = vi.fn(() => Promise.resolve());
@@ -38,6 +38,9 @@ describe('the account page', () => {
     const user = userEvent.setup();
     mount();
     await waitFor(() => expect(screen.getByTestId('sessions').querySelectorAll('li').length).toBe(2));
+    // The request's own session is marked (ruling 18 Nov 2026 evening), and only it.
+    expect(Array.from(screen.getByTestId('sessions').querySelectorAll('li')).map((li) => li.getAttribute('data-current'))).toEqual(['false', 'true']);
+    expect(screen.getByText('This session')).toBeTruthy();
     await user.type(screen.getByLabelText('Current password'), 'old-one');
     await user.type(screen.getByLabelText('New password'), 'Different-2026!y');
     await user.type(screen.getByLabelText('New password, again'), 'Different-2026!y');

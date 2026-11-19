@@ -97,7 +97,7 @@ export default function AccountPage() {
         <button type="submit" disabled={busy} className="w-full rounded-lg bg-teak-dark py-2.5 text-sm font-semibold text-white shadow transition hover:bg-teak disabled:opacity-50">
           Change password
         </button>
-        <p className="text-xs text-wood">Changing it signs out every other browser and device; this one keeps going.</p>
+        <p className="text-xs text-wood">Changing it signs out every other browser and device at once; this one keeps going.</p>
       </form>
 
       <div className="mt-8 border-t border-gray-100 pt-6">
@@ -107,14 +107,14 @@ export default function AccountPage() {
         ) : (
           <ul className="mt-2 space-y-1 text-sm text-wood" data-testid="sessions">
             {sessions.map((s) => (
-              <li key={s.id}>
-                Opened {ago(s.created_at)} · expires {new Date(s.expires_at).toLocaleDateString('en-US')}
+              <li key={s.id} data-current={s.current ? 'true' : 'false'}>
+                {s.current ? <strong>This session</strong> : 'Another session'} · opened {ago(s.created_at)} · expires {new Date(s.expires_at).toLocaleDateString('en-US')}
               </li>
             ))}
             {sessions.length === 0 ? <li>No session is open.</li> : null}
           </ul>
         )}
-        <p className="mt-1 text-xs text-wood">A signed-out session keeps its access for up to 15 minutes, then cannot continue.</p>
+        <p className="mt-1 text-xs text-wood">Signing out ends a session at once, on the server.</p>
         <div className="mt-4 flex flex-wrap gap-3">
           <button type="button" onClick={signOut} className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-brand-dark transition hover:bg-gray-50">
             Sign out
