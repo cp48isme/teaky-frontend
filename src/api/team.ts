@@ -1,3 +1,4 @@
+import { rememberSignedInDisplayName } from '../lib/portalSession';
 import { apiRequest, setTokens } from './client';
 import type {
   InvitationPreview,
@@ -79,4 +80,6 @@ export async function registerFromInvitation(
     { method: 'POST', body: JSON.stringify({ token, password, display_name: displayName || undefined }) },
   );
   setTokens(tokens);
+  // The name the person gave is what the account menu shows (dispatch 19 Nov 2026).
+  rememberSignedInDisplayName(displayName ?? '');
 }

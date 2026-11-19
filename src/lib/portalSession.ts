@@ -88,3 +88,34 @@ export function forgetSignedInEmail(): void {
     // nothing to forget
   }
 }
+
+/** The person's display name, when a sign-in path knows it (an invited
+ * registration asks for it). Beside the email it is what the avatar menu
+ * shows (dispatch 19 Nov 2026): the person, never the user id. */
+const DISPLAY_NAME_KEY = 'teaky_signed_in_display_name';
+
+export function rememberSignedInDisplayName(name: string): void {
+  try {
+    const trimmed = name.trim();
+    if (trimmed) localStorage.setItem(DISPLAY_NAME_KEY, trimmed);
+    else localStorage.removeItem(DISPLAY_NAME_KEY);
+  } catch {
+    // storage unavailable — the menu falls back to the email
+  }
+}
+
+export function signedInDisplayName(): string | null {
+  try {
+    return localStorage.getItem(DISPLAY_NAME_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export function forgetSignedInDisplayName(): void {
+  try {
+    localStorage.removeItem(DISPLAY_NAME_KEY);
+  } catch {
+    // nothing to forget
+  }
+}
