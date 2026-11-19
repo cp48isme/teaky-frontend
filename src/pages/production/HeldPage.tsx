@@ -9,6 +9,7 @@ import type { Order } from '../../types/order';
 import type { ProductionSettings, SpecSuggestion, StockEvidence, TaylorPoolLine } from '../../types/production';
 import type { HeldQueueEntry } from '../../types/releaseUnit';
 import { isShadowReader } from '../../lib/roles';
+import { NO_FLOOR_ROLE, isNoFloorRole, loadFailureText } from '../../lib/productionAccess';
 import ProposalsPanel, { type ProposalTarget } from '../../components/production/ProposalsPanel';
 
 /** Board 4: Held — the suggestion, one answer. Two lists: "Waiting for a
@@ -229,6 +230,7 @@ export default function HeldPage({ readOnly = isShadowReader() }: { readOnly?: b
   const [settings, setSettings] = useState<ProductionSettings | null>(null);
   const [suggestions, setSuggestions] = useState<Record<string, SpecSuggestion>>({});
   const [error, setError] = useState<string | null>(null);
+  const [noRole, setNoRole] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
@@ -242,7 +244,7 @@ export default function HeldPage({ readOnly = isShadowReader() }: { readOnly?: b
   }, [readOnly]);
 
   useEffect(() => {
-    load().catch((e: unknown) => setError(e instanceof Error ? e.message : 'Could not load the held lines'));
+    load().catch((e: unknown) => (isNoFloorRole(e) ? setNoRole(true) : setError(loadFailureText(e, 'Could not load the held lines'))));
     if (readOnly) return;
     getProductionSettings()
       .then(setSettings)
@@ -347,6 +349,7 @@ export default function HeldPage({ readOnly = isShadowReader() }: { readOnly?: b
         </span>
       </div>
       {error ? <div role="alert" style={{ color: '#a3331d' }}>{error}</div> : null}
+      {noRole ? <div role="status" style={{ color: '#4b5563' }} data-testid="no-floor-role">{NO_FLOOR_ROLE}</div> : null}
       {notice ? <div role="status" style={{ color: colors.vein }}>{notice}</div> : null}
 
       {readOnly ? (

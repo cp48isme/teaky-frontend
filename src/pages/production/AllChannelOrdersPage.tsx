@@ -7,6 +7,7 @@ import { ageSeconds, ageText, nextSort, receivedText, slotsFor, sortRows, type S
 import type { Order } from '../../types/order';
 import type { BatchSummary, TaylorPoolLine } from '../../types/production';
 import { isShadowReader } from '../../lib/roles';
+import { NO_FLOOR_ROLE, isNoFloorRole, loadFailureText } from '../../lib/productionAccess';
 import { EMPTY_TAG_FILTER, cycleTag, passesTagFilter, tagFilterText, tagMode, tagUniverse, type TagFilter } from '../../lib/tags';
 
 /** Board 1: every line from every channel in one list, the moment it is
@@ -152,6 +153,7 @@ export default function AllChannelOrdersPage({ readOnly = isShadowReader() }: { 
   const [batches, setBatches] = useState<BatchSummary[]>([]);
   const [taylor, setTaylor] = useState<TaylorPoolLine[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [noRole, setNoRole] = useState(false);
   const [sort, setSort] = useState<SortState<SortKey>>({ key: 'received', direction: 'desc' });
   const [channel, setChannel] = useState('All');
   const [show, setShow] = useState('Waiting and held');
@@ -166,7 +168,7 @@ export default function AllChannelOrdersPage({ readOnly = isShadowReader() }: { 
         setBatches(b);
         setTaylor(t);
       })
-      .catch((e: unknown) => setError(e instanceof Error ? e.message : 'Could not load the orders'));
+      .catch((e: unknown) => (isNoFloorRole(e) ? setNoRole(true) : setError(loadFailureText(e, 'Could not load the orders'))));
   }, [readOnly]);
 
   const now = useMemo(() => new Date(), [orders, taylor]);
@@ -278,6 +280,7 @@ export default function AllChannelOrdersPage({ readOnly = isShadowReader() }: { 
         <Tile label="Order → received" value={taylor.length ? 'minutes' : '—'} note="was 3.5 days by weekly pull" />
       </div>
       {error ? <div role="alert" style={{ color: '#a3331d' }}>{error}</div> : null}
+      {noRole ? <div role="status" style={{ color: '#4b5563' }} data-testid="no-floor-role">{NO_FLOOR_ROLE}</div> : null}
       <div style={{ background: '#fff', border: '1px solid #e1e5ea', borderRadius: 8, overflowX: 'auto' }}>
         <table style={{ borderCollapse: 'collapse', width: '100%' }}>
           <thead>
