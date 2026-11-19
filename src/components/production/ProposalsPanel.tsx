@@ -271,7 +271,7 @@ export default function ProposalsPanel({ targets, readOnly = false }: { targets:
       {error ? <div role="alert" style={{ color: '#a3331d' }}>{error}</div> : null}
       {notice ? <div role="status" style={{ color: colors.vein }}>{notice}</div> : null}
       {readOnly ? (
-        <div style={{ fontSize: 13, color: '#4b5563' }} data-testid="read-only-note">
+        <div style={{ fontSize: 13, color: '#4b5563' }} data-testid="proposals-read-only-note">
           Read-only: proposals are shown as staff see them; proposing and deciding are staff actions.
         </div>
       ) : (

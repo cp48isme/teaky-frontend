@@ -29,5 +29,11 @@ jobs:
       - name: Banned calls
         run: npm run lint:banned
 
+      # Ruling 18 Nov 2026 evening: a red test blocks a frontend merge the
+      # way it does on the backend. This step lives in the one required
+      # check (lint-and-build), so the ruleset needs no change.
+      - name: Test
+        run: npx vitest run --retry 2
+
       - name: Build
         run: npm run build
