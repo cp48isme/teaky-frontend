@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { downloadOrderInvoicePdf, updateOrder } from "../../api/orders";
 import type { Order } from "../../types/order";
 import { useAction } from "../useAction";
@@ -17,13 +17,17 @@ export function useOrderDetailsForm(
   const [rgiOrderNumber, setRgiOrderNumber] = useState("");
   const [notes, setNotes] = useState("");
 
-  // What the page set on every fetch: the fields from the loaded order.
+  // What the page set on every fetch: the fields from the loaded order. The
+  // order is read through a ref so the effect keys on the load alone — a
+  // mutation's setOrder must not reset a field being edited, as it never did.
+  const loaded = useRef(order);
+  loaded.current = order;
   useEffect(() => {
-    if (!order) return;
-    setTrackingNumber(order.tracking_number || "");
-    setRgiOrderNumber(order.rgi_order_number || "");
-    setNotes(order.notes || "");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const current = loaded.current;
+    if (!current) return;
+    setTrackingNumber(current.tracking_number || "");
+    setRgiOrderNumber(current.rgi_order_number || "");
+    setNotes(current.notes || "");
   }, [loadCount]);
 
   // Every mutation on this page reports through the status region (30 Oct
