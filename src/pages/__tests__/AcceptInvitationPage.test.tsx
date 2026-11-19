@@ -15,7 +15,13 @@ vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
   return { ...actual, useNavigate: () => mockNavigate };
 });
-vi.mock('../../api/client', () => ({ isAuthenticated: () => authed, switchOrganization: vi.fn().mockResolvedValue(true) }));
+vi.mock('../../api/client', () => ({
+  isAuthenticated: () => authed,
+  switchOrganization: vi.fn().mockResolvedValue(true),
+  // The cookie cut-over: the provider's silent refresh on load answers what the test says.
+  bootstrapSession: () => Promise.resolve(authed),
+  getAccessToken: () => null,
+}));
 vi.mock('../../api/team', () => ({
   getInvitationPreview: vi.fn(),
   registerFromInvitation: vi.fn().mockResolvedValue(undefined),

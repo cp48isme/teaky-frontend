@@ -2,11 +2,15 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { logout as apiLogout } from '../../api/auth';
 import { useOptionalAuth } from '../../contexts/AuthContext';
-import { initialsFor, labelFor, signedInIdentity } from '../../lib/identity';
+import { initialsFor, labelFor, signedInIdentity, type SignedInIdentity } from '../../lib/identity';
+import { loadCurrentUser } from '../../lib/currentUser';
+import type { MeResponse } from '../../types/auth';
 
 /** The account menu both shells share (dispatch 19 Nov 2026): the avatar with
- * the person's initials; the menu names the person (display name, else the
- * email — never the user id) and offers Account, Settings (staff only where
+ * the person's initials; the menu names the person — from GET /auth/me (the
+ * source; read once per sign-in), with the browser's own record of the
+ * sign-in as the fallback only while that request is in flight or has
+ * failed — never the user id. It offers Account, Settings (staff only where
  * the shell says so) and Sign out, which ends the session on the server at
  * once (#272) and clears this browser. */
 export default function AccountMenu({ showSettings = true }: { showSettings?: boolean }) {
@@ -14,7 +18,26 @@ export default function AccountMenu({ showSettings = true }: { showSettings?: bo
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-  const identity = signedInIdentity();
+  const [me, setMe] = useState<MeResponse | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    const pending = loadCurrentUser();
+    if (pending === null) return;
+    pending.then(
+      (answer) => {
+        if (!cancelled) setMe(answer);
+      },
+      () => {
+        // The fallback stands; nothing to do.
+      },
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  const identity: SignedInIdentity = me
+    ? { email: me.email, displayName: me.display_name }
+    : signedInIdentity();
   const label = labelFor(identity);
   const initials = initialsFor(identity);
 

@@ -20,6 +20,7 @@ import { getMyOrganization } from '../../api/organizations';
 import { listPortals } from '../../api/portals';
 import { listMyPortals } from '../../api/auth';
 import { CHOOSE_PORTAL_PATH } from '../usePostLoginRedirect';
+import { clearSession, setSession } from '../../api/client';
 
 function fakeJwt(claims: Record<string, unknown>): string {
   const b64 = (o: unknown) => btoa(JSON.stringify(o)).replace(/=+$/, '');
@@ -43,6 +44,7 @@ describe('usePostLoginRedirect', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.stubGlobal('localStorage', memoryStorage());
+    clearSession(); // the access token lives in memory now (cookie cut-over)
     vi.mocked(getMyOrganization).mockResolvedValue({ id: 'org-print', name: 'Print', is_managed: false });
     vi.mocked(listPortals).mockResolvedValue([]);
     // belq (30 Oct 2026): the buyer's own portals come from the server.
@@ -50,7 +52,7 @@ describe('usePostLoginRedirect', () => {
   });
 
   it('sends a buyer back to the portal they were on and never asks for a company profile', async () => {
-    localStorage.setItem('access_token', fakeJwt({ org: 'org-rgi', roles: ['end_user'] }));
+    setSession({ access_token: fakeJwt({ org: 'org-rgi', roles: ['end_user'] }), token_type: 'bearer', expires_in: 900 });
     localStorage.setItem('teaky_last_portal', 'raphael');
     const { result } = renderHook(() => usePostLoginRedirect());
     await result.current();
@@ -59,7 +61,7 @@ describe('usePostLoginRedirect', () => {
   });
 
   it('sends a buyer who also holds printer_admin (the registration-form artefact) to their portal', async () => {
-    localStorage.setItem('access_token', fakeJwt({ org: 'org-rgi', roles: ['end_user', 'printer_admin'] }));
+    setSession({ access_token: fakeJwt({ org: 'org-rgi', roles: ['end_user', 'printer_admin'] }), token_type: 'bearer', expires_in: 900 });
     localStorage.setItem('teaky_last_portal', 'raphael');
     const { result } = renderHook(() => usePostLoginRedirect());
     await result.current();
@@ -68,14 +70,14 @@ describe('usePostLoginRedirect', () => {
   });
 
   it('prefers an explicit same-origin next path for a buyer', async () => {
-    localStorage.setItem('access_token', fakeJwt({ org: 'org-rgi', roles: ['end_user'] }));
+    setSession({ access_token: fakeJwt({ org: 'org-rgi', roles: ['end_user'] }), token_type: 'bearer', expires_in: 900 });
     const { result } = renderHook(() => usePostLoginRedirect());
     await result.current('/p/allegretto/cart');
     expect(mockNavigate).toHaveBeenCalledWith('/p/allegretto/cart');
   });
 
   it('ignores an off-site next path', async () => {
-    localStorage.setItem('access_token', fakeJwt({ org: 'org-rgi', roles: ['end_user'] }));
+    setSession({ access_token: fakeJwt({ org: 'org-rgi', roles: ['end_user'] }), token_type: 'bearer', expires_in: 900 });
     localStorage.setItem('teaky_last_portal', 'raphael');
     const { result } = renderHook(() => usePostLoginRedirect());
     await result.current('https://evil.example/phish');
@@ -83,7 +85,7 @@ describe('usePostLoginRedirect', () => {
   });
 
   it('keeps the wizard rule for a printer user without a complete profile', async () => {
-    localStorage.setItem('access_token', fakeJwt({ org: 'org-print', roles: ['printer_admin'] }));
+    setSession({ access_token: fakeJwt({ org: 'org-print', roles: ['printer_admin'] }), token_type: 'bearer', expires_in: 900 });
     vi.mocked(getCompanyProfileByOrg).mockRejectedValueOnce(new Error('404'));
     const { result } = renderHook(() => usePostLoginRedirect());
     await result.current();
@@ -92,7 +94,7 @@ describe('usePostLoginRedirect', () => {
   });
 
   it('never sends a managed account to the wizard, profile or not (8 Oct 2026 ruling)', async () => {
-    localStorage.setItem('access_token', fakeJwt({ org: 'org-rgi', roles: ['printer_admin'] }));
+    setSession({ access_token: fakeJwt({ org: 'org-rgi', roles: ['printer_admin'] }), token_type: 'bearer', expires_in: 900 });
     vi.mocked(getMyOrganization).mockResolvedValueOnce({ id: 'org-rgi', name: 'RGI Publications', is_managed: true });
     const { result } = renderHook(() => usePostLoginRedirect());
     await result.current();
@@ -101,7 +103,7 @@ describe('usePostLoginRedirect', () => {
   });
 
   it('never sends an organisation that already has a portal to the wizard', async () => {
-    localStorage.setItem('access_token', fakeJwt({ org: 'org-print', roles: ['printer_admin'] }));
+    setSession({ access_token: fakeJwt({ org: 'org-print', roles: ['printer_admin'] }), token_type: 'bearer', expires_in: 900 });
     vi.mocked(listPortals).mockResolvedValueOnce([{ id: 'p1' } as never]);
     const { result } = renderHook(() => usePostLoginRedirect());
     await result.current();
@@ -110,7 +112,7 @@ describe('usePostLoginRedirect', () => {
   });
 
   it('sends a printer user with a complete profile to the dashboard', async () => {
-    localStorage.setItem('access_token', fakeJwt({ org: 'org-print', roles: ['printer_admin'] }));
+    setSession({ access_token: fakeJwt({ org: 'org-print', roles: ['printer_admin'] }), token_type: 'bearer', expires_in: 900 });
     vi.mocked(getCompanyProfileByOrg).mockResolvedValueOnce({ is_wizard_complete: true } as never);
     const { result } = renderHook(() => usePostLoginRedirect());
     await result.current();
@@ -121,7 +123,7 @@ describe('usePostLoginRedirect', () => {
   // never the public landing page.
   describe('a buyer with no remembered portal (a fresh browser)', () => {
     it('goes to the one portal they belong to', async () => {
-      localStorage.setItem('access_token', fakeJwt({ org: 'org-rgi', roles: ['end_user'] }));
+      setSession({ access_token: fakeJwt({ org: 'org-rgi', roles: ['end_user'] }), token_type: 'bearer', expires_in: 900 });
       const { result } = renderHook(() => usePostLoginRedirect());
       await result.current();
       expect(mockNavigate).toHaveBeenCalledWith('/p/raphael');
@@ -129,14 +131,14 @@ describe('usePostLoginRedirect', () => {
     });
 
     it('a portal_admin with one portal goes there too', async () => {
-      localStorage.setItem('access_token', fakeJwt({ org: 'org-rgi', roles: ['portal_admin'] }));
+      setSession({ access_token: fakeJwt({ org: 'org-rgi', roles: ['portal_admin'] }), token_type: 'bearer', expires_in: 900 });
       const { result } = renderHook(() => usePostLoginRedirect());
       await result.current();
       expect(mockNavigate).toHaveBeenCalledWith('/p/raphael');
     });
 
     it('is offered a chooser when they belong to several', async () => {
-      localStorage.setItem('access_token', fakeJwt({ org: 'org-rgi', roles: ['end_user'] }));
+      setSession({ access_token: fakeJwt({ org: 'org-rgi', roles: ['end_user'] }), token_type: 'bearer', expires_in: 900 });
       vi.mocked(listMyPortals).mockResolvedValueOnce([
         { id: 'p1', name: 'The Raphael', slug: 'raphael', status: 'active' },
         { id: 'p2', name: 'Allegretto', slug: 'allegretto', status: 'active' },
@@ -147,7 +149,7 @@ describe('usePostLoginRedirect', () => {
     });
 
     it('goes to the remembered portal when it is one of several', async () => {
-      localStorage.setItem('access_token', fakeJwt({ org: 'org-rgi', roles: ['end_user'] }));
+      setSession({ access_token: fakeJwt({ org: 'org-rgi', roles: ['end_user'] }), token_type: 'bearer', expires_in: 900 });
       localStorage.setItem('teaky_last_portal', 'allegretto');
       vi.mocked(listMyPortals).mockResolvedValueOnce([
         { id: 'p1', name: 'The Raphael', slug: 'raphael', status: 'active' },
@@ -159,7 +161,7 @@ describe('usePostLoginRedirect', () => {
     });
 
     it('is sent to the chooser, which says so, when they belong to none — never to the landing page', async () => {
-      localStorage.setItem('access_token', fakeJwt({ org: 'org-rgi', roles: ['end_user'] }));
+      setSession({ access_token: fakeJwt({ org: 'org-rgi', roles: ['end_user'] }), token_type: 'bearer', expires_in: 900 });
       vi.mocked(listMyPortals).mockResolvedValueOnce([]);
       const { result } = renderHook(() => usePostLoginRedirect());
       await result.current();
@@ -168,7 +170,7 @@ describe('usePostLoginRedirect', () => {
     });
 
     it('falls back to the remembered portal, else the chooser, when the server does not know the route yet', async () => {
-      localStorage.setItem('access_token', fakeJwt({ org: 'org-rgi', roles: ['end_user'] }));
+      setSession({ access_token: fakeJwt({ org: 'org-rgi', roles: ['end_user'] }), token_type: 'bearer', expires_in: 900 });
       vi.mocked(listMyPortals).mockRejectedValueOnce(new Error('404'));
       const { result } = renderHook(() => usePostLoginRedirect());
       await result.current();

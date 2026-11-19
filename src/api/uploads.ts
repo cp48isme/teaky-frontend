@@ -1,3 +1,4 @@
+import { getAccessToken } from './client';
 const API_BASE = '/api';
 
 export interface UploadResponse {
@@ -10,13 +11,14 @@ export async function uploadFile(file: File): Promise<UploadResponse> {
   const formData = new FormData();
   formData.append('file', file);
 
-  const token = localStorage.getItem('access_token');
+  const token = getAccessToken();
   const headers: Record<string, string> = {};
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
 
   const response = await fetch(`${API_BASE}/uploads`, {
+    credentials: 'include',
     method: 'POST',
     headers,
     body: formData,

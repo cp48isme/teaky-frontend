@@ -1,32 +1,38 @@
+import type { SessionResponse } from '../types/auth';
+
 const API_BASE = '/api';
 
-interface TokenPair {
-  access_token: string;
-  refresh_token: string;
-  token_type: string;
-  expires_in: number;
+/**
+ * The session cut-over (review 19 Nov 2026, item 6; backend #279). The access
+ * token lives in this module variable and nowhere else — not localStorage,
+ * not sessionStorage — so a script on the page cannot lift it from storage
+ * and a reload starts from nothing. The refresh token is the `teaky_refresh`
+ * HttpOnly cookie: the browser sends it on every request to the API
+ * (`credentials: 'include'`), the server reads it on refresh and logout, and
+ * no code path here reads, stores or sends it. On load the client asks the
+ * server for one silent refresh (the cookie decides) before it knows whether
+ * it is signed in; a browser without the cookie goes to sign in.
+ */
+let accessToken: string | null = null;
+
+/** The storage keys the client used before the cut-over. Never read again;
+ * removed once so an old browser does not keep a dead token around. */
+const LEGACY_STORAGE_KEYS = ['access_token', 'refresh_token'] as const;
+
+export function getAccessToken(): string | null {
+  return accessToken;
 }
 
-function getAccessToken(): string | null {
-  return localStorage.getItem('access_token');
+export function setSession(session: SessionResponse): void {
+  accessToken = session.access_token;
 }
 
-function getRefreshToken(): string | null {
-  return localStorage.getItem('refresh_token');
-}
-
-export function setTokens(tokens: TokenPair): void {
-  localStorage.setItem('access_token', tokens.access_token);
-  localStorage.setItem('refresh_token', tokens.refresh_token);
-}
-
-export function clearTokens(): void {
-  localStorage.removeItem('access_token');
-  localStorage.removeItem('refresh_token');
+export function clearSession(): void {
+  accessToken = null;
 }
 
 export function isAuthenticated(): boolean {
-  return getAccessToken() !== null;
+  return accessToken !== null;
 }
 
 /** The organisation of the current access token, so a refresh keeps the session there (S86). */
@@ -45,11 +51,11 @@ function currentOrganizationId(): string | null {
  * One refresh at a time (bead 672f, 2 Nov 2026). The server rotates the refresh
  * token on every use, so when several requests meet a 401 at once — the
  * dashboard fires four on mount and the unread-count poll is a fifth — each
- * running its own refresh means at most one can win and the rest clear storage
+ * running its own refresh means at most one can win and the rest clear the session
  * and throw the user to sign in. Every caller awaits the same in-flight promise
  * and retries with its result. A caller whose 401 came from a token that has
  * already been replaced (another refresh finished first) does not refresh at
- * all; it retries with the token in storage.
+ * all; it retries with the token now held.
  */
 let inFlightRefresh: Promise<boolean> | null = null;
 
@@ -62,57 +68,70 @@ function refreshAccessToken(): Promise<boolean> {
 }
 
 async function doRefresh(): Promise<boolean> {
-  const refreshToken = getRefreshToken();
-  if (!refreshToken) return false;
-
   try {
     const response = await fetch(`${API_BASE}/auth/refresh`, {
       method: 'POST',
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        refresh_token: refreshToken,
-        organization_id: currentOrganizationId(),
-      }),
+      // The cookie carries the refresh token; the body only names the
+      // organisation the session should stay in.
+      body: JSON.stringify({ organization_id: currentOrganizationId() }),
     });
 
     if (!response.ok) {
-      clearTokens();
+      clearSession();
       return false;
     }
 
-    const tokens: TokenPair = await response.json();
-    setTokens(tokens);
+    setSession((await response.json()) as SessionResponse);
     return true;
   } catch {
-    clearTokens();
+    clearSession();
     return false;
   }
 }
 
+/**
+ * On load: one silent refresh, the cookie deciding. Signed in when the server
+ * answers a new access token; otherwise not, and the guarded routes send the
+ * person to sign in. A browser that holds only the old storage tokens has no
+ * cookie, so its one refresh fails and it signs in once — the forced sign-in
+ * of the cut-over. The old keys are removed here, never read.
+ */
+export async function bootstrapSession(): Promise<boolean> {
+  for (const key of LEGACY_STORAGE_KEYS) {
+    try {
+      localStorage.removeItem(key);
+    } catch {
+      // storage unavailable — nothing to remove
+    }
+  }
+  return refreshAccessToken();
+}
+
 /** Re-issue the session inside `organizationId` (after accepting an invitation) (S86). */
 export async function switchOrganization(organizationId: string): Promise<boolean> {
-  // Never race a refresh already in flight: it would consume the same token.
+  // Never race a refresh already in flight: it would consume the same cookie token.
   if (inFlightRefresh) await inFlightRefresh;
-  const refreshToken = getRefreshToken();
-  if (!refreshToken) return false;
   const response = await fetch(`${API_BASE}/auth/refresh`, {
     method: 'POST',
+    credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ refresh_token: refreshToken, organization_id: organizationId }),
+    body: JSON.stringify({ organization_id: organizationId }),
   });
   if (!response.ok) return false;
-  setTokens((await response.json()) as TokenPair);
+  setSession((await response.json()) as SessionResponse);
   return true;
 }
 
 /**
  * Endpoints that establish a session rather than use one. Two rules, both
  * needed (29 Oct 2026, launch blocker): they are sent without a bearer, since
- * whatever sits in localStorage is irrelevant to proving who you are; and a
+ * whatever token is held is irrelevant to proving who you are; and a
  * 401 from them is their own answer (a failed sign-in), never a session expiry.
  * Before this, a returning user with an expired token who mistyped a password
  * once had the login's 401 treated as "session expired": refresh, clear
- * storage, hard reload, and no message. Logout is not listed: it consumes a
+ * memory, hard reload, and no message. Logout is not listed: it consumes a
  * session rather than opening one. The two token-issuing routes outside /auth
  * — taking up an invitation with a new password, and portal self-registration
  * — establish a session the same way and are listed with them.
@@ -159,7 +178,7 @@ export async function apiRequest<T>(
     headers['Authorization'] = `Bearer ${accessToken}`;
   }
 
-  let response = await fetch(url, { ...options, headers });
+  let response = await fetch(url, { ...options, credentials: 'include', headers });
 
   // Half two: only a 401 to a request that used a session means the session
   // expired — then refresh and retry once, or send the user to sign in. A 401
@@ -171,9 +190,9 @@ export async function apiRequest<T>(
     const refreshed = alreadyReplaced || (await refreshAccessToken());
     if (refreshed) {
       headers['Authorization'] = `Bearer ${getAccessToken()}`;
-      response = await fetch(url, { ...options, headers });
+      response = await fetch(url, { ...options, credentials: 'include', headers });
     } else {
-      clearTokens();
+      clearSession();
       sessionNavigation.toLogin();
       throw new Error('Session expired');
     }
