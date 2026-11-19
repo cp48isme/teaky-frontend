@@ -13,7 +13,7 @@ const logout = vi.fn(() => Promise.resolve());
 vi.mock('../../contexts/AuthContext', () => ({ useAuth: () => ({ logout }) }));
 const listSessions = vi.fn(() => Promise.resolve([{ id: 's1', created_at: new Date(Date.now() - 120000).toISOString(), expires_at: '2026-11-25T10:00:00Z', current: false }, { id: 's2', created_at: new Date().toISOString(), expires_at: '2026-11-25T11:00:00Z', current: true }]));
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-const changePassword = vi.fn((_c: string, _n: string) => Promise.resolve({ access_token: 'a', refresh_token: 'r', token_type: 'bearer', expires_in: 900, other_sessions_ended: 1, credentials_changed_at: '2026-11-18T23:00:00Z' }));
+const changePassword = vi.fn((_c: string, _n: string) => Promise.resolve({ access_token: 'a', token_type: 'bearer', expires_in: 900, other_sessions_ended: 1, credentials_changed_at: '2026-11-18T23:00:00Z' }));
 const logoutAll = vi.fn(() => Promise.resolve());
 vi.mock('../../api/auth', () => ({
   listSessions: () => listSessions(),
