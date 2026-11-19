@@ -1,12 +1,15 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { apiRequest, ApiError, isSessionEstablishingPath, sessionNavigation } from '../client';
+import { apiRequest, ApiError, clearSession, getAccessToken, isSessionEstablishingPath, sessionNavigation, setSession } from '../client';
 
 // 29 Oct 2026: a login's 401 is a failed sign-in, not a session expiry. Both
 // halves are asserted here — no bearer on the session-establishing endpoints,
 // and no refresh-and-redirect on their 401 — plus the genuine expiry path,
-// which must keep working.
+// which must keep working. Cookie cut-over (19 Nov 2026): the access token
+// lives in memory (setSession / getAccessToken), the refresh token is the
+// browser's HttpOnly cookie — never in storage, never in a body.
 
-const STALE = { access_token: 'stale.access.token', refresh_token: 'stale-refresh' };
+const STALE = { access_token: 'stale.access.token', token_type: 'bearer', expires_in: 900 };
+const fresh = (access_token: string) => ({ access_token, token_type: 'bearer', expires_in: 900 });
 
 function jsonResponse(status: number, body: unknown): Response {
   return new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
@@ -14,16 +17,21 @@ function jsonResponse(status: number, body: unknown): Response {
 
 // Snapshot per call: apiRequest reuses one headers object across its retry, so
 // reading mock.calls afterwards would show the retried value on the first call.
-let recorded: { url: string; authorization: string | undefined }[] = [];
+let recorded: { url: string; authorization: string | undefined; credentials: RequestCredentials | undefined; body: unknown }[] = [];
 const responses = vi.fn<(url: string, init?: RequestInit) => Promise<Response>>();
 function recordingFetch(): typeof fetch {
   return ((url: string, init?: RequestInit) => {
-    recorded.push({ url, authorization: (init?.headers as Record<string, string> | undefined)?.['Authorization'] });
+    recorded.push({
+      url,
+      authorization: (init?.headers as Record<string, string> | undefined)?.['Authorization'],
+      credentials: init?.credentials,
+      body: init?.body,
+    });
     return responses(url, init);
   }) as unknown as typeof fetch;
 }
 function calls(): { url: string; authorization: string | undefined }[] {
-  return recorded;
+  return recorded.map(({ url, authorization }) => ({ url, authorization }));
 }
 
 describe('isSessionEstablishingPath', () => {
@@ -50,6 +58,7 @@ describe('apiRequest and the session-establishing endpoints', () => {
 
   beforeEach(() => {
     localStorage.clear();
+    clearSession();
     recorded = [];
     responses.mockReset();
     vi.stubGlobal('fetch', recordingFetch());
@@ -61,10 +70,9 @@ describe('apiRequest and the session-establishing endpoints', () => {
     toLogin.mockRestore();
   });
 
-  it('sends no bearer to /auth/login even when a token sits in localStorage', async () => {
-    localStorage.setItem('access_token', STALE.access_token);
-    localStorage.setItem('refresh_token', STALE.refresh_token);
-    responses.mockResolvedValueOnce(jsonResponse(200, { access_token: 'new', refresh_token: 'new-r', token_type: 'bearer', expires_in: 900 }));
+  it('sends no bearer to /auth/login even when a token is held', async () => {
+    setSession(STALE);
+    responses.mockResolvedValueOnce(jsonResponse(200, fresh('new')));
 
     const tokens = await apiRequest<{ access_token: string }>('/auth/login', { method: 'POST', body: '{}' });
 
@@ -73,29 +81,27 @@ describe('apiRequest and the session-establishing endpoints', () => {
   });
 
   it('sends no bearer when taking up an invitation with a new password, and its 401 is not an expiry', async () => {
-    localStorage.setItem('access_token', STALE.access_token);
-    localStorage.setItem('refresh_token', STALE.refresh_token);
+    setSession(STALE);
     responses.mockResolvedValueOnce(jsonResponse(401, { detail: 'Invitation not found' }));
 
     await expect(apiRequest('/team/invitations/register', { method: 'POST', body: '{}' })).rejects.toMatchObject({ status: 401, message: 'Invitation not found' });
 
     expect(calls()).toEqual([{ url: '/api/team/invitations/register', authorization: undefined }]);
     expect(toLogin).not.toHaveBeenCalled();
-    expect(localStorage.getItem('access_token')).toBe(STALE.access_token);
+    expect(getAccessToken()).toBe(STALE.access_token);
   });
 
   it('sends no bearer to /auth/register either', async () => {
-    localStorage.setItem('access_token', STALE.access_token);
-    responses.mockResolvedValueOnce(jsonResponse(201, { access_token: 'new', refresh_token: 'new-r', token_type: 'bearer', expires_in: 900 }));
+    setSession(STALE);
+    responses.mockResolvedValueOnce(jsonResponse(201, fresh('new')));
 
     await apiRequest('/auth/register', { method: 'POST', body: '{}' });
 
     expect(calls()).toEqual([{ url: '/api/auth/register', authorization: undefined }]);
   });
 
-  it('treats a 401 from /auth/login as a failed sign-in: no refresh, no redirect, storage untouched, the detail thrown', async () => {
-    localStorage.setItem('access_token', STALE.access_token);
-    localStorage.setItem('refresh_token', STALE.refresh_token);
+  it('treats a 401 from /auth/login as a failed sign-in: no refresh, no redirect, the held token untouched, the detail thrown', async () => {
+    setSession(STALE);
     responses.mockResolvedValueOnce(jsonResponse(401, { detail: 'Invalid email or password' }));
 
     await expect(apiRequest('/auth/login', { method: 'POST', body: '{}' })).rejects.toMatchObject({
@@ -106,16 +112,14 @@ describe('apiRequest and the session-establishing endpoints', () => {
 
     expect(calls()).toEqual([{ url: '/api/auth/login', authorization: undefined }]);
     expect(toLogin).not.toHaveBeenCalled();
-    expect(localStorage.getItem('access_token')).toBe(STALE.access_token);
-    expect(localStorage.getItem('refresh_token')).toBe(STALE.refresh_token);
+    expect(getAccessToken()).toBe(STALE.access_token);
   });
 
   it('still carries the bearer on an ordinary request and retries once after a successful refresh', async () => {
-    localStorage.setItem('access_token', 'expired.access.token');
-    localStorage.setItem('refresh_token', 'good-refresh');
+    setSession(fresh('expired.access.token'));
     responses
       .mockResolvedValueOnce(jsonResponse(401, { detail: 'Could not validate credentials' }))
-      .mockResolvedValueOnce(jsonResponse(200, { access_token: 'fresh', refresh_token: 'fresh-r', token_type: 'bearer', expires_in: 900 }))
+      .mockResolvedValueOnce(jsonResponse(200, fresh('fresh')))
       .mockResolvedValueOnce(jsonResponse(200, [{ id: 'o1' }]));
 
     const orders = await apiRequest<{ id: string }[]>('/orders');
@@ -127,11 +131,14 @@ describe('apiRequest and the session-establishing endpoints', () => {
       { url: '/api/orders', authorization: 'Bearer fresh' },
     ]);
     expect(toLogin).not.toHaveBeenCalled();
+    // The refresh carried the cookie and no body token.
+    const refresh = recorded[1]!;
+    expect(refresh.credentials).toBe('include');
+    expect(JSON.parse(String(refresh.body))).not.toHaveProperty('refresh_token');
   });
 
   it('four parallel 401s share one refresh and all four retry with the new token (672f)', async () => {
-    localStorage.setItem('access_token', STALE.access_token);
-    localStorage.setItem('refresh_token', STALE.refresh_token);
+    setSession(STALE);
     let releaseRefresh: (r: Response) => void = () => undefined;
     const refreshGate = new Promise<Response>((resolve) => {
       releaseRefresh = resolve;
@@ -146,25 +153,23 @@ describe('apiRequest and the session-establishing endpoints', () => {
     const paths = ['/portals', '/analytics/summary', '/organizations/x/equipment', '/notifications/unread-count'];
     const pending = paths.map((p) => apiRequest<{ ok: string }>(p));
     await new Promise((r) => setTimeout(r, 0));
-    releaseRefresh(jsonResponse(200, { access_token: 'fresh', refresh_token: 'fresh-r', token_type: 'bearer', expires_in: 900 }));
+    releaseRefresh(jsonResponse(200, fresh('fresh')));
     const results = await Promise.all(pending);
 
     expect(results.map((r) => r.ok)).toEqual(paths.map((p) => `/api${p}`));
     expect(calls().filter((c) => c.url === '/api/auth/refresh')).toHaveLength(1);
     expect(calls().filter((c) => c.authorization === 'Bearer fresh')).toHaveLength(4);
     expect(toLogin).not.toHaveBeenCalled();
-    expect(localStorage.getItem('refresh_token')).toBe('fresh-r');
+    expect(getAccessToken()).toBe('fresh');
   });
 
-  it('a 401 on a token that storage has already replaced retries without refreshing', async () => {
-    localStorage.setItem('access_token', STALE.access_token);
-    localStorage.setItem('refresh_token', STALE.refresh_token);
+  it('a 401 on a token another refresh has already replaced retries without refreshing', async () => {
+    setSession(STALE);
     responses.mockImplementation((url: string, init?: RequestInit) => {
       const auth = (init?.headers as Record<string, string> | undefined)?.['Authorization'];
       if (auth === `Bearer ${STALE.access_token}`) {
         // Someone else's refresh landed while this request was in flight.
-        localStorage.setItem('access_token', 'fresh');
-        localStorage.setItem('refresh_token', 'fresh-r');
+        setSession(fresh('fresh'));
         return Promise.resolve(jsonResponse(401, { detail: 'Access token has expired' }));
       }
       return Promise.resolve(jsonResponse(200, { ok: url }));
@@ -178,8 +183,7 @@ describe('apiRequest and the session-establishing endpoints', () => {
   });
 
   it('when the shared refresh fails, every waiting caller is sent to sign in once each and nothing retries', async () => {
-    localStorage.setItem('access_token', STALE.access_token);
-    localStorage.setItem('refresh_token', STALE.refresh_token);
+    setSession(STALE);
     responses.mockImplementation((url: string) => {
       if (url === '/api/auth/refresh') return Promise.resolve(jsonResponse(401, { detail: 'Invalid or expired refresh token' }));
       return Promise.resolve(jsonResponse(401, { detail: 'Access token has expired' }));
@@ -189,12 +193,11 @@ describe('apiRequest and the session-establishing endpoints', () => {
 
     expect(outcomes.map((o) => o.status)).toEqual(['rejected', 'rejected']);
     expect(calls().filter((c) => c.url === '/api/auth/refresh')).toHaveLength(1);
-    expect(localStorage.getItem('access_token')).toBeNull();
+    expect(getAccessToken()).toBeNull();
   });
 
-  it('genuine expiry — the refresh itself 401s: storage cleared, sent to sign in, "Session expired" thrown', async () => {
-    localStorage.setItem('access_token', 'expired.access.token');
-    localStorage.setItem('refresh_token', 'revoked-refresh');
+  it('genuine expiry — the refresh itself 401s: the session dropped, sent to sign in, "Session expired" thrown', async () => {
+    setSession(fresh('expired.access.token'));
     responses
       .mockResolvedValueOnce(jsonResponse(401, { detail: 'Could not validate credentials' }))
       .mockResolvedValueOnce(jsonResponse(401, { detail: 'Invalid or expired refresh token' }));
@@ -203,8 +206,7 @@ describe('apiRequest and the session-establishing endpoints', () => {
 
     expect(calls().map((c) => c.url)).toEqual(['/api/orders', '/api/auth/refresh']);
     expect(toLogin).toHaveBeenCalledTimes(1);
-    expect(localStorage.getItem('access_token')).toBeNull();
-    expect(localStorage.getItem('refresh_token')).toBeNull();
+    expect(getAccessToken()).toBeNull();
   });
 
   it('a 401 with no token at all is an ordinary ApiError, not an expiry', async () => {

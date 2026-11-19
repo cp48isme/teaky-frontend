@@ -1,5 +1,6 @@
 import { rememberSignedInDisplayName } from '../lib/portalSession';
-import { apiRequest, setTokens } from './client';
+import { apiRequest, setSession } from './client';
+import type { SessionResponse } from '../types/auth';
 import type {
   InvitationPreview,
   TeamMember,
@@ -75,11 +76,11 @@ export async function registerFromInvitation(
   password: string,
   displayName?: string,
 ): Promise<void> {
-  const tokens = await apiRequest<{ access_token: string; refresh_token: string; token_type: string; expires_in: number }>(
+  const tokens = await apiRequest<SessionResponse>(
     '/team/invitations/register',
     { method: 'POST', body: JSON.stringify({ token, password, display_name: displayName || undefined }) },
   );
-  setTokens(tokens);
+  setSession(tokens);
   // The name the person gave is what the account menu shows (dispatch 19 Nov 2026).
   rememberSignedInDisplayName(displayName ?? '');
 }

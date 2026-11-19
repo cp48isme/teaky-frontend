@@ -18,6 +18,7 @@ vi.mock('react-router-dom', async () => {
   return { ...actual, useNavigate: () => mockNavigate };
 });
 vi.mock('../../../contexts/AuthContext', () => ({ useAuth: () => ({ logout }), useOptionalAuth: () => ({ logout }) }));
+vi.mock('../../../api/auth', () => ({ getMe: () => Promise.resolve({ id: 'u-1', email: 'staff@example.com', display_name: 'Shop Staff', organization_id: 'o', roles: ['printer_admin'] }), logout: vi.fn() }));
 const shop: ProductionShell = { organization_id: 'org-1', name: 'Single Source US', mark: { url: 'https://app.example/production/single-source-logo.png', alt: 'Single Source US', source: 'shop_profile' } };
 vi.mock('../../../api/organizations', () => ({ getMyOrganization: vi.fn(), getProductionShell: () => Promise.resolve(shop) }));
 

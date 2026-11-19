@@ -1,12 +1,6 @@
-import { apiRequest, setTokens, clearTokens } from './client';
+import { apiRequest, clearSession, setSession } from './client';
+import type { MeResponse, SessionResponse } from '../types/auth';
 import { forgetSignedInDisplayName, forgetSignedInEmail, rememberSignedInEmail } from '../lib/portalSession';
-
-interface TokenResponse {
-  access_token: string;
-  refresh_token: string;
-  token_type: string;
-  expires_in: number;
-}
 
 export interface RegisterPayload {
   email: string;
@@ -22,38 +16,39 @@ export interface LoginPayload {
 }
 
 export async function register(payload: RegisterPayload): Promise<void> {
-  const tokens = await apiRequest<TokenResponse>('/auth/register', {
+  const tokens = await apiRequest<SessionResponse>('/auth/register', {
     method: 'POST',
     body: JSON.stringify(payload),
   });
-  setTokens(tokens);
+  setSession(tokens);
   rememberSignedInEmail(payload.email);
 }
 
 export async function login(payload: LoginPayload): Promise<void> {
-  const tokens = await apiRequest<TokenResponse>('/auth/login', {
+  const tokens = await apiRequest<SessionResponse>('/auth/login', {
     method: 'POST',
     body: JSON.stringify(payload),
   });
-  setTokens(tokens);
+  setSession(tokens);
   rememberSignedInEmail(payload.email);
 }
 
 export async function logout(): Promise<void> {
-  const refreshToken = localStorage.getItem('refresh_token');
-  if (refreshToken) {
-    try {
-      await apiRequest('/auth/logout', {
-        method: 'POST',
-        body: JSON.stringify({ refresh_token: refreshToken }),
-      });
-    } catch {
-      // Best-effort logout
-    }
+  // The server revokes the cookie's refresh token and clears the cookie; the
+  // access token is dropped here. No token is sent in the body.
+  try {
+    await apiRequest('/auth/logout', { method: 'POST' });
+  } catch {
+    // Best-effort logout
   }
-  clearTokens();
+  clearSession();
   forgetSignedInEmail();
   forgetSignedInDisplayName();
+}
+
+/** GET /auth/me (#272): who is signed in, for the account menu. 401 when not. */
+export async function getMe(): Promise<MeResponse> {
+  return apiRequest<MeResponse>('/auth/me');
 }
 
 export interface PasswordResetRequestResponse {
@@ -110,7 +105,7 @@ export interface SessionSummary {
   current: boolean;
 }
 
-export interface PasswordChangedResponse extends TokenResponse {
+export interface PasswordChangedResponse extends SessionResponse {
   other_sessions_ended: number;
   credentials_changed_at: string;
 }
@@ -120,25 +115,26 @@ export async function listSessions(): Promise<SessionSummary[]> {
 }
 
 /** Change the password with the current one in hand; every other session ends
- * at its next request; this browser keeps going on the fresh pair returned. */
+ * at its next request; this browser keeps going on the fresh session returned
+ * (its new refresh token in the cookie). */
 export async function changePassword(currentPassword: string, newPassword: string): Promise<PasswordChangedResponse> {
   const changed = await apiRequest<PasswordChangedResponse>('/auth/change-password', {
     method: 'POST',
     body: JSON.stringify({ current_password: currentPassword, new_password: newPassword }),
   });
-  setTokens(changed);
+  setSession(changed);
   return changed;
 }
 
 /** Sign out everywhere: every refresh token revoked on the server, then this
- * browser's tokens cleared. */
+ * browser's session dropped. */
 export async function logoutAll(): Promise<void> {
   try {
     await apiRequest('/auth/logout-all', { method: 'POST' });
   } catch {
-    // Best-effort; the tokens are cleared either way.
+    // Best-effort; the session is dropped either way.
   }
-  clearTokens();
+  clearSession();
   forgetSignedInEmail();
   forgetSignedInDisplayName();
 }
