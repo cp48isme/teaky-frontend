@@ -18,6 +18,8 @@ function batch(over: Partial<BatchSummary>): BatchSummary {
 
 const markHalfBatch = vi.fn(() => Promise.resolve({}));
 vi.mock('../../../api/production', () => ({
+  // a26: the page reads the shop's production_view (cards unless set)
+  getProductionSettings: vi.fn(() => Promise.resolve({ production_view: 'cards' })),
   listBatches: vi.fn(() => Promise.resolve([batch({})])),
   markHalfBatch: (...args: unknown[]) => markHalfBatch(...(args as [])),
 }));
