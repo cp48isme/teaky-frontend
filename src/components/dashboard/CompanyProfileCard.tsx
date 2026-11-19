@@ -1,18 +1,34 @@
+import { Link } from 'react-router-dom';
+import { canEditCompany, currentRoles } from '../../lib/roles';
 import type { CompanyProfile } from '../../types/companyProfile';
 
 interface Props {
   profile: CompanyProfile | null;
+  /** The organisation's display name (organizations.name), shown with the mark. */
+  name?: string | null;
   /** A managed account is set up by Teaky: no wizard link, ever. */
   managed?: boolean;
   /** Only a self-serve signup with nothing yet is offered the wizard (Cause 5, 30 Oct 2026). */
   selfServe?: boolean;
+  /** The signed-in roles; a printer_admin gets the link to the company page (t06). */
+  roles?: string[];
 }
 
-export default function CompanyProfileCard({ profile, managed = false, selfServe = false }: Props) {
+export default function CompanyProfileCard({ profile, name = null, managed = false, selfServe = false, roles = currentRoles() }: Props) {
+  const editable = canEditCompany(roles);
+  const pageLink = editable ? (
+    <Link to="/settings/company" className="text-xs text-teak-dark hover:text-teak">
+      Edit
+    </Link>
+  ) : null;
   if (!profile) {
     return (
       <div className="rounded-lg border border-gray-200 bg-white p-6">
-        <h3 className="font-heading text-sm font-semibold text-brand-dark">Company Profile</h3>
+        <div className="flex items-start justify-between">
+          <h3 className="font-heading text-sm font-semibold text-brand-dark">Company Profile</h3>
+          {pageLink}
+        </div>
+        {name && <p className="mt-2 font-heading text-lg font-semibold text-brand-dark">{name}</p>}
         <p className="mt-2 text-sm text-gray-500">
           {managed ? (
             'Your profile is set up by Teaky. To change it, reply to any Teaky email.'
@@ -35,28 +51,32 @@ export default function CompanyProfileCard({ profile, managed = false, selfServe
     <div className="rounded-lg border border-gray-200 bg-white p-6">
       <div className="flex items-start justify-between">
         <h3 className="font-heading text-sm font-semibold text-brand-dark">Company Profile</h3>
-        {selfServe && (
-          <a
-            href="/get-started"
-            className="text-xs text-teak-dark hover:text-teak"
-          >
-            Edit
-          </a>
-        )}
+        <span className="flex gap-3">
+          {pageLink}
+          {selfServe && !editable && (
+            <a
+              href="/get-started"
+              className="text-xs text-teak-dark hover:text-teak"
+            >
+              Edit
+            </a>
+          )}
+        </span>
       </div>
 
       <div className="mt-4 flex items-start gap-4">
         {profile.logo_url && (
           <img
             src={profile.logo_url}
-            alt="Logo"
-            className="h-12 w-12 rounded-md border object-contain bg-white p-1"
+            alt={name ? `${name} logo` : 'Logo'}
+            className="h-20 w-20 rounded-md border object-contain bg-white p-1"
             onError={(e) => {
               (e.target as HTMLImageElement).style.display = 'none';
             }}
           />
         )}
         <div className="space-y-1 text-sm">
+          {name && <p className="font-heading text-lg font-semibold text-brand-dark">{name}</p>}
           {profile.industry && (
             <p className="text-gray-600">
               <span className="font-medium">Industry:</span> {profile.industry}

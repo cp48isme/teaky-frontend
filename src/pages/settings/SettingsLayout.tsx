@@ -2,6 +2,7 @@ import { NavLink, Outlet } from 'react-router-dom';
 import Breadcrumbs from '../../components/ui/Breadcrumbs';
 
 const SETTINGS_TABS = [
+  { to: '/settings/company', label: 'Company' },
   { to: '/settings/team', label: 'Team' },
   { to: '/settings/notifications', label: 'Notifications' },
   { to: '/settings/integrations', label: 'Integrations' },
