@@ -142,7 +142,7 @@ describe('the proposals panel', () => {
     await waitFor(() => expect(screen.getAllByTestId('proposal-facts').length).toBe(2));
     expect(listProposals).toHaveBeenCalledTimes(1);
     expect(listMembers).not.toHaveBeenCalled();
-    expect(screen.getByTestId('read-only-note')).toBeTruthy();
+    expect(screen.getByTestId('proposals-read-only-note')).toBeTruthy();
     expect(screen.getAllByTestId('proposed-by').map((n) => n.textContent)).toEqual(['a staff member', 'a staff member']);
     expect(screen.getAllByTestId('waiting-for-a-decision').length).toBe(2);
     expect(screen.queryByTestId('propose-form')).toBeNull();
