@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { getProductionSettings, listBatches, markHalfBatch } from '../../api/production';
 import BatchesTable from '../../components/production/BatchesTable';
+import ProductionSearch from '../../components/production/ProductionSearch';
+import { matchesSearch } from '../../lib/productionSearch';
 import type { SortKey } from '../../lib/batchesList';
 import { cycleTag, EMPTY_TAG_FILTER, passesTagFilter, tagMode, tagUniverse, type TagFilter } from '../../lib/tags';
 import { readViewPreference, resolveView, writeViewPreference, type ProductionView } from '../../lib/productionView';
@@ -57,6 +59,7 @@ export default function BatchesPage({ readOnly = isShadowReader() }: { readOnly?
   const [browserView, setBrowserView] = useState<ProductionView | null>(readViewPreference);
   const view = resolveView(shopDefault, browserView);
   const [tagFilter, setTagFilter] = useState<TagFilter>(EMPTY_TAG_FILTER);
+  const [search, setSearch] = useState('');
   const [sort, setSort] = useState<{ key: SortKey; direction: 'asc' | 'desc' }>({ key: 'oldest', direction: 'desc' });
   const navigate = useNavigate();
 
@@ -93,7 +96,10 @@ export default function BatchesPage({ readOnly = isShadowReader() }: { readOnly?
   const pushedOut = useMemo(() => batches.filter((b) => b.docket_number || b.release_state === 'released'), [batches]);
   const bySection = show === 'Open' ? open : show === 'Pushed out' ? pushedOut : batches;
   const tags = useMemo(() => tagUniverse(batches.map((b) => b.tags)), [batches]);
-  const shown = useMemo(() => bySection.filter((b) => passesTagFilter(tagFilter, b.tags)), [bySection, tagFilter]);
+  const shown = useMemo(
+    () => bySection.filter((b) => passesTagFilter(tagFilter, b.tags) && matchesSearch(search, [b.batch_number, b.scan_code, b.stock, b.oldest_line_ref, b.docket_number, ...(b.business_entities ?? []), ...(b.tags ?? [])])),
+    [bySection, tagFilter, search],
+  );
   const nextNumber = batches.reduce((m, b) => Math.max(m, b.batch_number), 0) + 1;
   const [first, ...rest] = shown;
   // Proposals (dispatch 17–18 Nov 2026, item 1): every open batch is a target (a short run, mark done).
@@ -127,6 +133,7 @@ export default function BatchesPage({ readOnly = isShadowReader() }: { readOnly?
             ))}
           </select>
         </label>
+        <ProductionSearch value={search} onChange={setSearch} />
       </div>
       {tags.length ? (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', fontSize: 14 }} data-testid="tag-chips">
@@ -191,10 +198,20 @@ export function halfBatchOffered(batch: BatchSummary): boolean {
 function BatchCard({ batch, featured = false, readOnly = false, onPushOut, onHalfBatch }: { batch: BatchSummary; featured?: boolean; readOnly?: boolean; onPushOut: () => void; onHalfBatch?: () => void }) {
   const state = stateText(batch);
   const pushable = !readOnly && !batch.cancelled && !batch.docket_number && batch.release_state !== 'releasing' && batch.release_state !== 'released' && batch.used > 0;
+  // t05 (19 Nov 2026): the whole card is the link to the batch's push-out
+  // page for staff — a click or Enter anywhere on it; its own links and
+  // buttons keep their jobs; the footer "its lines" stays the secondary action.
+  // A read-only reader gets a plain card.
   return (
     <div
       className="card"
-      style={{ background: '#fff', border: `${featured ? 2 : 1}px solid ${featured ? colors.vein : '#e1e5ea'}`, borderRadius: 8, padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}
+      data-testid="batch-card"
+      role={readOnly ? undefined : 'link'}
+      tabIndex={readOnly ? undefined : 0}
+      aria-label={readOnly ? undefined : `Batch ${batch.batch_number}: open`}
+      onClick={readOnly ? undefined : (e) => { if ((e.target as HTMLElement).closest('a, button, input, select')) return; onPushOut(); }}
+      onKeyDown={readOnly ? undefined : (e) => { if (e.key === 'Enter' && e.target === e.currentTarget) onPushOut(); }}
+      style={{ background: '#fff', border: `${featured ? 2 : 1}px solid ${featured ? colors.vein : '#e1e5ea'}`, borderRadius: 8, padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 12, cursor: readOnly ? 'default' : 'pointer' }}
     >
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'center' }}>
         <div>

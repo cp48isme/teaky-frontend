@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { listPrinterOrders } from '../../api/orders';
 import { listBatches, listTaylorPool } from '../../api/production';
+import ProductionSearch from '../../components/production/ProductionSearch';
 import ProductionLayout from '../../components/production/ProductionLayout';
 import { ageSeconds, ageText, nextSort, receivedText, slotsFor, sortRows, type SortState } from '../../lib/production';
 import type { Order } from '../../types/order';
@@ -228,10 +229,7 @@ export default function AllChannelOrdersPage({ readOnly = isShadowReader() }: { 
             ))}
           </select>
         </label>
-        <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, flex: '1 1 220px' }}>
-          <span style={{ whiteSpace: 'nowrap' }}>Search</span>
-          <input type="search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="PO, product, any field" style={{ ...selectStyle, flex: 1 }} />
-        </label>
+        <ProductionSearch value={search} onChange={setSearch} />
       </div>
       {tags.length ? (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', fontSize: 14 }} data-testid="tag-chips">
