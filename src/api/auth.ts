@@ -88,3 +88,10 @@ export interface MyPortal {
 export async function listMyPortals(): Promise<MyPortal[]> {
   return apiRequest<MyPortal[]>('/auth/me/portals');
 }
+
+/** GET /auth/signup (t04, 18 Nov 2026): whether public self-signup is on. The
+ * backend refuses POST /auth/register on its own when it is off; this only
+ * decides whether the links are shown. */
+export async function getSignupAvailability(): Promise<{ public_signup_enabled: boolean }> {
+  return apiRequest<{ public_signup_enabled: boolean }>('/auth/signup');
+}

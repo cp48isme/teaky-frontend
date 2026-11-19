@@ -1,46 +1,15 @@
-import { useState, type FormEvent } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import { ApiError } from '../api/client';
 import { usePostLoginRedirect } from '../hooks/usePostLoginRedirect';
-import { rememberSignedInEmail, portalSlugFromPath, lastPortalSlug } from '../lib/portalSession';
+import { portalSlugFromPath, lastPortalSlug } from '../lib/portalSession';
+import SignInForm from '../components/auth/SignInForm';
+import { useSignupAvailability } from '../hooks/useSignupAvailability';
 
 export default function LoginPage() {
-  const { login } = useAuth();
   const postLoginRedirect = usePostLoginRedirect();
   const [searchParams] = useSearchParams();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  // Ruling 2026-10-26 (item 4): a buyer arriving from a portal (?next=/p/<slug>,
-  // or a remembered portal) is a hotel's staff signing in to order — never a
-  // print shop that should be offered a free Teaky account. Hide the signup
-  // offer in that context so the first screen a hotel buyer sees is neutral.
-  // The page cannot know the organisation before sign-in; the portal context
-  // is the signal it has. Per-portal branding before sign-in is post-launch.
   const fromPortal = (portalSlugFromPath(searchParams.get('next')) ?? lastPortalSlug()) !== null;
-
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
-    try {
-      const next = searchParams.get('next');
-      const portalSlug = portalSlugFromPath(next) ?? lastPortalSlug() ?? undefined;
-      await login({ email, password, portal_slug: portalSlug });
-      rememberSignedInEmail(email);
-      await postLoginRedirect(searchParams.get('next'));
-    } catch (err) {
-      if (err instanceof ApiError) {
-        setError(err.message);
-      } else {
-        setError('An unexpected error occurred');
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
+  // t04 (18 Nov 2026): the offer is shown only when the server says public sign-up is on.
+  const signupOn = useSignupAvailability();
 
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-brand-light">
@@ -66,74 +35,13 @@ export default function LoginPage() {
             <h2 className="font-heading text-2xl font-bold text-brand-dark">Sign in</h2>
             <p className="mt-1 text-sm text-wood">Your ordering portal and orders</p>
 
-            <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
-              {error && (
-                <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                  {error}
-                </div>
-              )}
+            <SignInForm
+              next={searchParams.get('next')}
+              portalSlug={portalSlugFromPath(searchParams.get('next')) ?? lastPortalSlug() ?? undefined}
+              onSignedIn={() => postLoginRedirect(searchParams.get('next'))}
+            />
 
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-brand-dark">
-                  Email
-                </label>
-                <input
-                  id="email"
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="mt-1.5 block w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-brand-dark placeholder-gray-400 transition focus:border-teak focus:outline-none focus:ring-1 focus:ring-teak"
-                  placeholder="you@company.com"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="password" className="block text-sm font-medium text-brand-dark">
-                  Password
-                </label>
-                <input
-                  id="password"
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="mt-1.5 block w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-brand-dark placeholder-gray-400 transition focus:border-teak focus:outline-none focus:ring-1 focus:ring-teak"
-                  placeholder="Your password"
-                />
-                <p className="mt-2 text-right text-sm">
-                  <Link
-                    to={`/forgot-password?${new URLSearchParams({
-                      ...(email ? { email } : {}),
-                      ...(searchParams.get('next') ? { next: searchParams.get('next') as string } : {}),
-                    }).toString()}`}
-                    className="font-medium text-teak-dark transition hover:text-teak"
-                  >
-                    Forgot your password?
-                  </Link>
-                </p>
-              </div>
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full rounded-lg bg-teak-dark py-2.5 text-sm font-semibold text-white shadow transition hover:bg-teak disabled:opacity-50"
-              >
-                {loading ? (
-                  <span className="inline-flex items-center gap-2">
-                    <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                    </svg>
-                    Signing in...
-                  </span>
-                ) : (
-                  'Sign in'
-                )}
-              </button>
-            </form>
-
-            {!fromPortal && (
+            {!fromPortal && signupOn && (
               <p className="mt-6 text-center text-sm text-wood">
                 New to Teaky?{' '}
                 <Link to="/register" className="font-medium text-teak-dark transition hover:text-teak">

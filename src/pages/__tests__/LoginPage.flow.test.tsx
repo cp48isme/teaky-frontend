@@ -13,6 +13,8 @@ import { sessionNavigation } from '../../api/client';
 
 const redirect = vi.fn();
 vi.mock('../../hooks/usePostLoginRedirect', () => ({ usePostLoginRedirect: () => redirect }));
+// t04: the page's sign-up offer reads GET /auth/signup; pinned here so the mocked fetch below sees only the sign-in call.
+vi.mock('../../hooks/useSignupAvailability', () => ({ useSignupAvailability: () => true }));
 
 const EMAIL = 'buyer@example.com';
 const TOKENS = { access_token: 'new.access.token', refresh_token: 'new-refresh', token_type: 'bearer', expires_in: 900 };

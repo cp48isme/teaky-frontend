@@ -10,6 +10,8 @@ import LoginPage from '../LoginPage';
 let remembered: string | null = null;
 vi.mock('../../contexts/AuthContext', () => ({ useAuth: () => ({ login: vi.fn() }) }));
 vi.mock('../../hooks/usePostLoginRedirect', () => ({ usePostLoginRedirect: () => vi.fn() }));
+// t04: these cases are about the portal context; public sign-up is on for them.
+vi.mock('../../hooks/useSignupAvailability', () => ({ useSignupAvailability: () => true }));
 vi.mock('../../lib/portalSession', async () => {
   const actual = await vi.importActual<typeof import('../../lib/portalSession')>('../../lib/portalSession');
   return { ...actual, lastPortalSlug: () => remembered, rememberSignedInEmail: vi.fn() };
