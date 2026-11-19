@@ -33,7 +33,7 @@ jobs:
       # way it does on the backend. This step lives in the one required
       # check (lint-and-build), so the ruleset needs no change.
       - name: Test
-        run: npx vitest run --retry 2
+        run: npx vitest run
 
       - name: Build
         run: npm run build

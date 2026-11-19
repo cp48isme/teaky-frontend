@@ -62,9 +62,18 @@ export default function AgentTaskDetailPage() {
     return () => clearInterval(interval);
   }, [taskId]);
 
-  useEffect(() => {
-    setEditedDraft(task?.state?.draft_response ?? '');
-  }, [task?.state?.draft_response]);
+  // The draft under edit follows the task's draft_response. Adjusted during
+  // render (React's "adjusting state when a prop changes" pattern), not in a
+  // passive effect: the effect committed one frame with the stale value — an
+  // empty textarea and a disabled Approve button beside a loaded draft — and
+  // under CI load that frame is what the detail-page tests clicked into
+  // (three red runs on 19 Nov 2026). No frame shows the stale value now.
+  const [draftSource, setDraftSource] = useState<string | undefined>(undefined);
+  const draftResponse = task?.state?.draft_response ?? '';
+  if (task && draftSource !== draftResponse) {
+    setDraftSource(draftResponse);
+    setEditedDraft(draftResponse);
+  }
 
   const handleTakeover = async () => {
     if (!taskId) return;
