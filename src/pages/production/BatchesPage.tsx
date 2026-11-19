@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { getProductionSettings, listBatches, markHalfBatch } from '../../api/production';
 import BatchesTable from '../../components/production/BatchesTable';
 import ProductionSearch from '../../components/production/ProductionSearch';
@@ -198,10 +198,10 @@ export function halfBatchOffered(batch: BatchSummary): boolean {
 function BatchCard({ batch, featured = false, readOnly = false, onPushOut, onHalfBatch }: { batch: BatchSummary; featured?: boolean; readOnly?: boolean; onPushOut: () => void; onHalfBatch?: () => void }) {
   const state = stateText(batch);
   const pushable = !readOnly && !batch.cancelled && !batch.docket_number && batch.release_state !== 'releasing' && batch.release_state !== 'released' && batch.used > 0;
-  // t05 (19 Nov 2026): the whole card is the link to the batch's push-out
-  // page for staff — a click or Enter anywhere on it; its own links and
-  // buttons keep their jobs; the footer "its lines" stays the secondary action.
-  // A read-only reader gets a plain card.
+  // t05 (19 Nov 2026): the whole card opens the batch (its push-out page) for
+  // staff — a click or Enter anywhere on it; its own links and buttons keep
+  // their jobs; the footer is the "Open batch" button, the same action for
+  // anyone who looks for one. A read-only reader gets a plain card.
   return (
     <div
       className="card"
@@ -289,11 +289,11 @@ function BatchCard({ batch, featured = false, readOnly = false, onPushOut, onHal
           Pushing out writes the art files and the job ticket, creates the Docket order <span style={mono}>BC Batch{batch.stock} {batch.batch_number}</span> and records its number on the batch. You confirm on the next screen; nothing moves until then.
         </div>
       ) : null}
-      {!featured ? (
+      {!readOnly ? (
         <div style={{ fontSize: 13 }}>
-          <Link to="/production/orders" style={{ color: colors.vein }}>
-            its lines
-          </Link>
+          <button type="button" onClick={onPushOut} style={btn} data-testid="open-batch">
+            Open batch
+          </button>
         </div>
       ) : null}
     </div>

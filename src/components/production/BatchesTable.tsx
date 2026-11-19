@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import type { BatchSummary } from '../../types/production';
 import { ageText } from '../../lib/production';
 import { colors } from './ProductionLayout';
@@ -7,9 +7,10 @@ import { sortBatches, slotsText, stateText, type SortKey } from '../../lib/batch
 /** The list form of the batches (a26, 18 Nov 2026; design
  * production-list-view-2026-11-18): one row per batch, the same facts as the
  * cards — batch, scan code, stock, slots, orders · lines, oldest line,
- * entity, tags, state — sortable by header. The row's batch number links to
- * the push-out page for staff; a read-only reader gets no link and no
- * action. */
+ * entity, tags, state — sortable by header. For staff the whole row opens
+ * the batch (its push-out page; t05, 19 Nov 2026 — the design note said so,
+ * rev 44 shipped the number alone), the batch number staying a real link for
+ * the keyboard and a new tab; a read-only reader gets no link and no action. */
 
 const th: React.CSSProperties = { textAlign: 'left', fontSize: 12, color: '#4b5563', padding: '8px 10px', borderBottom: '1px solid #d9dde3', textTransform: 'uppercase', letterSpacing: '.02em', cursor: 'pointer', whiteSpace: 'nowrap' };
 const td: React.CSSProperties = { padding: '10px 10px', borderBottom: '1px solid #eceff2', fontSize: 14, verticalAlign: 'top' };
@@ -39,6 +40,7 @@ export default function BatchesTable({
   onSort: (key: SortKey) => void;
 }) {
   const rows = sortBatches(batches, sort.key, sort.direction);
+  const navigate = useNavigate();
   return (
     <div style={{ overflowX: 'auto', background: '#fff', border: '1px solid #e1e5ea', borderRadius: 8 }} data-testid="batches-table">
       <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -61,7 +63,13 @@ export default function BatchesTable({
           {rows.map((b) => {
             const pct = b.capacity ? Math.round((b.used / b.capacity) * 100) : 0;
             return (
-              <tr key={b.unit_id} data-testid="batch-row">
+              <tr
+                key={b.unit_id}
+                data-testid="batch-row"
+                title={readOnly ? undefined : 'Open batch'}
+                style={readOnly ? undefined : { cursor: 'pointer' }}
+                onClick={readOnly ? undefined : (e) => { if ((e.target as HTMLElement).closest('a, button, input, select')) return; navigate(`/production/batches/${b.unit_id}/push-out`); }}
+              >
                 <td style={{ ...td, ...mono, fontWeight: 600 }}>
                   {readOnly ? (
                     b.batch_number

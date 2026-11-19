@@ -7,8 +7,9 @@ import type { BatchSummary } from '../../../types/production';
 
 /** t05 (19 Nov 2026): one search bar on Batches, in the head row, with the
  * orders page's words and behaviour (a substring over the visible fields);
- * the whole batch card is the link to its push-out page for staff, the footer
- * "its lines" kept as the secondary action; a read-only reader gets neither. */
+ * for staff the whole batch card opens the batch, the footer is an "Open
+ * batch" button, and a List view row opens the batch too; a read-only reader
+ * gets none of the three. */
 
 const batch = (over: Partial<BatchSummary>): BatchSummary => ({
   unit_id: 'u-101', batch_number: 101, scan_code: 'K7M2Q9XA', business_entities: ['single_source'], stock: '120#', channel: 'press_run',
@@ -53,23 +54,35 @@ describe('the production search and the card link', () => {
     expect(screen.getAllByTestId('batch-card').length).toBe(2);
   });
 
-  it('the whole card opens the batch for staff; the footer link stays; a read-only card is not a link', async () => {
+  it('a click on the card, on the "Open batch" button and on a List view row each open the batch for staff', async () => {
     const user = userEvent.setup();
     mount();
     await waitFor(() => expect(screen.getAllByTestId('batch-card').length).toBe(2));
     const second = screen.getAllByTestId('batch-card')[1]!;
     expect(second).toHaveAttribute('role', 'link');
-    await user.click(within(second).getByText('44RJBPZS'));
+    await user.click(within(second).getByText('44RJBPZS')); // the card itself
     expect(mockNavigate).toHaveBeenCalledWith('/production/batches/u-102/push-out');
-    expect(within(second).getByRole('link', { name: 'its lines' })).toHaveAttribute('href', '/production/orders');
     mockNavigate.mockClear();
-    await user.click(within(second).getByRole('link', { name: 'its lines' }));
-    expect(mockNavigate).not.toHaveBeenCalled(); // the footer link is its own action
+    await user.click(within(second).getByRole('button', { name: 'Open batch' })); // the footer button
+    expect(mockNavigate).toHaveBeenCalledWith('/production/batches/u-102/push-out');
+    mockNavigate.mockClear();
+    await user.click(screen.getByRole('button', { name: 'List' }));
+    const table = await screen.findByTestId('batches-table');
+    const row = within(table).getAllByTestId('batch-row').find((r) => r.textContent?.includes('44RJBPZS'))!;
+    await user.click(within(row).getByText('16 C2S')); // the row, not its number link
+    expect(mockNavigate).toHaveBeenCalledWith('/production/batches/u-102/push-out');
+    expect(within(row).getByRole('link', { name: '102' })).toHaveAttribute('href', '/production/batches/u-102/push-out');
   });
 
-  it('a read-only reader gets plain cards', async () => {
+  it('a read-only reader gets plain cards, no "Open batch" button and rows that open nothing', async () => {
+    const user = userEvent.setup();
     mount(true);
     await waitFor(() => expect(screen.getAllByTestId('batch-card').length).toBe(2));
     for (const card of screen.getAllByTestId('batch-card')) expect(card).not.toHaveAttribute('role');
+    expect(screen.queryByRole('button', { name: 'Open batch' })).toBeNull();
+    await user.click(screen.getByRole('button', { name: 'List' }));
+    const table = await screen.findByTestId('batches-table');
+    await user.click(within(table).getAllByTestId('batch-row')[0]!);
+    expect(mockNavigate).not.toHaveBeenCalled();
   });
 });
