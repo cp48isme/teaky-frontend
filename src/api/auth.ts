@@ -101,6 +101,8 @@ export interface SessionSummary {
   id: string;
   created_at: string;
   expires_at: string;
+  /** The session this browser's request came from (ruling 18 Nov 2026 evening). */
+  current: boolean;
 }
 
 export interface PasswordChangedResponse extends TokenResponse {
