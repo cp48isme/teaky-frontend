@@ -16,7 +16,12 @@ const order = (id: string, po: string, tags: string[]): Order =>
     line_items: [{ id: `${id}-l1`, product_name: 'Business cards', product_sku: 'BC-1', quantity: 1, pack_size: 250 }],
   }) as unknown as Order;
 
-vi.mock('../../../api/orders', () => ({ listPrinterOrders: vi.fn(() => Promise.resolve([order('o1', 'W7001234', ['Express']), order('o2', 'W7001235', []), order('o3', 'W7001236', ['Express', 'Rush'])])) }));
+vi.mock('../../../api/orders', () => ({
+  listPrinterOrders: vi.fn(() => Promise.resolve([order('o1', 'W7001234', ['Express']), order('o2', 'W7001235', []), order('o3', 'W7001236', ['Express', 'Rush'])])),
+  // t08 (19 Nov 2026): the page loads the shop's tag list for the inline editor; a mock, no assertion changed.
+  listShopTags: vi.fn(() => Promise.resolve({ tags: ['Express', 'Rush'] })),
+  updateOrder: vi.fn(),
+}));
 vi.mock('../../../api/production', () => ({ listBatches: vi.fn(() => Promise.resolve([])), listTaylorPool: vi.fn(() => Promise.resolve([])) }));
 vi.mock('../../../api/proposals', () => ({ listProposals: vi.fn(() => Promise.resolve([])) }));
 vi.mock('../../../api/team', () => ({ listMembers: vi.fn(() => Promise.resolve([])) }));

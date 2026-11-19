@@ -190,6 +190,23 @@ export interface ProductionSettings {
   production_view?: 'cards' | 'list';
 }
 
+/** Tags editing (t08, 19 Nov 2026): a customer → tags rule the intake applies
+ * to every order of that customer (#264); '' channel means every channel. */
+export interface CustomerTagRule {
+  customer_match: string;
+  channel: string;
+  tags: string[];
+}
+
+export interface TagRules {
+  customer_tags: CustomerTagRule[];
+}
+
+/** The shop's tag list for the pickers: the tags on its orders plus its rules' tags. */
+export interface ShopTagList {
+  tags: string[];
+}
+
 /** Day 5 (7 Nov 2026), Part B — the station view (canvas board 3). */
 export interface RouteStep {
   id: string;

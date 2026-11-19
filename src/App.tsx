@@ -15,6 +15,7 @@ import PushOutConfirmPage from './pages/production/PushOutConfirmPage';
 import HeldPage from './pages/production/HeldPage';
 import ProductsPage from './pages/production/ProductsPage';
 import FloorPage from './pages/production/FloorPage';
+import ProductionSettingsPage from './pages/production/ProductionSettingsPage';
 import PortalLayout from './components/layout/PortalLayout';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
@@ -203,6 +204,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <FloorPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/production/settings"
+            element={
+              <ProtectedRoute>
+                <ProductionSettingsPage />
               </ProtectedRoute>
             }
           />

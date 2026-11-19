@@ -69,6 +69,11 @@ export async function listPrinterOrders(filter: string | PrinterOrdersFilter = {
   return apiRequest<Order[]>(`/orders${query ? `?${query}` : ''}`);
 }
 
+/** The shop's tag list (t08, 19 Nov 2026): every tag on its orders plus its rules' tags, for the pickers. Staff only. */
+export async function listShopTags(): Promise<{ tags: string[] }> {
+  return apiRequest<{ tags: string[] }>('/orders/tags');
+}
+
 export async function getPrinterOrder(orderId: string): Promise<Order> {
   return apiRequest<Order>(`/orders/${orderId}`);
 }
