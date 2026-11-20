@@ -8,6 +8,16 @@ export type ActionProposalTarget = 'order' | 'release_unit';
 export type ActionProposalStatus = 'proposed' | 'approved' | 'declined' | 'failed' | 'withdrawn';
 export type PushAloneReason = 'rush' | 'stock' | 'finishing' | 'other';
 
+/** a27 item 2 (ruling 20 Nov 2026): a line a short run on a full batch sends back to the pool. */
+export interface MovedLineFact {
+  line_item_id: string;
+  order_id: string;
+  order_ref: string;
+  product: string;
+  slots: number;
+  source_created_at: string | null;
+}
+
 export interface ProposalUnitFact {
   unit_id: string;
   reference: string;
@@ -37,6 +47,9 @@ export interface ActionProposalFacts {
   capacity: number | null;
   half: boolean;
   open_holds: string[];
+  /** a27 item 2: the lines that return to the pool on approval (empty when the batch fits the half). */
+  lines_moving?: MovedLineFact[];
+  slots_kept?: number | null;
 }
 
 export interface ActionProposal {

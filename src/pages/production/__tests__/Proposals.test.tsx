@@ -204,5 +204,23 @@ describe('the proposals panel', () => {
       });
     }
   });
+
+  it('a short run on a full batch lists the lines that go back to the pool, and what stays (a27 item 2, 20 Nov 2026)', async () => {
+    const full = base({
+      id: 'p6', kind: 'push_short_run', target_kind: 'release_unit', target_id: 'u1', reason: 'the oldest two need to go today', category: null, proposed_by: 'u-dana',
+      facts: facts({
+        target_kind: 'release_unit', target_id: 'u1', reference: 'Batch 141', slots_used: 24, capacity: 24, slots_kept: 12,
+        lines_moving: [{ line_item_id: 'l-c', order_id: 'o-c', order_ref: 'W-C', product: 'Business card, standard', slots: 12, source_created_at: '2026-11-16T00:00:00Z' }],
+      }),
+    });
+    listProposals.mockResolvedValue([full]);
+    mount();
+    const card = await screen.findByTestId('proposal-push_short_run');
+    const factsBox = within(card).getByTestId('proposal-facts');
+    expect(factsBox).toHaveTextContent('Stays (oldest that fit)');
+    expect(factsBox).toHaveTextContent('12 slots');
+    expect(factsBox).toHaveTextContent('Back to the pool on approval (1 line, 12 slots)');
+    expect(factsBox).toHaveTextContent('W-C · Business card, standard · 12');
+  });
 });
 
