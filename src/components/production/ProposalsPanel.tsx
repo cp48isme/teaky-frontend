@@ -67,6 +67,7 @@ function ProposalCard({
   onApprove,
   onDecline,
   readOnly = false,
+  refusal,
 }: {
   proposal: ActionProposal;
   who: (id: string | null) => string;
@@ -75,6 +76,8 @@ function ProposalCard({
   onApprove: (note: string) => void;
   onDecline: (note: string) => void;
   readOnly?: boolean;
+  /** a27 item 1 (20 Nov 2026): the server's reason when this card's last decision was refused — shown on the card, not only at the top of the panel. */
+  refusal?: string;
 }) {
   const [note, setNote] = useState('');
   const [confirmDone, setConfirmDone] = useState(false);
@@ -109,7 +112,7 @@ function ProposalCard({
           {proposal.status === 'withdrawn' ? 'Withdrawn' : 'Decided'} by {who(proposal.decided_by)}
           {proposal.decided_at ? ` · ${new Date(proposal.decided_at).toLocaleString('en-US')}` : ''}
           {proposal.decision_note ? ` · ${proposal.decision_note}` : ''}
-          {proposal.failure ? <div style={{ color: '#a3331d' }}>The action refused: {proposal.failure}</div> : null}
+          {proposal.failure && !refusal ? <div style={{ color: '#a3331d' }}>The action refused: {proposal.failure}</div> : null}
         </div>
       ) : readOnly ? (
         <div style={{ fontSize: 13, color: '#4b5563' }} data-testid="waiting-for-a-decision">
@@ -159,6 +162,11 @@ function ProposalCard({
           ) : null}
         </div>
       )}
+      {refusal ? (
+        <div role="alert" data-testid="card-refusal" style={{ background: '#fdecea', border: '1px solid #f3b6ae', color: '#a3331d', borderRadius: 6, padding: '10px 12px', fontSize: 14 }}>
+          Refused: {refusal}
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -249,6 +257,9 @@ export default function ProposalsPanel({ targets, readOnly = false }: { targets:
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [showDecided, setShowDecided] = useState(false);
+  // a27 item 1 (20 Nov 2026): a refused decision stays in front of the person — the reason on its card, and the card not hidden behind the decided toggle this session.
+  const [refusals, setRefusals] = useState<Record<string, string>>({});
+  const [recent, setRecent] = useState<string[]>([]);
   const me = useMemo(() => currentUserId(), []);
 
   const load = useCallback(async () => {
@@ -273,19 +284,24 @@ export default function ProposalsPanel({ targets, readOnly = false }: { targets:
     setBusy(key);
     setNotice(null);
     setError(null);
+    setRefusals((m) => (key in m ? Object.fromEntries(Object.entries(m).filter(([k]) => k !== key)) : m));
     try {
       await fn();
       setNotice(done);
       await load();
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Refused');
+      const reason = e instanceof Error ? e.message : 'Refused';
+      setError(reason);
+      setRefusals((m) => ({ ...m, [key]: reason }));
+      setRecent((r) => (r.includes(key) ? r : [...r, key]));
+      await load().catch(() => undefined);
     } finally {
       setBusy(null);
     }
   }
 
-  const open = proposals.filter((p) => p.status === 'proposed');
-  const decided = proposals.filter((p) => p.status !== 'proposed');
+  const open = proposals.filter((p) => p.status === 'proposed' || recent.includes(p.id));
+  const decided = proposals.filter((p) => p.status !== 'proposed' && !recent.includes(p.id));
   return (
     <section aria-labelledby="proposals" style={{ display: 'flex', flexDirection: 'column', gap: 16 }} data-testid="proposals-panel">
       <div>
@@ -320,6 +336,7 @@ export default function ProposalsPanel({ targets, readOnly = false }: { targets:
       {open.map((p) => (
         <ProposalCard
           key={p.id}
+          refusal={refusals[p.id]}
           proposal={p}
           who={who}
           me={me}

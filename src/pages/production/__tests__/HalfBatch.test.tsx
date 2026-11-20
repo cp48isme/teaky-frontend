@@ -4,6 +4,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 import BatchesPage, { halfBatchOffered } from '../BatchesPage';
 import type { BatchSummary } from '../../../types/production';
+import { ApiError } from '../../../api/client';
 
 /** Andrew, 6 Nov 2026: a batch at 12 or fewer slots used offers a half
  * batch (12 at 125 sheets); the press goes through the same confirmation. */
@@ -49,4 +50,21 @@ describe('the half batch', () => {
     await waitFor(() => expect(markHalfBatch).toHaveBeenCalledWith('u-143'));
     expect(await screen.findByText('confirmation for u-143')).toBeInTheDocument();
   });
+
+  it('a refused half batch shows the reason on the card itself (a27 item 1, 20 Nov 2026)', async () => {
+    markHalfBatch.mockRejectedValueOnce(new ApiError(409, 'Batch 143 has 24 slots in use; a half batch holds 12.'));
+    render(
+      <MemoryRouter initialEntries={['/production/batches']}>
+        <Routes>
+          <Route path="/production/batches" element={<BatchesPage />} />
+          <Route path="/production/batches/:unitId/push-out" element={<div>confirmation for u-143</div>} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    await userEvent.click(await screen.findByRole('button', { name: 'Half batch (12 at 125 sheets)…' }));
+    const onCard = await screen.findByTestId('batch-refusal');
+    expect(onCard).toHaveTextContent('Refused: Batch 143 has 24 slots in use; a half batch holds 12.');
+    expect(screen.queryByText('confirmation for u-143')).toBeNull();
+  });
 });
+
