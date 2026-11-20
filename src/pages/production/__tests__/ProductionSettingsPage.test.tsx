@@ -71,4 +71,21 @@ describe('ProductionSettingsPage', () => {
     expect(await screen.findByTestId('no-floor-role')).toBeInTheDocument();
     expect(screen.queryByTestId('tag-rules')).toBeNull();
   });
+
+  it('the bridge switch reads off by default, writes the whole resource with it on, and says the change is recorded', async () => {
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter>
+        <ProductionSettingsPage readOnly={false} />
+      </MemoryRouter>,
+    );
+    const section = await screen.findByTestId('bridge-bundles');
+    expect(within(section).getByRole('button', { name: 'Off' })).toHaveAttribute('aria-pressed', 'true');
+    expect(within(section).getByRole('button', { name: 'On' })).toHaveAttribute('aria-pressed', 'false');
+    await user.click(within(section).getByRole('button', { name: 'On' }));
+    await waitFor(() => expect(updateProductionSettings).toHaveBeenLastCalledWith({ ...settings, bridge_bundles_enabled: true }));
+    expect(await screen.findByRole('status')).toHaveTextContent('This change is recorded');
+    expect(within(section).getByRole('button', { name: 'On' })).toHaveAttribute('aria-pressed', 'true');
+  });
 });
+

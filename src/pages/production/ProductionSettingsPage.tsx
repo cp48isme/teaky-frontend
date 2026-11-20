@@ -63,6 +63,21 @@ export default function ProductionSettingsPage({ readOnly = isShadowReader() }: 
     }
   }
 
+  async function setBridge(on: boolean) {
+    if (!settings) return;
+    setBusy(true);
+    setNotice(null);
+    setError(null);
+    try {
+      setSettings(await updateProductionSettings({ ...settings, bridge_bundles_enabled: on }));
+      setNotice(on ? 'On: the bridge on the shop\'s PC will write each batch\'s files to the job-tickets folder. This change is recorded.' : 'Off: the bridge is offered no batch files and writes nothing. This change is recorded.');
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'The setting was refused');
+    } finally {
+      setBusy(false);
+    }
+  }
+
   function setRule(i: number, patch: Partial<CustomerTagRule>) {
     setRules((all) => all.map((r, j) => (j === i ? { ...r, ...patch } : r)));
   }
@@ -91,6 +106,7 @@ export default function ProductionSettingsPage({ readOnly = isShadowReader() }: 
   }
 
   const view: ProductionView = settings?.production_view ?? 'cards';
+  const bridge = settings?.bridge_bundles_enabled ?? false;
   return (
     <ProductionLayout readOnly={readOnly}>
       <h1 style={{ margin: 0, fontSize: 24, fontWeight: 600 }}>Production settings</h1>
@@ -112,6 +128,17 @@ export default function ProductionSettingsPage({ readOnly = isShadowReader() }: 
               ))}
             </div>
             <div style={{ fontSize: 13, color: '#4b5563' }}>The shop's default; a browser's own toggle on Batches overrides it there.</div>
+          </section>
+          <section style={card} aria-labelledby="bridge-bundles" data-testid="bridge-bundles">
+            <h2 id="bridge-bundles" style={{ margin: 0, fontSize: 16 }}>Bridge writes batch files to the job-tickets folder</h2>
+            <div role="group" aria-label="Bridge writes batch files" style={{ display: 'flex', gap: 2 }}>
+              {([false, true] as const).map((on) => (
+                <button key={String(on)} type="button" aria-pressed={bridge === on} disabled={busy || !settings} onClick={() => setBridge(on)} style={{ ...button, background: bridge === on ? '#5d4037' : '#fff', color: bridge === on ? '#fff' : '#1c1917' }}>
+                  {on ? 'On' : 'Off'}
+                </button>
+              ))}
+            </div>
+            <div style={{ fontSize: 13, color: '#4b5563' }}>Off (the default): the bridge on the shop's PC is offered no batch files and writes nothing; it only keeps the Taylor session. Switching it on is a deliberate step taken together with the shop, and every change is recorded with who made it.</div>
           </section>
           <section style={card} aria-labelledby="tag-rules" data-testid="tag-rules">
             <h2 id="tag-rules" style={{ margin: 0, fontSize: 16 }}>Tags by customer</h2>
