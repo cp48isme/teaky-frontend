@@ -121,6 +121,8 @@ export interface TaylorPoolLine {
   art_error: string | null;
   /** Ruling 20 Nov 2026: 'stocked_goods' for a pick-and-pack line (no art step, never a press run). */
   lane?: string;
+  /** 20 Nov 2026: the Taylor grid's customer column. */
+  customer?: string;
   held_by: string[];
   stock: string;
   // One pool (9 Nov 2026): the canonical line this raw row became.
