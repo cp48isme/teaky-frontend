@@ -41,6 +41,7 @@ export function SlotStrip({ used, fillable, capacity, gap = 3 }: { used: number;
 
 function stateText(b: BatchSummary): { text: string; color?: string } {
   if (b.cancelled) return { text: 'cancelled', color: '#a3331d' };
+  if (b.marked_done_at) return { text: `marked done · ${new Date(b.marked_done_at).toLocaleDateString()}` };
   if (b.docket_number) return { text: `pushed out · Docket ${b.docket_number}` };
   if (b.release_state === 'needs_human') return { text: 'needs a person — check DocketManager', color: '#a3331d' };
   if (b.release_state === 'releasing') return { text: 'pushing out…', color: '#7a5a12' };
@@ -92,9 +93,11 @@ export default function BatchesPage({ readOnly = isShadowReader() }: { readOnly?
       .catch(() => setShopDefault('cards'));
   }, [readOnly]);
 
-  const open = useMemo(() => batches.filter((b) => !b.cancelled && !b.docket_number && b.release_state !== 'released'), [batches]);
-  const pushedOut = useMemo(() => batches.filter((b) => b.docket_number || b.release_state === 'released'), [batches]);
-  const bySection = show === 'Open' ? open : show === 'Pushed out' ? pushedOut : batches;
+  // a27 (20 Nov 2026): a batch marked done by a person leaves Open and has its own section.
+  const open = useMemo(() => batches.filter((b) => !b.cancelled && !b.marked_done_at && !b.docket_number && b.release_state !== 'released'), [batches]);
+  const pushedOut = useMemo(() => batches.filter((b) => !b.marked_done_at && (b.docket_number || b.release_state === 'released')), [batches]);
+  const done = useMemo(() => batches.filter((b) => !!b.marked_done_at), [batches]);
+  const bySection = show === 'Open' ? open : show === 'Pushed out' ? pushedOut : show === 'Done' ? done : batches;
   const tags = useMemo(() => tagUniverse(batches.map((b) => b.tags)), [batches]);
   const shown = useMemo(
     () => bySection.filter((b) => passesTagFilter(tagFilter, b.tags) && matchesSearch(search, [b.batch_number, b.scan_code, b.stock, b.oldest_line_ref, b.docket_number, ...(b.business_entities ?? []), ...(b.tags ?? [])])),
@@ -128,7 +131,7 @@ export default function BatchesPage({ readOnly = isShadowReader() }: { readOnly?
         <label style={{ fontSize: 14, display: 'flex', gap: 8, alignItems: 'center' }}>
           Show
           <select value={show} onChange={(e) => setShow(e.target.value)} style={{ padding: '7px 10px', border: '1px solid #c9cfd6', borderRadius: 6, background: '#fff', font: 'inherit' }}>
-            {['Open', 'Pushed out', 'All'].map((o) => (
+            {['Open', 'Pushed out', 'Done', 'All'].map((o) => (
               <option key={o}>{o}</option>
             ))}
           </select>
@@ -192,12 +195,12 @@ export const HALF_CAPACITY = 12;
 export const HALF_SHEETS = 125;
 
 export function halfBatchOffered(batch: BatchSummary): boolean {
-  return !batch.half && !batch.full && !batch.cancelled && !batch.docket_number && batch.release_state !== 'releasing' && batch.release_state !== 'released' && batch.used > 0 && batch.used <= HALF_CAPACITY;
+  return !batch.half && !batch.full && !batch.cancelled && !batch.marked_done_at && !batch.docket_number && batch.release_state !== 'releasing' && batch.release_state !== 'released' && batch.used > 0 && batch.used <= HALF_CAPACITY;
 }
 
 function BatchCard({ batch, featured = false, readOnly = false, onPushOut, onHalfBatch }: { batch: BatchSummary; featured?: boolean; readOnly?: boolean; onPushOut: () => void; onHalfBatch?: () => void }) {
   const state = stateText(batch);
-  const pushable = !readOnly && !batch.cancelled && !batch.docket_number && batch.release_state !== 'releasing' && batch.release_state !== 'released' && batch.used > 0;
+  const pushable = !readOnly && !batch.cancelled && !batch.marked_done_at && !batch.docket_number && batch.release_state !== 'releasing' && batch.release_state !== 'released' && batch.used > 0;
   // t05 (19 Nov 2026): the whole card opens the batch (its push-out page) for
   // staff — a click or Enter anywhere on it; its own links and buttons keep
   // their jobs; the footer is the "Open batch" button, the same action for
@@ -208,7 +211,7 @@ function BatchCard({ batch, featured = false, readOnly = false, onPushOut, onHal
       data-testid="batch-card"
       role={readOnly ? undefined : 'link'}
       tabIndex={readOnly ? undefined : 0}
-      aria-label={readOnly ? undefined : `Batch ${batch.batch_number}: open`}
+      aria-label={readOnly ? undefined : `Batch ${batch.batch_number}: ${batch.marked_done_at ? 'done' : 'open'}`}
       onClick={readOnly ? undefined : (e) => { if ((e.target as HTMLElement).closest('a, button, input, select')) return; onPushOut(); }}
       onKeyDown={readOnly ? undefined : (e) => { if (e.key === 'Enter' && e.target === e.currentTarget) onPushOut(); }}
       style={{ background: '#fff', border: `${featured ? 2 : 1}px solid ${featured ? colors.vein : '#e1e5ea'}`, borderRadius: 8, padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 12, cursor: readOnly ? 'default' : 'pointer' }}

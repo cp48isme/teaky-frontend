@@ -4,6 +4,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import BatchesPage from '../BatchesPage';
 import type { BatchSummary } from '../../../types/production';
+import { listBatches } from '../../../api/production';
 
 /** The list view (a26, 18 Nov 2026): cards by default (RGI untouched); the
  * shop's production setting opens the list; the browser's toggle overrides
@@ -87,5 +88,22 @@ describe('the batches list view', () => {
     expect(within(table).getAllByTestId('batch-row').length).toBe(1);
     await user.click(chip); // off
     expect(within(table).getAllByTestId('batch-row').length).toBe(2);
+  });
+
+  it('a batch marked done by a person leaves Open and sits under Done with the mark (a27)', async () => {
+    vi.mocked(listBatches).mockResolvedValueOnce([
+      ...batches,
+      batch({ unit_id: 'u-103', batch_number: 103, scan_code: 'EF1374TE', marked_done_at: '2026-11-20T14:00:00Z', marked_done_by_id: 'person-1' }),
+    ]);
+    localStorage.setItem('teaky.production.view', 'list');
+    mount();
+    expect(await screen.findByTestId('batches-table')).toBeTruthy();
+    expect(screen.getByText(/2 open/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: '101' })).toBeTruthy();
+    expect(screen.queryAllByRole('link', { name: '103' })).toEqual([]);
+    await userEvent.selectOptions(screen.getByDisplayValue('Open'), 'Done');
+    expect(await screen.findByRole('link', { name: '103' })).toBeTruthy();
+    expect(screen.getByText(/marked done/)).toBeInTheDocument();
+    expect(screen.queryAllByRole('link', { name: '101' })).toEqual([]);
   });
 });

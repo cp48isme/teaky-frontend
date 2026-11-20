@@ -38,6 +38,9 @@ export interface BatchSummary {
   released_at: string | null;
   released_by_id: string | null;
   cancelled: boolean;
+  /** a27 (20 Nov 2026): marked done by a person; it leaves Open. */
+  marked_done_at?: string | null;
+  marked_done_by_id?: string | null;
   fill_candidates: FillCandidateSummary[];
   fillable_slots: number;
   line_item_ids: string[];

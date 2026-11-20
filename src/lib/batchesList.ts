@@ -6,6 +6,7 @@ export type SortKey = 'batch' | 'stock' | 'slots' | 'orders' | 'oldest' | 'state
 
 export function stateText(b: BatchSummary): string {
   if (b.cancelled) return 'cancelled';
+  if (b.marked_done_at) return `marked done · ${new Date(b.marked_done_at).toLocaleDateString()}`;
   if (b.docket_number) return `pushed out · Docket ${b.docket_number}`;
   if (b.release_state === 'released') return 'released';
   if (b.release_state === 'releasing') return 'releasing';
