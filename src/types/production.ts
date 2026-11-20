@@ -117,8 +117,10 @@ export interface TaylorPoolLine {
   cards: number;
   source_created_at: string;
   received_at: string;
-  art_state: 'missing' | 'fetched' | 'hold';
+  art_state: 'missing' | 'fetched' | 'hold' | 'not_needed';
   art_error: string | null;
+  /** Ruling 20 Nov 2026: 'stocked_goods' for a pick-and-pack line (no art step, never a press run). */
+  lane?: string;
   held_by: string[];
   stock: string;
   // One pool (9 Nov 2026): the canonical line this raw row became.

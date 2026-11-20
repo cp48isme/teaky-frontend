@@ -139,6 +139,8 @@ export function rowsFromTaylor(lines: TaylorPoolLine[], now: Date): OrderRow[] {
     status:
       l.canonical_state === 'blocked'
         ? `Held · ${l.canonical_error ?? 'needs a person'}`
+        : l.lane === 'stocked_goods'
+          ? 'Stocked goods · pick and pack'
         : l.art_state === 'hold'
           ? `Held · art: ${l.art_error ?? 'missing'}`
           : 'Waiting for a batch',
