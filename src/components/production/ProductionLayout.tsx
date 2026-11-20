@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { NavLink } from 'react-router-dom';
+import { Link, NavLink } from 'react-router-dom';
 import SiteFooter from '../layout/SiteFooter';
 import { isShadowReader } from '../../lib/roles';
 import { useProductionShell } from '../../hooks/useProductionShell';
@@ -43,10 +43,15 @@ export default function ProductionLayout({ children, footnote, readOnly = isShad
       >
         {shell === null ? (
           <div style={{ height: 44 }} data-testid="shell-loading" />
-        ) : teakysOwn ? (
-          <img src={TEAKY_WORDMARK} alt="Teaky" style={{ height: 36, width: 'auto', display: 'block' }} data-testid="shell-mark" data-source="teaky" />
         ) : (
-          <img src={shell.mark.url} alt={shell.mark.alt} style={{ height: 44, width: 'auto', display: 'block' }} data-testid="shell-mark" data-source={shell.mark.source} />
+          // Walk t09 (20 Nov 2026): the mark is the way home — the dashboard for staff, Batches for a read-only reader.
+          <Link to={readOnly ? '/production/batches' : '/dashboard'} style={{ display: 'block' }} data-testid="shell-mark-link">
+            {teakysOwn ? (
+              <img src={TEAKY_WORDMARK} alt="Teaky" style={{ height: 36, width: 'auto', display: 'block' }} data-testid="shell-mark" data-source="teaky" />
+            ) : (
+              <img src={shell.mark.url} alt={shell.mark.alt} style={{ height: 44, width: 'auto', display: 'block' }} data-testid="shell-mark" data-source={shell.mark.source} />
+            )}
+          </Link>
         )}
         {shell !== null && !teakysOwn ? (
           <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: '#cfc9c2' }} data-testid="powered-by">
@@ -62,6 +67,11 @@ export default function ProductionLayout({ children, footnote, readOnly = isShad
           <div style={{ padding: '0 20px 20px', fontWeight: 600, color: '#fff', fontSize: 15, minHeight: 38 }} data-testid="shell-name">
             {shell?.name ?? ''}
           </div>
+          {!readOnly ? (
+            <NavLink to="/dashboard" style={{ display: 'block', padding: '10px 20px', color: '#d7dbe0', textDecoration: 'none', borderBottom: '1px solid rgba(255,255,255,0.12)', marginBottom: 6 }} data-testid="dashboard-link">
+              ← Dashboard
+            </NavLink>
+          ) : null}
           {nav.map((item) =>
             item.built ? (
               <NavLink

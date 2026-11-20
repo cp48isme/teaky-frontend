@@ -271,3 +271,11 @@ export interface StationHoldResult {
   opened_by: string;
   detail: string;
 }
+
+/** The mark-done answer (D4): the plan (confirm false) or what was applied. */
+export interface MarkDoneResult {
+  applied: boolean;
+  reason: string;
+  units: { unit_id: string; batch_number: number; steps_remaining: number; steps_skipped: number; marked_done_at?: string | null }[];
+}
+
