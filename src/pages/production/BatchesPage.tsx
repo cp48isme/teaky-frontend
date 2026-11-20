@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getProductionSettings, listBatches, markHalfBatch } from '../../api/production';
+import { listShopTags } from '../../api/orders';
 import BatchesTable from '../../components/production/BatchesTable';
 import ProductionSearch from '../../components/production/ProductionSearch';
 import { matchesSearch } from '../../lib/productionSearch';
@@ -78,11 +79,22 @@ export default function BatchesPage({ readOnly = isShadowReader() }: { readOnly?
     }
   }
 
-  useEffect(() => {
+  function loadBatches() {
     listBatches()
       .then(setBatches)
       .catch((e: unknown) => (isNoFloorRole(e) ? setNoRole(true) : setError(loadFailureText(e, 'Could not load the batches'))));
-  }, []);
+  }
+  useEffect(loadBatches, []);
+
+  // The shop's tag list for the list rows' bulk editor (ruling 19 Nov 2026); staff only.
+  const [shopTags, setShopTags] = useState<string[]>([]);
+  useEffect(() => {
+    if (readOnly) return;
+    Promise.resolve()
+      .then(() => listShopTags())
+      .then((l) => setShopTags(l.tags))
+      .catch(() => setShopTags([]));
+  }, [readOnly]);
 
   useEffect(() => {
     // The shop's default is a production setting (staff-only); a reader who
@@ -162,7 +174,7 @@ export default function BatchesPage({ readOnly = isShadowReader() }: { readOnly?
       {error ? <div role="alert" style={{ color: '#a3331d' }}>{error}</div> : null}
       {noRole ? <div role="status" style={{ color: '#4b5563' }} data-testid="no-floor-role">{NO_FLOOR_ROLE}</div> : null}
       {view === 'list' ? (
-        <BatchesTable batches={shown} readOnly={readOnly} sort={sort} onSort={(key) => setSort((s) => (s.key === key ? { key, direction: s.direction === 'asc' ? 'desc' : 'asc' } : { key, direction: key === 'oldest' || key === 'batch' ? 'desc' : 'asc' }))} />
+        <BatchesTable batches={shown} readOnly={readOnly} shopTags={shopTags} onTagsWritten={loadBatches} sort={sort} onSort={(key) => setSort((s) => (s.key === key ? { key, direction: s.direction === 'asc' ? 'desc' : 'asc' } : { key, direction: key === 'oldest' || key === 'batch' ? 'desc' : 'asc' }))} />
       ) : null}
       {view === 'cards' && first ? <BatchCard batch={first} featured readOnly={readOnly} onPushOut={() => navigate(`/production/batches/${first.unit_id}/push-out`)} onHalfBatch={() => halfBatch(first)} /> : view === 'cards' ? <div style={{ color: '#4b5563' }}>No batches to show.</div> : null}
       {view === 'cards' && rest.length ? (

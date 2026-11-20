@@ -24,6 +24,7 @@ const NAV: { to: string; label: string; built: boolean }[] = [
   { to: '/production/held', label: 'Held', built: true },
   { to: '/production/products', label: 'Products', built: true },
   { to: '/production/floor', label: 'Floor', built: true },
+  { to: '/production/settings', label: 'Settings', built: true },
 ];
 
 /** The read-only shell (dispatch 16 Nov 2026, item 5): a shadow_reader sees

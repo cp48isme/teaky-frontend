@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { listPrinterOrders } from '../../api/orders';
+import { listPrinterOrders, listShopTags, updateOrder } from '../../api/orders';
 import { listBatches, listTaylorPool } from '../../api/production';
 import ProductionSearch from '../../components/production/ProductionSearch';
 import ProductionLayout from '../../components/production/ProductionLayout';
@@ -8,6 +8,7 @@ import { ageSeconds, ageText, nextSort, receivedText, slotsFor, sortRows, type S
 import type { Order } from '../../types/order';
 import type { BatchSummary, TaylorPoolLine } from '../../types/production';
 import { isShadowReader } from '../../lib/roles';
+import TagEditor from '../../components/production/TagEditor';
 import { NO_FLOOR_ROLE, isNoFloorRole, loadFailureText } from '../../lib/productionAccess';
 import { EMPTY_TAG_FILTER, cycleTag, passesTagFilter, tagFilterText, tagMode, tagUniverse, type TagFilter } from '../../lib/tags';
 
@@ -160,6 +161,30 @@ export default function AllChannelOrdersPage({ readOnly = isShadowReader() }: { 
   const [show, setShow] = useState('Waiting and held');
   const [search, setSearch] = useState('');
   const [tagFilter, setTagFilter] = useState<TagFilter>(EMPTY_TAG_FILTER);
+  // Tags editing (t08, 19 Nov 2026): the shop's list for the pickers; a row's
+  // tags are set inline, the whole list, and the order re-read from the answer.
+  const [shopTags, setShopTags] = useState<string[]>([]);
+  const [tagBusy, setTagBusy] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (readOnly) return;
+    listShopTags()
+      .then((l) => setShopTags(l.tags))
+      .catch(() => setShopTags([]));
+  }, [readOnly]);
+
+  async function setTags(orderId: string, tags: string[]) {
+    setTagBusy(orderId);
+    try {
+      const updated = await updateOrder(orderId, { tags });
+      setOrders((all) => all.map((o) => (o.id === updated.id ? updated : o)));
+      setShopTags((s) => Array.from(new Set([...s, ...(updated.tags ?? [])])));
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'The tags were refused');
+    } finally {
+      setTagBusy(null);
+    }
+  }
 
   useEffect(() => {
     // A shadow_reader (dispatch 16 Nov 2026, item 5) reads the pool and the batches, not the orders list.
@@ -317,7 +342,11 @@ export default function AllChannelOrdersPage({ readOnly = isShadowReader() }: { 
                   ) : (
                     r.order
                   )}
-                  {r.tags.length ? (
+                  {!readOnly && r.orderId ? (
+                    <div style={{ marginTop: 2 }}>
+                      <TagEditor tags={r.tags} options={shopTags} readOnly={false} compact busy={tagBusy === r.orderId} onChange={(next) => setTags(r.orderId as string, next)} />
+                    </div>
+                  ) : r.tags.length ? (
                     <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 2 }}>
                       {r.tags.map((t) => (
                         <span key={t} style={{ ...pill, background: '#eef2f6', color: '#3f4854', fontSize: 11 }} data-testid="row-tag">

@@ -34,6 +34,7 @@ import OrderCostsPanel from "../components/orders/OrderCostsPanel";
 import Breadcrumbs from "../components/ui/Breadcrumbs";
 import ActionButton from "../components/ui/ActionButton";
 import { useAction } from "../hooks/useAction";
+import OrderTagsSection from "../components/production/OrderTagsSection";
 import { getPortal } from "../api/portals";
 import { listMembers } from "../api/team";
 import { staffArtworkLine } from "../lib/artworkCopy";
@@ -236,6 +237,18 @@ export default function PrinterOrderDetailPage() {
     if (!orderId) return;
     const updated = await saveDetails.run(orderId);
     if (updated) setOrder(updated);
+  };
+
+  // Tags (t08, 19 Nov 2026): saved on every change, the whole list; the
+  // server audits the change.
+  const saveTags = useAction("Order tags", (id: string, tags: string[]) =>
+    updateOrder(id, { tags }),
+  );
+  const handleSaveTags = async (tags: string[]) => {
+    if (!orderId) return undefined;
+    const updated = await saveTags.run(orderId, tags);
+    if (updated) setOrder(updated);
+    return updated?.tags;
   };
 
   // The push resolves even when DocketManager refused the job; the sync log
@@ -869,6 +882,7 @@ export default function PrinterOrderDetailPage() {
               className="mt-1 block w-full rounded border border-gray-300 px-2 py-1.5 text-sm"
             />
           </div>
+          <OrderTagsSection tags={order.tags ?? []} onSave={handleSaveTags} />
           <div>
             <label className="block text-xs font-medium text-gray-500">
               Notes

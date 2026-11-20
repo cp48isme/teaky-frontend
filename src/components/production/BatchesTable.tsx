@@ -3,6 +3,7 @@ import type { BatchSummary } from '../../types/production';
 import { ageText } from '../../lib/production';
 import { colors } from './ProductionLayout';
 import { sortBatches, slotsText, stateText, type SortKey } from '../../lib/batchesList';
+import BatchTagEditor from './BatchTagEditor';
 
 /** The list form of the batches (a26, 18 Nov 2026; design
  * production-list-view-2026-11-18): one row per batch, the same facts as the
@@ -33,11 +34,17 @@ export default function BatchesTable({
   readOnly,
   sort,
   onSort,
+  shopTags = [],
+  onTagsWritten = () => {},
 }: {
   batches: BatchSummary[];
   readOnly: boolean;
   sort: { key: SortKey; direction: 'asc' | 'desc' };
   onSort: (key: SortKey) => void;
+  /** The shop's tag list for the row editor (ruling 19 Nov 2026: a bulk action over the batch's orders). */
+  shopTags?: readonly string[];
+  /** After a bulk write: the page re-reads the batches. */
+  onTagsWritten?: () => void;
 }) {
   const rows = sortBatches(batches, sort.key, sort.direction);
   const navigate = useNavigate();
@@ -93,7 +100,7 @@ export default function BatchesTable({
                   {b.oldest_line_ref ? <span style={{ ...mono, marginLeft: 6, color: '#a3331d' }}>{b.oldest_line_ref}</span> : null}
                 </td>
                 <td style={td}>{(b.business_entities ?? []).join(', ')}</td>
-                <td style={td}>{(b.tags ?? []).join(', ')}</td>
+                <td style={td}>{readOnly ? (b.tags ?? []).join(', ') : <BatchTagEditor batch={b} options={shopTags} onWritten={onTagsWritten} />}</td>
                 <td style={td}>{stateText(b)}</td>
               </tr>
             );

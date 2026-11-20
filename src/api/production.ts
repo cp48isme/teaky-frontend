@@ -6,6 +6,7 @@ import type {
   StationView,
   BatchSummary,
   ProductionSettings,
+  TagRules,
   PushOutPreview,
   PushOutResult,
   SpecAssertion,
@@ -114,4 +115,13 @@ export async function holdFromStation(unitId: string, position: number, scannedB
     method: 'POST',
     body: JSON.stringify({ scanned_by: scannedBy, station, note }),
   });
+}
+
+/** The customer → tags rules (t08, 19 Nov 2026), read and written whole under production settings. */
+export async function getTagRules(): Promise<TagRules> {
+  return apiRequest<TagRules>('/organizations/me/tag-rules');
+}
+
+export async function updateTagRules(rules: TagRules): Promise<TagRules> {
+  return apiRequest<TagRules>('/organizations/me/tag-rules', { method: 'PUT', body: JSON.stringify(rules) });
 }
