@@ -1,5 +1,6 @@
 import { apiRequest } from './client';
 import type { OrderFile } from '../types/order';
+import { getAccessToken } from './client';
 
 export type { OrderFile };
 
@@ -11,8 +12,9 @@ export async function uploadOrderFile(orderId: string, file: File): Promise<Orde
   const formData = new FormData();
   formData.append('file', file);
 
-  const token = localStorage.getItem('access_token');
+  const token = getAccessToken();
   const response = await fetch(`/api/orders/${orderId}/files`, {
+    credentials: 'include',
     method: 'POST',
     headers: token ? { Authorization: `Bearer ${token}` } : {},
     body: formData,

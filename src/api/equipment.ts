@@ -1,3 +1,4 @@
+import { getAccessToken } from './client';
 import { apiRequest } from './client';
 import type { Equipment } from '../types/equipment';
 import type {
@@ -72,9 +73,10 @@ export async function uploadOnboardingDocument(
   formData.append('file', file);
 
   // Use raw fetch since apiRequest assumes JSON content-type
-  const token = localStorage.getItem('access_token');
+  const token = getAccessToken();
   const baseUrl = import.meta.env.VITE_API_BASE_URL || '/api';
   const res = await fetch(`${baseUrl}/onboarding/upload-document`, {
+    credentials: 'include',
     method: 'POST',
     headers: token ? { Authorization: `Bearer ${token}` } : {},
     body: formData,

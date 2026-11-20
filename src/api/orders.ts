@@ -1,3 +1,4 @@
+import { getAccessToken } from './client';
 import { apiRequest } from './client';
 import type {
   CancelOrderRequest,
@@ -134,8 +135,9 @@ export async function getOrderInvoice(orderId: string): Promise<InvoiceData> {
 }
 
 export async function downloadOrderInvoicePdf(orderId: string): Promise<Blob> {
-  const token = localStorage.getItem('access_token');
+  const token = getAccessToken();
   const response = await fetch(`/api/orders/${orderId}/invoice/pdf`, {
+    credentials: 'include',
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
   if (!response.ok) throw new Error('Failed to download invoice');
