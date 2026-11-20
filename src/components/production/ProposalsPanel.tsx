@@ -45,6 +45,8 @@ const btn: React.CSSProperties = { padding: '9px 14px', borderRadius: 6, border:
 const primary: React.CSSProperties = { ...btn, background: colors.vein, color: '#fff', borderColor: colors.vein };
 const danger: React.CSSProperties = { ...btn, borderColor: '#a3331d', color: '#a3331d' };
 const field: React.CSSProperties = { padding: '9px 10px', border: '1px solid #c9cfd6', borderRadius: 6, font: 'inherit', minHeight: 44, background: '#fff' };
+const overlay: React.CSSProperties = { position: 'fixed', inset: 0, background: 'rgba(28, 25, 23, 0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, zIndex: 50 };
+const dialogBox: React.CSSProperties = { ...card, maxWidth: 560, width: '100%', boxShadow: '0 12px 32px rgba(0,0,0,0.25)' };
 const mono: React.CSSProperties = { fontFamily: "'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace", fontSize: 13 };
 const pill: React.CSSProperties = { display: 'inline-block', padding: '2px 8px', borderRadius: 999, fontSize: 12, fontWeight: 500 };
 
@@ -120,17 +122,39 @@ function ProposalCard({
             <button type="button" disabled={busy} onClick={() => setConfirmDone(true)} style={primary} data-testid="approve-first">
               Approve…
             </button>
+          ) : proposal.kind === 'mark_done' ? (
+            <span style={{ ...pill, background: '#fffbe6', color: '#7a5a12' }} data-testid="awaiting-confirmation">
+              awaiting your confirmation
+            </span>
           ) : (
             <button type="button" disabled={busy} onClick={() => onApprove(note)} style={primary} data-testid="approve">
-              {proposal.kind === 'mark_done' ? 'Yes, mark it done — skip the remaining steps' : proposal.kind === 'push_short_run' ? 'Approve (then confirm the push-out)' : 'Approve and apply'}
+              {proposal.kind === 'push_short_run' ? 'Approve (then confirm the push-out)' : 'Approve and apply'}
             </button>
           )}
           <button type="button" disabled={busy} onClick={() => onDecline(note)} style={danger} data-testid="decline">
             {mine ? 'Withdraw' : 'Decline'}
           </button>
           {proposal.kind === 'mark_done' && confirmDone ? (
-            <div style={{ flexBasis: '100%', fontSize: 13, color: '#a3331d' }} data-testid="approve-confirm-note">
-              Approving marks {proposal.facts.reference} done: every remaining route step is skipped by a person, with this reason kept. Nothing is printed by it.
+            // Ruling 20 Nov 2026 (a27, batch 101): the second step is a modal that names the batch; the card says it waits until confirmed.
+            <div role="dialog" aria-modal="true" aria-label={`Mark ${proposal.facts.reference} done?`} style={overlay} data-testid="mark-done-dialog">
+              <div style={dialogBox}>
+                <div style={{ fontSize: 18, fontWeight: 600 }}>Mark {proposal.facts.reference} done?</div>
+                <div style={{ fontSize: 14, color: '#a3331d' }} data-testid="approve-confirm-note">
+                  Approving marks {proposal.facts.reference} done: every remaining route step is skipped by a person, with this reason kept. Nothing is printed by it.
+                </div>
+                <div style={{ fontSize: 14 }}>
+                  <span style={lbl}>Reason</span>
+                  <div>{proposal.reason}</div>
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+                  <button type="button" disabled={busy} onClick={() => onApprove(note)} style={primary} data-testid="approve">
+                    Yes, mark {proposal.facts.reference} done — skip the remaining steps
+                  </button>
+                  <button type="button" disabled={busy} onClick={() => setConfirmDone(false)} style={btn} data-testid="approve-cancel">
+                    Not now
+                  </button>
+                </div>
+              </div>
             </div>
           ) : null}
         </div>

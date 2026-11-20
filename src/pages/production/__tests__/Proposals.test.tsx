@@ -108,6 +108,23 @@ describe('the proposals panel', () => {
     await waitFor(() => expect(approveProposal).toHaveBeenCalledWith('p2', ''));
   });
 
+  it("mark done's second step is a modal naming the batch; the card says it awaits confirmation until then (ruling 20 Nov 2026, a27)", async () => {
+    mount();
+    const mineCard = await screen.findByTestId('proposal-mark_done');
+    expect(within(mineCard).queryByTestId('awaiting-confirmation')).toBeNull();
+    expect(screen.queryByRole('dialog')).toBeNull();
+    await userEvent.click(within(mineCard).getByTestId('approve-first'));
+    expect(within(mineCard).getByTestId('awaiting-confirmation')).toHaveTextContent('awaiting your confirmation');
+    const dialog = screen.getByRole('dialog', { name: 'Mark Batch 141 done?' });
+    expect(within(dialog).getByRole('button', { name: /Yes, mark Batch 141 done/ })).toBeTruthy();
+    expect(approveProposal).not.toHaveBeenCalled();
+    await userEvent.click(within(dialog).getByTestId('approve-cancel'));
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(within(mineCard).queryByTestId('awaiting-confirmation')).toBeNull();
+    expect(within(mineCard).getByTestId('approve-first')).toBeTruthy();
+    expect(approveProposal).not.toHaveBeenCalled();
+  });
+
   it('proposes with a reason; push alone carries its category; the proposal applies nothing', async () => {
     mount();
     await screen.findByTestId('propose-form');
