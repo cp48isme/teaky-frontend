@@ -125,3 +125,9 @@ export async function getTagRules(): Promise<TagRules> {
 export async function updateTagRules(rules: TagRules): Promise<TagRules> {
   return apiRequest<TagRules>('/organizations/me/tag-rules', { method: 'PUT', body: JSON.stringify(rules) });
 }
+
+/** The shop's press-run configuration (staff, production:rules); the stock rulings screen reads the Docket item-code keys as the stock list. */
+export async function getPressRunConfig(): Promise<{ docket_item_codes?: Record<string, string> }> {
+  return apiRequest<{ docket_item_codes?: Record<string, string> }>('/organizations/me/press-run-config');
+}
+
