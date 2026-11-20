@@ -1,11 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
-import { correctStock, getSpecHistory, listSpecLibrary, markNotBatched } from '../../api/production';
+import { correctStock, getPressRunConfig, getSpecHistory, listSpecLibrary, markNotBatched } from '../../api/production';
 import ProductionLayout, { colors } from '../../components/production/ProductionLayout';
 import type { SpecHistoryEntry, SpecLibraryRow, SpecSource } from '../../types/production';
 
-/** Board 5: Products — evidence and provenance. The spec library's table:
- * a value is never thrown away; a correction supersedes; the table answers
- * "why is this product on this stock?" with a name, a time and the evidence. */
+/** Board 5: Products — the stock rulings screen (a27 item 4, ruling 20 Nov
+ * 2026): one row per product, the product and ONE stock dropdown; choosing a
+ * stock writes the ruling against the product (a person's assertion; the
+ * previous row stays as history); "not batched" is a choice too; the
+ * provenance (source, who, when, evidence, history) sits collapsed behind
+ * Details. A value is never thrown away; a correction supersedes. */
 
 const SRC: Record<SpecSource, { background: string; color: string; what: string }> = {
   person: { background: '#e6f3ee', color: '#558b2f', what: 'someone answered a hold or edited here' },
@@ -18,7 +21,6 @@ const mono: React.CSSProperties = { fontFamily: "'IBM Plex Mono', monospace", fo
 const th: React.CSSProperties = { textAlign: 'left', fontSize: 12, fontWeight: 600, color: '#4b5563', padding: '10px 12px', borderBottom: '1px solid #d9dde3', letterSpacing: '.02em', textTransform: 'uppercase', whiteSpace: 'nowrap' };
 const td: React.CSSProperties = { padding: '11px 12px', borderBottom: '1px solid #e6e9ee', fontSize: 14, verticalAlign: 'top' };
 const btn: React.CSSProperties = { padding: '9px 14px', borderRadius: 6, border: '1px solid #c9cfd6', background: '#fff', fontWeight: 500, minHeight: 44, font: 'inherit', cursor: 'pointer' };
-const card: React.CSSProperties = { background: '#fff', border: '1px solid #e1e5ea', borderRadius: 8, padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 12 };
 const lbl: React.CSSProperties = { fontSize: 12, color: '#4b5563', textTransform: 'uppercase', letterSpacing: '.02em' };
 
 export function SourcePill({ source }: { source: SpecSource }) {
@@ -48,15 +50,30 @@ export function agreementText(row: SpecLibraryRow): string {
   return row.agrees ? `yes · ${row.prior_units} lines` : `no · ${row.prior_units} lines ran on another stock`;
 }
 
+const RULED_NOTE = 'ruled on Products';
+const NOT_BATCHED = 'not batched';
+
+export function stockOptions(rows: SpecLibraryRow[], shopStocks: string[]): string[] {
+  const seen = new Set<string>();
+  for (const s of shopStocks) if (s.trim()) seen.add(s.trim());
+  for (const r of rows) if (r.value && r.value !== 'unknown' && !r.not_batched) seen.add(r.value);
+  return Array.from(seen).sort((a, b) => a.localeCompare(b, 'en', { numeric: true }));
+}
+
+export function currentChoice(r: SpecLibraryRow): string {
+  if (r.not_batched) return NOT_BATCHED;
+  return r.value && r.value !== 'unknown' ? r.value : '';
+}
+
 export default function ProductsPage() {
   const [rows, setRows] = useState<SpecLibraryRow[]>([]);
+  const [shopStocks, setShopStocks] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [source, setSource] = useState<'all' | SpecSource>('all');
-  const [selected, setSelected] = useState<string | null>(null);
-  const [history, setHistory] = useState<SpecHistoryEntry[]>([]);
-  const [correcting, setCorrecting] = useState<{ value: string; note: string } | null>(null);
-  const [busy, setBusy] = useState(false);
+  const [open, setOpen] = useState<Record<string, boolean>>({});
+  const [history, setHistory] = useState<Record<string, SpecHistoryEntry[]>>({});
+  const [busy, setBusy] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
   async function load() {
@@ -64,50 +81,55 @@ export default function ProductsPage() {
   }
   useEffect(() => {
     load().catch((e: unknown) => setError(e instanceof Error ? e.message : 'Could not load the library'));
+    getPressRunConfig()
+      .then((c) => setShopStocks(Object.keys(c.docket_item_codes ?? {})))
+      .catch(() => setShopStocks([]));
   }, []);
-  useEffect(() => {
-    if (!selected) return;
-    getSpecHistory(selected)
-      .then(setHistory)
-      .catch(() => setHistory([]));
-  }, [selected, rows]);
 
+  const options = useMemo(() => stockOptions(rows, shopStocks), [rows, shopStocks]);
   const shown = useMemo(() => {
     const q = search.trim().toLowerCase();
     return rows.filter((r) => (source === 'all' || r.source === source) && (!q || r.product_key.toLowerCase().includes(q) || r.value.toLowerCase().includes(q)));
   }, [rows, search, source]);
   const counts = {
     total: rows.length,
-    imported: rows.filter((r) => r.source === 'import').length,
+    unknown: rows.filter((r) => !r.not_batched && (!r.value || r.value === 'unknown')).length,
     person: rows.filter((r) => r.source === 'person').length,
   };
 
-  async function submitCorrection(key: string) {
-    if (!correcting) return;
-    setBusy(true);
-    setNotice(null);
-    try {
-      await correctStock(key, correcting.value.trim(), correcting.note.trim());
-      setNotice(`${key}: stock ${correcting.value.trim()} written as your assertion; the previous row is kept as history.`);
-      setCorrecting(null);
-      await load();
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'The correction was refused');
-    } finally {
-      setBusy(false);
+  async function toggle(key: string) {
+    const next = !open[key];
+    setOpen((o) => ({ ...o, [key]: next }));
+    if (next && !history[key]) {
+      try {
+        setHistory((h) => ({ ...h, [key]: [] }));
+        const entries = await getSpecHistory(key);
+        setHistory((h) => ({ ...h, [key]: entries }));
+      } catch {
+        setHistory((h) => ({ ...h, [key]: [] }));
+      }
     }
   }
-  async function notBatched(key: string) {
-    setBusy(true);
+
+  async function rule(key: string, choice: string) {
+    if (choice === '') return; // "unknown" is not a ruling; the row stays as it is
+    setBusy(key);
     setNotice(null);
+    setError(null);
     try {
-      await markNotBatched(key, 'marked on Products');
-      setNotice(`${key}: marked not batched; its stock row is kept as history.`);
+      if (choice === NOT_BATCHED) {
+        await markNotBatched(key, RULED_NOTE);
+        setNotice(`${key}: not batched — recorded against the product; the previous row is kept as history.`);
+      } else {
+        await correctStock(key, choice, RULED_NOTE);
+        setNotice(`${key}: stock ${choice} — recorded against the product as your ruling; the previous row is kept as history.`);
+      }
+      setHistory((h) => ({ ...h, [key]: undefined as unknown as SpecHistoryEntry[] }));
       await load();
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'The mark was refused');
+      setError(`${key}: ${e instanceof Error ? e.message : 'the ruling was refused'}`);
     } finally {
-      setBusy(false);
+      setBusy(null);
     }
   }
 
@@ -116,7 +138,7 @@ export default function ProductsPage() {
       <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: 16 }}>
         <h1 style={{ margin: 0, fontSize: 24, fontWeight: 600 }}>Products</h1>
         <span style={{ color: '#4b5563', fontSize: 14 }}>
-          {counts.total} products · {counts.imported} from Andrew's table · {counts.person} asserted by a person
+          {counts.total} products · {counts.unknown} without a stock · {counts.person} ruled by a person
         </span>
       </div>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center' }}>
@@ -137,8 +159,8 @@ export default function ProductsPage() {
         <table style={{ borderCollapse: 'collapse', width: '100%' }}>
           <thead>
             <tr>
-              {['Product', 'Stock', 'Source', 'Asserted', 'Evidence agrees?', 'Used', ''].map((h) => (
-                <th key={h} style={th}>
+              {['Product', 'Stock', ''].map((h) => (
+                <th key={h || 'details'} style={th}>
                   {h}
                 </th>
               ))}
@@ -146,27 +168,65 @@ export default function ProductsPage() {
           </thead>
           <tbody>
             {shown.map((r) => (
-              <tr key={r.product_key} style={selected === r.product_key ? { background: '#f6faf2' } : undefined}>
-                <td style={{ ...td, ...mono }}>{r.product_key}</td>
-                <td style={{ ...td, ...mono, color: r.not_batched ? '#4b5563' : r.value === 'unknown' ? '#a3331d' : undefined }}>{r.not_batched ? 'not batched' : r.value}</td>
-                <td style={td}>
-                  <SourcePill source={r.source} />
-                </td>
-                <td style={td}>
-                  {who(r)} · {when(r.asserted_at)}
-                </td>
-                <td style={td}>{agreementText(r)}</td>
-                <td style={td}>{r.prior_units ? `${r.prior_units} lines` : '—'}</td>
-                <td style={td}>
-                  <button type="button" onClick={() => setSelected(selected === r.product_key ? null : r.product_key)} style={{ all: 'unset', color: colors.vein, cursor: 'pointer' }}>
-                    History
-                  </button>
-                </td>
-              </tr>
+              <>
+                <tr key={r.product_key} data-testid="product-row" style={open[r.product_key] ? { background: '#f6faf2' } : undefined}>
+                  <td style={{ ...td, ...mono }}>{r.product_key}</td>
+                  <td style={td}>
+                    <select
+                      aria-label={`Stock for ${r.product_key}`}
+                      value={currentChoice(r)}
+                      disabled={busy === r.product_key}
+                      onChange={(e) => rule(r.product_key, e.target.value)}
+                      style={{ padding: '7px 10px', border: '1px solid #c9cfd6', borderRadius: 6, background: '#fff', font: 'inherit', minHeight: 40, color: currentChoice(r) === '' ? '#a3331d' : undefined }}
+                    >
+                      <option value="">unknown — choose a stock</option>
+                      {options.map((s) => (
+                        <option key={s} value={s}>
+                          {s}
+                        </option>
+                      ))}
+                      <option value={NOT_BATCHED}>{NOT_BATCHED}</option>
+                    </select>
+                  </td>
+                  <td style={td}>
+                    <button type="button" aria-expanded={Boolean(open[r.product_key])} aria-label={`Details of ${r.product_key}`} onClick={() => toggle(r.product_key)} style={{ all: 'unset', color: colors.vein, cursor: 'pointer' }}>
+                      {open[r.product_key] ? 'Hide' : 'Details'}
+                    </button>
+                  </td>
+                </tr>
+                {open[r.product_key] ? (
+                  <tr key={`${r.product_key}-details`} data-testid="product-details">
+                    <td colSpan={3} style={{ ...td, background: '#fbfcfa' }}>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px 24px', fontSize: 14, marginBottom: 10 }}>
+                        <span>
+                          <span style={lbl}>Source</span> <SourcePill source={r.source} />
+                        </span>
+                        <span>
+                          <span style={lbl}>Asserted</span> {who(r)} · {when(r.asserted_at)}
+                        </span>
+                        <span>
+                          <span style={lbl}>Evidence agrees?</span> {agreementText(r)}
+                        </span>
+                        <span>
+                          <span style={lbl}>Used</span> {r.prior_units ? `${r.prior_units} lines` : '—'}
+                        </span>
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '150px 110px minmax(0, 1fr)', gap: '6px 16px', fontSize: 14 }}>
+                        <div style={lbl}>When</div>
+                        <div style={lbl}>Stock</div>
+                        <div style={lbl}>By · evidence shown at the time</div>
+                        {(history[r.product_key] ?? []).map((h, i) => (
+                          <HistoryCells key={h.id} entry={h} superseded={i > 0 || Boolean(h.superseded_by)} />
+                        ))}
+                      </div>
+                    </td>
+                  </tr>
+                ) : null}
+              </>
             ))}
             {!shown.length ? (
               <tr>
-                <td colSpan={7} style={{ ...td, color: '#4b5563' }}>
+                <td colSpan={3} style={{ ...td, color: '#4b5563' }}>
                   No products match.
                 </td>
               </tr>
@@ -174,50 +234,8 @@ export default function ProductsPage() {
           </tbody>
         </table>
       </div>
-
-      {selected ? (
-        <section style={card} aria-label={`History of ${selected}`}>
-          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: 12 }}>
-            <span style={{ fontWeight: 600 }}>History</span>
-            <span style={mono}>{selected}</span>
-            <span style={{ color: '#4b5563', fontSize: 14 }}>nothing is deleted; a correction supersedes</span>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '150px 110px minmax(0, 1fr)', gap: '8px 16px', fontSize: 14 }}>
-            <div style={lbl}>When</div>
-            <div style={lbl}>Stock</div>
-            <div style={lbl}>By · evidence shown at the time</div>
-            {history.map((h, i) => (
-              <HistoryCells key={h.id} entry={h} superseded={i > 0 || Boolean(h.superseded_by)} />
-            ))}
-          </div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center' }}>
-            {correcting ? (
-              <>
-                <input aria-label="Corrected stock" value={correcting.value} onChange={(e) => setCorrecting({ ...correcting, value: e.target.value })} placeholder="stock, e.g. 100#" style={{ padding: '9px 10px', border: '1px solid #c9cfd6', borderRadius: 6, font: 'inherit', minHeight: 44, width: 160 }} />
-                <input aria-label="Why" value={correcting.note} onChange={(e) => setCorrecting({ ...correcting, note: e.target.value })} placeholder="why (kept with the row)" style={{ padding: '9px 10px', border: '1px solid #c9cfd6', borderRadius: 6, font: 'inherit', minHeight: 44, width: 320 }} />
-                <button type="button" disabled={busy || !correcting.value.trim()} onClick={() => submitCorrection(selected)} style={{ ...btn, background: colors.vein, color: '#fff', borderColor: colors.vein }}>
-                  Write the correction
-                </button>
-                <button type="button" onClick={() => setCorrecting(null)} style={btn}>
-                  Cancel
-                </button>
-              </>
-            ) : (
-              <>
-                <button type="button" onClick={() => setCorrecting({ value: '', note: '' })} style={btn}>
-                  Correct the stock…
-                </button>
-                <button type="button" disabled={busy} onClick={() => notBatched(selected)} style={btn}>
-                  Mark not batched
-                </button>
-                <span style={{ fontSize: 13, color: '#4b5563' }}>both under production:rules</span>
-              </>
-            )}
-          </div>
-        </section>
-      ) : null}
       <div style={{ fontSize: 13, color: '#4b5563' }}>
-        This replaces the Products window and the spreadsheet import. A value is never thrown away on import ("100# cream" stays "100# cream" and is flagged, not blanked). The table answers "why is this product on this stock?" with a name, a time and the evidence that was on screen.
+        Choosing a stock records your ruling against the product; nothing is thrown away — the previous row stays as history behind Details. "not batched" keeps the product on the hotel path.
       </div>
     </ProductionLayout>
   );
