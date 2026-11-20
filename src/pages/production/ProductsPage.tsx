@@ -21,7 +21,6 @@ const mono: React.CSSProperties = { fontFamily: "'IBM Plex Mono', monospace", fo
 const th: React.CSSProperties = { textAlign: 'left', fontSize: 12, fontWeight: 600, color: '#4b5563', padding: '10px 12px', borderBottom: '1px solid #d9dde3', letterSpacing: '.02em', textTransform: 'uppercase', whiteSpace: 'nowrap' };
 const td: React.CSSProperties = { padding: '11px 12px', borderBottom: '1px solid #e6e9ee', fontSize: 14, verticalAlign: 'top' };
 const btn: React.CSSProperties = { padding: '9px 14px', borderRadius: 6, border: '1px solid #c9cfd6', background: '#fff', fontWeight: 500, minHeight: 44, font: 'inherit', cursor: 'pointer' };
-const card: React.CSSProperties = { background: '#fff', border: '1px solid #e1e5ea', borderRadius: 8, padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 12 };
 const lbl: React.CSSProperties = { fontSize: 12, color: '#4b5563', textTransform: 'uppercase', letterSpacing: '.02em' };
 
 export function SourcePill({ source }: { source: SpecSource }) {
