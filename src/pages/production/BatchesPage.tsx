@@ -70,12 +70,18 @@ export default function BatchesPage({ readOnly = isShadowReader() }: { readOnly?
     setBrowserView(next);
   }
 
+  // a27 item 1 (20 Nov 2026): a refused action shows its reason on the card it was pressed on, not only at the top of the page.
+  const [cardRefusals, setCardRefusals] = useState<Record<string, string>>({});
+
   async function halfBatch(batch: BatchSummary) {
+    setCardRefusals((m) => (batch.unit_id in m ? Object.fromEntries(Object.entries(m).filter(([k]) => k !== batch.unit_id)) : m));
     try {
       await markHalfBatch(batch.unit_id);
       navigate(`/production/batches/${batch.unit_id}/push-out`);
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'The half batch was refused');
+      const reason = e instanceof Error ? e.message : 'The half batch was refused';
+      setError(reason);
+      setCardRefusals((m) => ({ ...m, [batch.unit_id]: reason }));
     }
   }
 
@@ -176,11 +182,11 @@ export default function BatchesPage({ readOnly = isShadowReader() }: { readOnly?
       {view === 'list' ? (
         <BatchesTable batches={shown} readOnly={readOnly} shopTags={shopTags} onTagsWritten={loadBatches} sort={sort} onSort={(key) => setSort((s) => (s.key === key ? { key, direction: s.direction === 'asc' ? 'desc' : 'asc' } : { key, direction: key === 'oldest' || key === 'batch' ? 'desc' : 'asc' }))} />
       ) : null}
-      {view === 'cards' && first ? <BatchCard batch={first} featured readOnly={readOnly} onPushOut={() => navigate(`/production/batches/${first.unit_id}/push-out`)} onHalfBatch={() => halfBatch(first)} /> : view === 'cards' ? <div style={{ color: '#4b5563' }}>No batches to show.</div> : null}
+      {view === 'cards' && first ? <BatchCard batch={first} featured readOnly={readOnly} refusal={cardRefusals[first.unit_id]} onPushOut={() => navigate(`/production/batches/${first.unit_id}/push-out`)} onHalfBatch={() => halfBatch(first)} /> : view === 'cards' ? <div style={{ color: '#4b5563' }}>No batches to show.</div> : null}
       {view === 'cards' && rest.length ? (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 16 }}>
           {rest.map((b) => (
-            <BatchCard key={b.unit_id} batch={b} readOnly={readOnly} onPushOut={() => navigate(`/production/batches/${b.unit_id}/push-out`)} onHalfBatch={() => halfBatch(b)} />
+            <BatchCard key={b.unit_id} batch={b} readOnly={readOnly} refusal={cardRefusals[b.unit_id]} onPushOut={() => navigate(`/production/batches/${b.unit_id}/push-out`)} onHalfBatch={() => halfBatch(b)} />
           ))}
         </div>
       ) : null}
@@ -210,7 +216,7 @@ export function halfBatchOffered(batch: BatchSummary): boolean {
   return !batch.half && !batch.full && !batch.cancelled && !batch.marked_done_at && !batch.docket_number && batch.release_state !== 'releasing' && batch.release_state !== 'released' && batch.used > 0 && batch.used <= HALF_CAPACITY;
 }
 
-function BatchCard({ batch, featured = false, readOnly = false, onPushOut, onHalfBatch }: { batch: BatchSummary; featured?: boolean; readOnly?: boolean; onPushOut: () => void; onHalfBatch?: () => void }) {
+function BatchCard({ batch, featured = false, readOnly = false, refusal, onPushOut, onHalfBatch }: { batch: BatchSummary; featured?: boolean; readOnly?: boolean; refusal?: string; onPushOut: () => void; onHalfBatch?: () => void }) {
   const state = stateText(batch);
   const pushable = !readOnly && !batch.cancelled && !batch.marked_done_at && !batch.docket_number && batch.release_state !== 'releasing' && batch.release_state !== 'released' && batch.used > 0;
   // t05 (19 Nov 2026): the whole card opens the batch (its push-out page) for
@@ -281,6 +287,11 @@ function BatchCard({ batch, featured = false, readOnly = false, onPushOut, onHal
           ) : null}
         </div>
       </div>
+      {refusal ? (
+        <div role="alert" data-testid="batch-refusal" style={{ background: '#fdecea', border: '1px solid #f3b6ae', color: '#a3331d', borderRadius: 6, padding: '10px 12px', fontSize: 14 }}>
+          Refused: {refusal}
+        </div>
+      ) : null}
       <SlotStrip used={batch.used} fillable={batch.fillable_slots} capacity={batch.capacity} />
       {batch.fill_candidates.length ? (
         <div style={{ background: '#fbf6e8', border: '1px solid #efd9a3', borderRadius: 6, padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 8 }}>

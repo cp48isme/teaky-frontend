@@ -4,6 +4,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import ProposalsPanel from '../../../components/production/ProposalsPanel';
 import type { ActionProposal, ProposeActionRequest } from '../../../types/proposals';
+import { ApiError } from '../../../api/client';
 
 /** The four proposal actions on the production screens (dispatch 17–18 Nov
  * 2026, item 1): the list shows each proposal's facts and who proposed it;
@@ -173,4 +174,35 @@ describe('the proposals panel', () => {
     expect(approveProposal).not.toHaveBeenCalled();
     expect(declineProposal).not.toHaveBeenCalled();
   });
+
+  describe('every refusal shows its reason on the card (a27 item 1, 20 Nov 2026)', () => {
+    const shortRun = base({ id: 'p4', kind: 'push_short_run', target_kind: 'release_unit', target_id: 'u1', reason: 'the hotel needs these first', category: null, proposed_by: 'u-dana', facts: facts({ target_kind: 'release_unit', target_id: 'u1', reference: 'Batch 141', slots_used: 24 }) });
+    const voidOrder = base({ id: 'p5', kind: 'void_order', target_kind: 'order', target_id: 'o1', reason: 'customer cancelled by phone', category: null, proposed_by: 'u-dana' });
+    const cases: Array<[string, ActionProposal, string, boolean]> = [
+      ['push_short_run', shortRun, 'the action refused: Batch 141 has 24 slots in use; a half batch holds 12.', false],
+      ['push_alone', theirs, 'the action refused: This order has no lines in the pool; nothing to push out alone.', false],
+      ['void_order', voidOrder, 'the action refused: This order is already void.', false],
+      ['mark_done', mine, 'the action refused: Batch 141 was already marked done on 2026-11-20.', true],
+    ];
+    for (const [kind, proposal, reason, twoStep] of cases) {
+      it(`${kind}: the reason sits on the card and the card stays in view`, async () => {
+        listProposals.mockResolvedValueOnce([proposal]).mockResolvedValue([{ ...proposal, status: 'failed', failure: reason.replace('the action refused: ', ''), decided_by: 'u-me', decided_at: '2026-11-20T15:00:00Z' }]);
+        approveProposal.mockRejectedValueOnce(new ApiError(409, reason));
+        mount();
+        const card = await screen.findByTestId(`proposal-${kind}`);
+        if (twoStep) {
+          await userEvent.click(within(card).getByTestId('approve-first'));
+          await userEvent.click(within(card).getByTestId('approve'));
+        } else {
+          await userEvent.click(within(card).getByTestId('approve'));
+        }
+        const onCard = await screen.findByTestId('card-refusal');
+        expect(onCard).toHaveTextContent(`Refused: ${reason}`);
+        // after the reload the server says failed; the card is still in view, not behind the decided toggle
+        await waitFor(() => expect(screen.getByTestId(`proposal-${kind}`)).toHaveAttribute('data-status', 'failed'));
+        expect(within(screen.getByTestId(`proposal-${kind}`)).getByTestId('card-refusal')).toBeInTheDocument();
+      });
+    }
+  });
 });
+
