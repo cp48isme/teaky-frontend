@@ -8,7 +8,7 @@ import ProductionLayout from '../../../components/production/ProductionLayout';
 import Sidebar from '../../../components/layout/Sidebar';
 import NotFoundPage from '../../NotFoundPage';
 import { resetProductionShell } from '../../../hooks/useProductionShell';
-import type { BatchSummary, PoolLineSummary } from '../../../types/production';
+import type { BatchSummary, TaylorPoolLine } from '../../../types/production';
 
 /** Walk findings t07/t09 (dispatch 20 Nov 2026, item 5): Production in the
  * admin sidebar for a floor role; a Dashboard link and the mark as the way
@@ -32,7 +32,7 @@ vi.mock('../../../api/production', () => ({
   listShopTags: vi.fn(() => Promise.resolve([])),
   markHalfBatch: vi.fn(),
   markBatchDone: (...args: unknown[]) => markBatchDone(...(args as [])),
-  listTaylorPool: vi.fn(() => Promise.resolve([] as PoolLineSummary[])),
+  listTaylorPool: vi.fn(() => Promise.resolve([] as TaylorPoolLine[])),
   updateOrder: vi.fn(),
 }));
 vi.mock('../../../api/proposals', () => ({ listProposals: vi.fn(() => Promise.resolve([])), proposeAction: vi.fn(), approveProposal: vi.fn(), declineProposal: vi.fn() }));
