@@ -191,6 +191,8 @@ export interface ProductionSettings {
   timezone: string;
   /** a26 (18 Nov 2026): how the Batches page opens for the shop; a browser's toggle overrides it. */
   production_view?: 'cards' | 'list';
+  /** Ruling 20 Nov 2026: the bridge writes batch files to the job-tickets folder only while this is on; off by default, audited. */
+  bridge_bundles_enabled?: boolean;
 }
 
 /** Tags editing (t08, 19 Nov 2026): a customer → tags rule the intake applies
