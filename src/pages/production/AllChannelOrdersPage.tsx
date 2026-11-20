@@ -22,6 +22,8 @@ export interface OrderRow {
   age: number; // seconds since the customer placed it
   channel: 'Taylor' | 'RGI portal' | 'PageDNA' | 'Email';
   order: string;
+  /** 20 Nov 2026: who the order is for — the Taylor grid's customer, the portal order's for_whom. */
+  customer: string;
   line: string;
   product: string;
   qty: number;
@@ -38,13 +40,14 @@ export interface OrderRow {
   tags: string[];
 }
 
-type SortKey = keyof Pick<OrderRow, 'received' | 'age' | 'channel' | 'order' | 'product' | 'slots' | 'stock' | 'status' | 'batch'>;
+type SortKey = keyof Pick<OrderRow, 'received' | 'age' | 'channel' | 'order' | 'customer' | 'product' | 'slots' | 'stock' | 'status' | 'batch'>;
 
 const HEADERS: { key: SortKey | null; label: string }[] = [
   { key: 'received', label: 'Received' },
   { key: 'age', label: 'Age' },
   { key: 'channel', label: 'Channel' },
   { key: 'order', label: 'Order' },
+  { key: 'customer', label: 'Customer' },
   { key: null, label: 'Line' },
   { key: 'product', label: 'Product' },
   { key: null, label: 'Qty × pack' },
@@ -105,6 +108,7 @@ export function rowsFromOrders(orders: Order[], batches: BatchSummary[], now: Da
         age: ageSeconds(order.placed_at, now),
         channel: 'RGI portal',
         order: order.po_number || order.order_number,
+        customer: order.for_whom?.name ?? '',
         line: String(order.line_items.indexOf(li) + 1),
         product: li.product_sku ? `${li.product_sku} · ${li.product_name}` : li.product_name,
         qty: li.quantity,
@@ -130,6 +134,7 @@ export function rowsFromTaylor(lines: TaylorPoolLine[], now: Date): OrderRow[] {
     age: ageSeconds(l.source_created_at, now),
     channel: 'Taylor',
     order: l.po,
+    customer: l.customer ?? '',
     line: String(l.line_no),
     product: l.product,
     qty: l.quantity,
@@ -214,7 +219,7 @@ export default function AllChannelOrdersPage({ readOnly = isShadowReader() }: { 
       if (show === 'Waiting and held' && r.statusKind === 'released') return false;
       if (show === 'In an open batch' && !(r.batch && r.statusKind !== 'released')) return false;
       if (show === 'Pushed out' && r.statusKind !== 'released') return false;
-      if (q && ![r.order, r.product, r.stock, r.status].some((v) => v.toLowerCase().includes(q))) return false;
+      if (q && ![r.order, r.customer, r.product, r.stock, r.status].some((v) => v.toLowerCase().includes(q))) return false;
       if (!passesTagFilter(tagFilter, r.tags)) return false;
       return true;
     });
@@ -358,6 +363,7 @@ export default function AllChannelOrdersPage({ readOnly = isShadowReader() }: { 
                     </div>
                   ) : null}
                 </td>
+                <td style={tdStyle}>{r.customer || '—'}</td>
                 <td style={{ ...tdStyle, ...mono }}>{r.line}</td>
                 <td style={tdStyle}>{r.product}</td>
                 <td style={{ ...tdStyle, ...mono }}>
