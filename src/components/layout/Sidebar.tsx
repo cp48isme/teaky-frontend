@@ -1,6 +1,7 @@
 import { NavLink, useLocation } from 'react-router-dom';
 import { useMyOrganization } from '../../hooks/useMyOrganization';
 import { useSelfServeOnboarding } from '../../hooks/useSelfServeOnboarding';
+import { currentRoles, hasFloorRole, PRODUCTION_LANDING } from '../../lib/roles';
 import type { ReactNode } from 'react';
 
 interface NavItem {
@@ -9,6 +10,18 @@ interface NavItem {
   icon: ReactNode;
   matchPrefix?: string;
 }
+
+/** Walk t07/t09 (20 Nov 2026): the production screens, for a role with a floor grant. */
+const PRODUCTION_ITEM: NavItem = {
+  to: PRODUCTION_LANDING,
+  label: 'Production',
+  matchPrefix: '/production',
+  icon: (
+    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 7.5h16.5M3.75 12h16.5m-16.5 4.5h16.5M6 4.5v15m12-15v15" />
+    </svg>
+  ),
+};
 
 const NAV_ITEMS: NavItem[] = [
   {
@@ -102,8 +115,10 @@ export default function Sidebar() {
   const { selfServe } = useSelfServeOnboarding();
   // Equipment is a self-serve surface: a managed account never sees it (8 Oct
   // 2026), and neither does an organisation that already has a portal (Cause 5).
-  const items =
+  const base =
     organization?.is_managed || selfServe !== true ? NAV_ITEMS.filter((i) => i.to !== '/equipment') : NAV_ITEMS;
+  // Production sits right after Dashboard for a role that may act on (or read) the floor.
+  const items = hasFloorRole(currentRoles()) ? [base[0], PRODUCTION_ITEM, ...base.slice(1)] : base;
 
   return (
     <aside className="hidden w-56 shrink-0 border-r border-gray-100 bg-white lg:block">

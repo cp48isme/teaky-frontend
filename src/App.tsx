@@ -57,6 +57,7 @@ import QuotesPage from './pages/QuotesPage';
 import MessageCenterPage from './pages/MessageCenterPage';
 import EquipmentPage from './pages/EquipmentPage';
 import PlaceholderPage from './pages/PlaceholderPage';
+import NotFoundPage from './pages/NotFoundPage';
 import PortalLegalPage from './pages/portal/PortalLegalPage';
 import ChoosePortalPage from './pages/ChoosePortalPage';
 
@@ -371,6 +372,8 @@ function App() {
           <Route path="/security" element={<PlaceholderPage page="security" />} />
           <Route path="/contact" element={<PlaceholderPage page="contact" />} />
           <Route path="/" element={<LandingPage />} />
+          {/* Walk t09 (20 Nov 2026): every unknown address lands on a page that says so. */}
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
         </AuthProvider>
       </PreviewProvider>

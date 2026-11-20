@@ -36,6 +36,7 @@ export default function BatchesTable({
   onSort,
   shopTags = [],
   onTagsWritten = () => {},
+  emptyText = 'No batches to show.',
 }: {
   batches: BatchSummary[];
   readOnly: boolean;
@@ -45,6 +46,8 @@ export default function BatchesTable({
   shopTags?: readonly string[];
   /** After a bulk write: the page re-reads the batches. */
   onTagsWritten?: () => void;
+  /** Walk t09 (20 Nov 2026): the page names the search when it empties the list. */
+  emptyText?: string;
 }) {
   const rows = sortBatches(batches, sort.key, sort.direction);
   const navigate = useNavigate();
@@ -107,7 +110,7 @@ export default function BatchesTable({
           })}
           {rows.length === 0 ? (
             <tr>
-              <td style={td} colSpan={HEADERS.length}>No batches to show.</td>
+              <td style={td} colSpan={HEADERS.length} data-testid="no-batches">{emptyText}</td>
             </tr>
           ) : null}
         </tbody>

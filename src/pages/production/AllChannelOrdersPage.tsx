@@ -334,6 +334,13 @@ export default function AllChannelOrdersPage({ readOnly = isShadowReader() }: { 
             </tr>
           </thead>
           <tbody>
+            {rows.length === 0 ? (
+              <tr>
+                <td style={{ ...tdStyle, color: '#4b5563' }} colSpan={HEADERS.length} data-testid="no-rows">
+                  {search.trim() ? `No results for "${search.trim()}"` : 'Nothing to show.'}
+                </td>
+              </tr>
+            ) : null}
             {rows.map((r) => (
               <tr key={r.id} style={r.statusKind === 'held' ? { background: '#fff8f6' } : undefined}>
                 <td style={{ ...tdStyle, ...mono }}>{receivedText(r.received)}</td>

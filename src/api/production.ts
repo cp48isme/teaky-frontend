@@ -1,20 +1,5 @@
 import { apiRequest } from './client';
-import type {
-  ScanResult,
-  StationHoldResult,
-  StationScan,
-  StationView,
-  BatchSummary,
-  ProductionSettings,
-  TagRules,
-  PushOutPreview,
-  PushOutResult,
-  SpecAssertion,
-  SpecHistoryEntry,
-  SpecLibraryRow,
-  SpecSuggestion,
-  TaylorPoolLine,
-} from '../types/production';
+import type { BatchSummary, MarkDoneResult, ProductionSettings, PushOutPreview, PushOutResult, ScanResult, SpecAssertion, SpecHistoryEntry, SpecLibraryRow, SpecSuggestion, StationHoldResult, StationScan, StationView, TagRules, TaylorPoolLine } from '../types/production';
 
 export async function listBatches(): Promise<BatchSummary[]> {
   return apiRequest<BatchSummary[]>('/release-units');
@@ -37,6 +22,11 @@ export async function listTaylorPool(): Promise<TaylorPoolLine[]> {
  * confirmation, whose preview this returns. */
 export async function markHalfBatch(unitId: string): Promise<PushOutPreview> {
   return apiRequest<PushOutPreview>(`/release-units/${unitId}/half-batch`, { method: 'POST' });
+}
+
+/** Mark done (D4; on the card since the walk of 20 Nov 2026): confirm false answers with the plan and writes nothing; confirm true skips the remaining route steps and marks the batch done. */
+export async function markBatchDone(unitId: string, reason: string, confirm: boolean): Promise<MarkDoneResult> {
+  return apiRequest<MarkDoneResult>(`/release-units/${unitId}/mark-done`, { method: 'POST', body: JSON.stringify({ reason, confirm }) });
 }
 
 export async function listSpecLibrary(): Promise<SpecLibraryRow[]> {

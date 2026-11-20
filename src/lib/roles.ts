@@ -24,6 +24,11 @@ export function isShadowReader(roles: string[] = currentRoles()): boolean {
 /** Roles that may act on the production screens. */
 const PRODUCTION_ROLES = new Set(['super_admin', 'printer_admin', 'sales_rep', 'sales_team_lead', 'store_creator']);
 
+/** Walk t07/t09 (20 Nov 2026): a role with a floor grant — staff who may act on production, or the read-only shadow reader — gets Production in the admin sidebar. */
+export function hasFloorRole(roles: string[] = currentRoles()): boolean {
+  return roles.some((r) => PRODUCTION_ROLES.has(r) || r === 'shadow_reader');
+}
+
 /** Buyer roles land on the portal they were invited to; everyone else — the
  * shop's staff and the read-only shadow_reader — lands on the production
  * screens. Ruling 17 Nov 2026 (BLOCKS): Andrew's shadow_reader invitation
