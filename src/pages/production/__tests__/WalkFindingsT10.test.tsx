@@ -177,8 +177,8 @@ describe('(c) proposals say where they are decided; a batch has its own panel', 
     );
     const form = await screen.findByTestId('propose-form');
     expect(within(form).getByLabelText('Proposal target')).toHaveDisplayValue('Batch 143');
+    expect(await screen.findByTestId('proposal-mark_done')).toBeInTheDocument();
     expect(screen.getByLabelText('Filter by batch or order')).toHaveDisplayValue('Batch 143');
-    expect(screen.getByTestId('proposal-mark_done')).toBeInTheDocument();
     expect(screen.queryByTestId('proposal-push_alone')).not.toBeInTheDocument();
   });
 });
