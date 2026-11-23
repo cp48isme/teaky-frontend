@@ -3,13 +3,15 @@ import { MemoryRouter } from 'react-router-dom';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import LoginPage from '../LoginPage';
 import { AuthProvider } from '../../contexts/AuthContext';
-import { sessionNavigation } from '../../api/client';
+import { clearSession, getAccessToken, sessionNavigation, setSession } from '../../api/client';
 
 // 29 Oct 2026 launch blocker: the four sign-in scenarios measured on rev 17,
 // run through the real AuthContext, api/auth and api/client against a mocked
-// fetch. The one that mattered: a stale token in localStorage plus a wrong
-// password must render the red error and leave the fields alone, instead of
-// a silent reload to a blank form.
+// fetch. The one that mattered: a stale token plus a wrong password must
+// render the red error and leave the fields alone, instead of a silent reload
+// to a blank form. Cookie cut-over (19 Nov 2026): the token lives in memory
+// and the provider's one silent refresh on load is the first fetch — answered
+// 401 here (no cookie) and filtered out of the sign-in calls.
 
 const redirect = vi.fn();
 vi.mock('../../hooks/usePostLoginRedirect', () => ({ usePostLoginRedirect: () => redirect }));
@@ -17,7 +19,7 @@ vi.mock('../../hooks/usePostLoginRedirect', () => ({ usePostLoginRedirect: () =>
 vi.mock('../../hooks/useSignupAvailability', () => ({ useSignupAvailability: () => true }));
 
 const EMAIL = 'buyer@example.com';
-const TOKENS = { access_token: 'new.access.token', refresh_token: 'new-refresh', token_type: 'bearer', expires_in: 900 };
+const TOKENS = { access_token: 'new.access.token', token_type: 'bearer', expires_in: 900 };
 
 function jsonResponse(status: number, body: unknown): Response {
   return new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
@@ -40,10 +42,18 @@ function submit(password: string) {
 }
 
 function loginCalls() {
-  return vi.mocked(fetch).mock.calls.map((c) => {
-    const [url, init] = c as [string, RequestInit];
-    return { url, authorization: (init.headers as Record<string, string>)['Authorization'], body: init.body };
-  });
+  return vi
+    .mocked(fetch)
+    .mock.calls.map((c) => {
+      const [url, init] = c as [string, RequestInit];
+      return { url, authorization: (init.headers as Record<string, string>)['Authorization'], body: init.body };
+    })
+    .filter((c) => c.url !== '/api/auth/refresh');
+}
+
+/** The provider's silent refresh on load: no cookie in this browser, so 401. */
+function noCookie() {
+  vi.mocked(fetch).mockResolvedValueOnce(jsonResponse(401, { detail: 'Invalid or expired refresh token' }));
 }
 
 describe('LoginPage sign-in flow', () => {
@@ -51,8 +61,10 @@ describe('LoginPage sign-in flow', () => {
 
   beforeEach(() => {
     localStorage.clear();
+    clearSession();
     redirect.mockReset();
     vi.stubGlobal('fetch', vi.fn());
+    noCookie();
     toLogin = vi.spyOn(sessionNavigation, 'toLogin').mockImplementation(() => undefined);
   });
 
@@ -67,7 +79,8 @@ describe('LoginPage sign-in flow', () => {
     submit('correct-horse');
 
     await waitFor(() => expect(redirect).toHaveBeenCalledTimes(1));
-    expect(localStorage.getItem('access_token')).toBe(TOKENS.access_token);
+    expect(getAccessToken()).toBe(TOKENS.access_token);
+    expect(localStorage.getItem('access_token')).toBeNull();
     expect(loginCalls()).toEqual([{ url: '/api/auth/login', authorization: undefined, body: JSON.stringify({ email: EMAIL, password: 'correct-horse' }) }]);
     expect(screen.queryByText('Invalid email or password')).not.toBeInTheDocument();
   });
@@ -82,9 +95,8 @@ describe('LoginPage sign-in flow', () => {
     expect(redirect).not.toHaveBeenCalled();
   });
 
-  it('stale token in localStorage, correct password: no bearer on the login, signs in', async () => {
-    localStorage.setItem('access_token', 'stale.access.token');
-    localStorage.setItem('refresh_token', 'stale-refresh');
+  it('stale token held, correct password: no bearer on the login, signs in', async () => {
+    setSession({ access_token: 'stale.access.token', token_type: 'bearer', expires_in: 900 });
     vi.mocked(fetch).mockResolvedValueOnce(jsonResponse(200, TOKENS));
     renderLogin();
     submit('correct-horse');
@@ -92,12 +104,12 @@ describe('LoginPage sign-in flow', () => {
     await waitFor(() => expect(redirect).toHaveBeenCalledTimes(1));
     expect(loginCalls()).toHaveLength(1);
     expect(loginCalls()[0]).toMatchObject({ url: '/api/auth/login', authorization: undefined });
-    expect(localStorage.getItem('access_token')).toBe(TOKENS.access_token);
+    expect(getAccessToken()).toBe(TOKENS.access_token);
+    expect(localStorage.getItem('access_token')).toBeNull();
   });
 
-  it('stale token in localStorage, wrong password: the red error renders, the fields are not cleared, no refresh, no reload', async () => {
-    localStorage.setItem('access_token', 'stale.access.token');
-    localStorage.setItem('refresh_token', 'stale-refresh');
+  it('stale token held, wrong password: the red error renders, the fields are not cleared, no refresh, no reload', async () => {
+    setSession({ access_token: 'stale.access.token', token_type: 'bearer', expires_in: 900 });
     vi.mocked(fetch).mockResolvedValueOnce(jsonResponse(401, { detail: 'Invalid email or password' }));
     renderLogin();
     submit('wrong');

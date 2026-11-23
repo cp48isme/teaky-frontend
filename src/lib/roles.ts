@@ -4,9 +4,11 @@
  * 2026, item 5): the role holds production:shadow_read and nothing else, so
  * the pages fetch only the three routes it may read and offer no action. */
 
+import { getAccessToken } from '../api/client';
+
 export function currentRoles(): string[] {
   try {
-    const token = localStorage.getItem('access_token');
+    const token = getAccessToken();
     if (!token) return [];
     const parts = token.split('.');
     if (parts.length !== 3) return [];
@@ -58,7 +60,7 @@ export function landingForInvitation(role: string | null | undefined, portalSlug
  * withdrawal). Null when no token is held or it does not parse. */
 export function currentUserId(): string | null {
   try {
-    const token = localStorage.getItem('access_token');
+    const token = getAccessToken();
     if (!token) return null;
     const parts = token.split('.');
     if (parts.length !== 3) return null;

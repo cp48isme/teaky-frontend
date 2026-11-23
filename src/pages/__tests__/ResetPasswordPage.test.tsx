@@ -3,6 +3,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import ResetPasswordPage from '../ResetPasswordPage';
 import { readResetFragment } from '../../lib/resetLink';
+import { clearSession, setSession } from '../../api/client';
 
 // Forgot-password step two (29 Oct 2026): the token comes from the fragment,
 // a good token sets the password, and an expired link offers a fresh one in
@@ -38,7 +39,9 @@ describe('readResetFragment', () => {
 describe('ResetPasswordPage', () => {
   beforeEach(() => {
     localStorage.clear();
-    localStorage.setItem('access_token', 'stale.access.token');
+    // A stale token held in memory (cookie cut-over): the reset must still send no bearer.
+    clearSession();
+    setSession({ access_token: 'stale.access.token', token_type: 'bearer', expires_in: 900 });
     vi.stubGlobal('fetch', vi.fn());
   });
   afterEach(() => {

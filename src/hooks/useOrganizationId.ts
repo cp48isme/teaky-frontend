@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { getAccessToken } from '../api/client';
 
 /**
  * Decode a JWT payload without verifying the signature.
@@ -18,7 +19,7 @@ function decodeJwtPayload(token: string): Record<string, unknown> {
  */
 export function useOrganizationId(): string | null {
   return useMemo(() => {
-    const token = localStorage.getItem('access_token');
+    const token = getAccessToken();
     if (!token) return null;
     try {
       const payload = decodeJwtPayload(token);

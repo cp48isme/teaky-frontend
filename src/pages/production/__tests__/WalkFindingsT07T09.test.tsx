@@ -8,6 +8,7 @@ import ProductionLayout from '../../../components/production/ProductionLayout';
 import Sidebar from '../../../components/layout/Sidebar';
 import NotFoundPage from '../../NotFoundPage';
 import { resetProductionShell } from '../../../hooks/useProductionShell';
+import { clearSession, setSession } from '../../../api/client';
 import type { BatchSummary, TaylorPoolLine } from '../../../types/production';
 
 /** Walk findings t07/t09 (dispatch 20 Nov 2026, item 5): Production in the
@@ -157,7 +158,7 @@ describe('the production layout', () => {
 
 describe('the admin sidebar', () => {
   it('shows Production, after Dashboard, for a role with a floor grant and not otherwise', async () => {
-    localStorage.setItem('access_token', tokenWithRoles(['printer_admin']));
+    setSession({ access_token: tokenWithRoles(['printer_admin']), token_type: 'bearer', expires_in: 900 });
     const { unmount } = render(
       <MemoryRouter>
         <Sidebar />
@@ -168,7 +169,8 @@ describe('the admin sidebar', () => {
     expect(links[1]).toBe('Production');
     expect(screen.getByRole('link', { name: 'Production' })).toHaveAttribute('href', '/production/batches');
     unmount();
-    localStorage.setItem('access_token', tokenWithRoles(['buyer']));
+    clearSession();
+    setSession({ access_token: tokenWithRoles(['buyer']), token_type: 'bearer', expires_in: 900 });
     render(
       <MemoryRouter>
         <Sidebar />

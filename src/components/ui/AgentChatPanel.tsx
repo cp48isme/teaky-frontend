@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import Spinner from './Spinner';
+import { getAccessToken } from '../../api/client';
 
 interface Message {
   id: string;
@@ -44,10 +45,11 @@ export default function AgentChatPanel({ isOpen, onClose }: Props) {
     try {
       // Call agent endpoint
       const response = await fetch('/api/agent-control/sandbox/test', {
+    credentials: 'include',
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('access_token') || ''}`,
+          'Authorization': `Bearer ${getAccessToken() || ''}`,
         },
         body: JSON.stringify({
           message: input.trim(),

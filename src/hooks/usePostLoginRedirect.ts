@@ -6,6 +6,7 @@ import { getMyOrganization } from '../api/organizations';
 import { listPortals } from '../api/portals';
 import { isBuyerUser, isPrinterUser, lastPortalPath, safeNextPath } from '../lib/portalSession';
 import { isShadowReader } from '../lib/roles';
+import { getAccessToken } from '../api/client';
 
 interface TokenClaims {
   org: string | null;
@@ -72,7 +73,7 @@ export function usePostLoginRedirect() {
 
   return useCallback(
     async (next?: string | null) => {
-      const token = localStorage.getItem('access_token');
+      const token = getAccessToken();
       if (!token) {
         navigate('/login');
         return;
