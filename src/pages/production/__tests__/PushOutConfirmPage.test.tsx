@@ -16,6 +16,9 @@ const preview: PushOutPreview = {
 
 let resolvePreview: (p: PushOutPreview) => void = () => {};
 const pushOut = vi.fn(() => Promise.resolve({ unit_id: 'u-139', attempted_at: 'now', sent: false, docket_send_enabled: false, docket_number: null, needs_human: false, reason: 'docket_send_enabled is false', release_state: null, payload_sha256: 'abc' }));
+// t10 c (23 Nov 2026): the page mounts the proposals panel for its batch.
+vi.mock('../../../api/proposals', () => ({ listProposals: vi.fn(() => Promise.resolve([])), proposeAction: vi.fn(), approveProposal: vi.fn(), declineProposal: vi.fn() }));
+vi.mock('../../../api/team', () => ({ listMembers: vi.fn(() => Promise.resolve([])) }));
 vi.mock('../../../api/production', () => ({
   getPushOutPreview: vi.fn(() => new Promise<PushOutPreview>((resolve) => { resolvePreview = resolve; })),
   pushOut: (...args: unknown[]) => pushOut(...(args as [])),

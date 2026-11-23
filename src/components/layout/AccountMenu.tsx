@@ -13,7 +13,7 @@ import type { MeResponse } from '../../types/auth';
  * failed — never the user id. It offers Account, Settings (staff only where
  * the shell says so) and Sign out, which ends the session on the server at
  * once (#272) and clears this browser. */
-export default function AccountMenu({ showSettings = true }: { showSettings?: boolean }) {
+export default function AccountMenu({ showSettings = true, onDark = false }: { showSettings?: boolean; onDark?: boolean }) {
   const auth = useOptionalAuth();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
@@ -34,7 +34,10 @@ export default function AccountMenu({ showSettings = true }: { showSettings?: bo
     return () => {
       cancelled = true;
     };
-  }, []);
+    // Walk of rev 46 (23 Nov 2026, t10 a): read again when the session becomes
+    // ready or changes, so a shell mounted before the silent refresh answered
+    // still shows the person, not the fallback.
+  }, [auth?.ready, auth?.authenticated]);
   const identity: SignedInIdentity = me
     ? { email: me.email, displayName: me.display_name }
     : signedInIdentity();
@@ -65,7 +68,11 @@ export default function AccountMenu({ showSettings = true }: { showSettings?: bo
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label={label ? `Account menu for ${label}` : 'Account menu'}
-        className="flex h-8 w-8 items-center justify-center rounded-full bg-teak-dark text-xs font-semibold text-white transition hover:bg-teak"
+        className={
+          onDark
+            ? 'flex h-8 w-8 items-center justify-center rounded-full bg-white text-xs font-semibold text-teak-dark ring-2 ring-white/70 transition hover:bg-stone-100'
+            : 'flex h-8 w-8 items-center justify-center rounded-full bg-teak-dark text-xs font-semibold text-white transition hover:bg-teak'
+        }
         title={label}
         data-testid="account-avatar"
       >

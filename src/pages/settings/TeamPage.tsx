@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import {
   listMembers,
   inviteMember,
-  removeMember,
   listInvitations,
   revokeInvitation,
   updateMember,
@@ -61,16 +61,6 @@ export default function TeamPage() {
       setError('Failed to send invitation');
     } finally {
       setInviting(false);
-    }
-  };
-
-  const handleRemove = async (userId: string) => {
-    if (!confirm('Are you sure you want to remove this member?')) return;
-    try {
-      await removeMember(userId);
-      await loadData();
-    } catch {
-      setError('Failed to remove member');
     }
   };
 
@@ -310,12 +300,17 @@ export default function TeamPage() {
                     >
                       Edit
                     </button>
-                    <button
-                      onClick={() => handleRemove(m.user_id)}
-                      className="text-red-600 hover:text-red-800"
+                    {/* Walk of rev 46 (23 Nov 2026, t10 b): removing, deactivating or
+                        changing a role is a proposal with a reason on the Admin page —
+                        the direct Remove is gone. */}
+                    <Link
+                      to="/settings/admin"
+                      className="text-teak-dark hover:text-teak"
+                      title="Remove, deactivate or change the role — proposed with a reason on the Admin page"
+                      data-testid={`manage-in-admin-${m.user_id}`}
                     >
-                      Remove
-                    </button>
+                      Admin…
+                    </Link>
                   </td>
                 </tr>
               ))}

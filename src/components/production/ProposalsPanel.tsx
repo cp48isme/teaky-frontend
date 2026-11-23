@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { approveProposal, declineProposal, listProposals, proposeAction } from '../../api/proposals';
 import { listMembers } from '../../api/team';
 import { colors } from './ProductionLayout';
@@ -87,8 +88,9 @@ function ProposalCard({
   return (
     <div style={card} data-testid={`proposal-${proposal.kind}`} data-status={proposal.status}>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'baseline' }}>
-        <span style={{ fontWeight: 600 }}>{KIND_LABEL[proposal.kind]}</span>
-        <span style={mono}>{proposal.facts.reference}</span>
+        <span style={{ fontWeight: 600 }} data-testid="proposal-title">
+          {KIND_LABEL[proposal.kind]} for <span style={mono}>{proposal.facts.reference}</span>
+        </span>
         <span style={{ marginLeft: 'auto', ...pill, background: status.background, color: status.color }}>{status.text}</span>
       </div>
       <div style={{ fontSize: 14 }}>
@@ -249,13 +251,24 @@ function ProposeForm({ targets, busy, onPropose }: { targets: ProposalTarget[]; 
   );
 }
 
-export default function ProposalsPanel({ targets, readOnly = false }: { targets: ProposalTarget[]; readOnly?: boolean }) {
+/** Where a proposal for this target is approved or declined: the Proposals
+ * section of the Batches page for a batch, of the Held page for an order. */
+export function approvalHref(target_kind: ActionProposalTarget): string {
+  return target_kind === 'release_unit' ? '/production/batches#proposals' : '/production/held#proposals';
+}
+
+export default function ProposalsPanel({ targets, readOnly = false, focusTargetId }: { targets: ProposalTarget[]; readOnly?: boolean; /** t10 c (23 Nov 2026): inside a batch, the list opens on that batch's proposals. */ focusTargetId?: string }) {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [proposals, setProposals] = useState<ActionProposal[]>([]);
   const [names, setNames] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
   const [noRole, setNoRole] = useState(false);
-  const [notice, setNotice] = useState<string | null>(null);
+  const [notice, setNotice] = useState<ReactNode | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
+  // t10 f (23 Nov 2026): the list filtered by action and by batch or order.
+  const [kindFilter, setKindFilter] = useState<'all' | ActionProposalKind>('all');
+  const [targetFilter, setTargetFilter] = useState<string>(focusTargetId ?? 'all');
   const [showDecided, setShowDecided] = useState(false);
   // a27 item 1 (20 Nov 2026): a refused decision stays in front of the person — the reason on its card, and the card not hidden behind the decided toggle this session.
   const [refusals, setRefusals] = useState<Record<string, string>>({});
@@ -280,7 +293,7 @@ export default function ProposalsPanel({ targets, readOnly = false }: { targets:
     [names, readOnly],
   );
 
-  async function run(key: string, fn: () => Promise<unknown>, done: string) {
+  async function run(key: string, fn: () => Promise<unknown>, done: ReactNode): Promise<boolean> {
     setBusy(key);
     setNotice(null);
     setError(null);
@@ -289,19 +302,44 @@ export default function ProposalsPanel({ targets, readOnly = false }: { targets:
       await fn();
       setNotice(done);
       await load();
+      return true;
     } catch (e: unknown) {
       const reason = e instanceof Error ? e.message : 'Refused';
       setError(reason);
       setRefusals((m) => ({ ...m, [key]: reason }));
       setRecent((r) => (r.includes(key) ? r : [...r, key]));
       await load().catch(() => undefined);
+      return false;
     } finally {
       setBusy(null);
     }
   }
 
-  const open = proposals.filter((p) => p.status === 'proposed' || recent.includes(p.id));
-  const decided = proposals.filter((p) => p.status !== 'proposed' && !recent.includes(p.id));
+  // t10 c: the notice after a propose names where the decision is made and links there.
+  function proposedNotice(kind: ActionProposalKind, target: ProposalTarget): ReactNode {
+    const href = approvalHref(target.target_kind);
+    const here = location.pathname === href.split('#')[0];
+    return (
+      <>
+        {KIND_LABEL[kind]} proposed for {target.label}; nothing is applied until a person approves it.{' '}
+        <Link to={href} data-testid="approve-where" style={{ color: 'inherit', fontWeight: 500 }}>
+          Approve or decline it under Proposals {here ? 'below' : target.target_kind === 'release_unit' ? 'on the Batches page' : 'on the Held page'}
+        </Link>
+        .
+      </>
+    );
+  }
+
+  // t10 d: a mark done applied from another page returns to Batches, the notice with it.
+  function afterApproved(p: ActionProposal, done: string) {
+    if (p.kind === 'mark_done' && location.pathname !== '/production/batches') navigate('/production/batches', { state: { notice: done } });
+  }
+
+  const byFilter = (p: ActionProposal) => (kindFilter === 'all' || p.kind === kindFilter) && (targetFilter === 'all' || p.target_id === targetFilter);
+  const open = proposals.filter((p) => (p.status === 'proposed' || recent.includes(p.id)) && byFilter(p));
+  const decided = proposals.filter((p) => p.status !== 'proposed' && !recent.includes(p.id) && byFilter(p));
+  const kindsPresent = Array.from(new Set(proposals.map((p) => p.kind)));
+  const targetsPresent = Array.from(new Map(proposals.map((p) => [p.target_id, p.facts.reference])).entries());
   return (
     <section aria-labelledby="proposals" style={{ display: 'flex', flexDirection: 'column', gap: 16 }} data-testid="proposals-panel">
       <div>
@@ -327,12 +365,43 @@ export default function ProposalsPanel({ targets, readOnly = false }: { targets:
             run(
               'propose',
               () => proposeAction({ kind, target_kind: target.target_kind, target_id: target.target_id, reason, category, note }),
-              `${KIND_LABEL[kind]} proposed for ${target.label}; nothing is applied until a person approves it.`,
+              proposedNotice(kind, target),
             )
           }
         />
       </div>
       )}
+      {proposals.length ? (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center', fontSize: 14 }} data-testid="proposal-filters">
+          <label style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            Action
+            <select aria-label="Filter by action" value={kindFilter} onChange={(e) => setKindFilter(e.target.value as 'all' | ActionProposalKind)} style={field}>
+              <option value="all">Every action</option>
+              {kindsPresent.map((k) => (
+                <option key={k} value={k}>
+                  {KIND_LABEL[k]}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            For
+            <select aria-label="Filter by batch or order" value={targetFilter} onChange={(e) => setTargetFilter(e.target.value)} style={field}>
+              <option value="all">Every batch and order</option>
+              {targetsPresent.map(([id, reference]) => (
+                <option key={id} value={id}>
+                  {reference}
+                </option>
+              ))}
+            </select>
+          </label>
+          {targetFilter !== 'all' || kindFilter !== 'all' ? (
+            <span style={{ color: '#4b5563' }}>
+              {open.length} waiting · {decided.length} decided in this view
+            </span>
+          ) : null}
+        </div>
+      ) : null}
       {open.map((p) => (
         <ProposalCard
           key={p.id}
@@ -342,7 +411,10 @@ export default function ProposalsPanel({ targets, readOnly = false }: { targets:
           me={me}
           readOnly={readOnly}
           busy={busy === p.id}
-          onApprove={(note) => run(p.id, () => approveProposal(p.id, note), `${KIND_LABEL[p.kind]} for ${p.facts.reference}: approved and applied.`)}
+          onApprove={(note) => {
+            const done = `${KIND_LABEL[p.kind]} for ${p.facts.reference}: approved and applied.`;
+            run(p.id, () => approveProposal(p.id, note), done).then((ok) => ok && afterApproved(p, done));
+          }}
           onDecline={(note) => run(p.id, () => declineProposal(p.id, note), `${KIND_LABEL[p.kind]} for ${p.facts.reference}: ${me && p.proposed_by === me ? 'withdrawn' : 'declined'}.`)}
         />
       ))}

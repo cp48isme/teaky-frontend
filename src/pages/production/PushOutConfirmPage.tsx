@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { getPushOutPreview, pushOut } from '../../api/production';
 import ProductionLayout, { colors } from '../../components/production/ProductionLayout';
+import ProposalsPanel from '../../components/production/ProposalsPanel';
 import type { PushOutPreview, PushOutResult } from '../../types/production';
 
 /** Board 2's rule: never push out without a confirmation that shows the
@@ -128,6 +129,8 @@ export default function PushOutConfirmPage() {
               {canConfirm ? 'Nothing moves until you press confirm.' : result ? '' : 'The confirm button stays off until the Docket order above has rendered.'}
             </span>
           </div>
+          {/* t10 c (23 Nov 2026): propose an action from inside the batch — a short run or mark done for this batch, its proposals listed first. */}
+          <ProposalsPanel targets={[{ target_kind: 'release_unit', target_id: unitId, label: `Batch ${preview.batch_number}` }]} focusTargetId={unitId} />
           {result ? (
             <div role="status" style={{ ...card, borderColor: result.sent && result.docket_number ? colors.vein : '#efd9a3' }}>
               {result.sent && result.docket_number ? (
