@@ -25,6 +25,8 @@ export interface VariableDatum {
 export interface LineItem {
   id: string;
   order_id: string;
+  /** Ruling 23 Nov 2026 (item 1a): the stored lane — press_run or stocked_goods; null on a line written before the backfill. */
+  lane?: string | null;
   product_id: string;
   product_name: string;
   product_sku: string | null;

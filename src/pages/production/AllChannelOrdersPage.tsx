@@ -114,7 +114,8 @@ export function rowsFromOrders(orders: Order[], batches: BatchSummary[], now: Da
         received: order.placed_at,
         age: ageSeconds(order.placed_at, now),
         channel: 'RGI portal',
-        lane: 'press_run',
+        // Item 1a (23 Nov 2026): the stored lane; a line written before the backfill is a press run.
+        lane: li.lane === 'stocked_goods' ? 'stocked_goods' : 'press_run',
         order: order.po_number || order.order_number,
         customer: order.for_whom?.name ?? '',
         line: String(order.line_items.indexOf(li) + 1),

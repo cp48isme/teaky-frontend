@@ -24,6 +24,7 @@ const NAV: { to: string; label: string; built: boolean }[] = [
   { to: '/production/orders', label: 'All Channel Orders', built: true },
   { to: '/production/batches', label: 'Batches', built: true },
   { to: '/production/held', label: 'Held', built: true },
+  { to: '/production/stocked-goods', label: 'Stocked goods', built: true },
   { to: '/production/products', label: 'Products', built: true },
   { to: '/production/floor', label: 'Floor', built: true },
   { to: '/production/settings', label: 'Settings', built: true },

@@ -281,3 +281,44 @@ export interface MarkDoneResult {
   units: { unit_id: string; batch_number: number; steps_remaining: number; steps_skipped: number; marked_done_at?: string | null }[];
 }
 
+/** Stocked goods end to end (dispatch 23 Nov 2026, item 1): a pick-and-pack
+ * shipment unit, its picked state and its shipping row once written. */
+export interface StockedGoodsLine {
+  line_item_id: string;
+  product: string;
+  product_name: string;
+  quantity: number;
+  pack_size: number;
+}
+
+export interface StockedGoodsFile {
+  file_id: string;
+  filename: string;
+  sha256: string;
+  size_bytes: number;
+  generated_at: string;
+}
+
+export interface StockedGoodsUnit {
+  unit_id: string;
+  order_id: string;
+  po: string;
+  order_number: string | null;
+  customer: string;
+  received_at: string;
+  age_seconds: number;
+  lines: StockedGoodsLine[];
+  /** The PO also carries press-run lines: the two kinds ship separately and the row says so. */
+  mixed_po: boolean;
+  picked_at: string | null;
+  picked_by_id: string | null;
+  shipping_csv: StockedGoodsFile | null;
+}
+
+export interface MarkPickedResult {
+  applied: boolean;
+  unit: StockedGoodsUnit;
+  shipping_rows: number;
+  mixed_po_note: string | null;
+}
+
