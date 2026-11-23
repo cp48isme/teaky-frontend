@@ -35,5 +35,19 @@ jobs:
       - name: Test
         run: npx vitest run
 
+      # Dispatch 23 Nov 2026 (item 6): the generated API types against the
+      # backend's openapi.json on main. Gated on the read token: until Clayton
+      # creates PRINTER_AGENT2_READ_TOKEN (read access to TeakyDev/printer-agent2)
+      # the step says so and passes; with it, drift fails the check.
+      - name: API types drift
+        env:
+          OPENAPI_TOKEN: ${{ secrets.PRINTER_AGENT2_READ_TOKEN }}
+        run: |
+          if [ -z "$OPENAPI_TOKEN" ]; then
+            echo "PRINTER_AGENT2_READ_TOKEN is not set; the API types drift check is skipped (it passes) until it is."
+            exit 0
+          fi
+          npm run types:api:check -- "https://api.github.com/repos/TeakyDev/printer-agent2/contents/openapi.json?ref=main"
+
       - name: Build
         run: npm run build
