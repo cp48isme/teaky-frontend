@@ -160,6 +160,8 @@ export interface SpecHistoryEntry extends SpecAssertion {
 
 export interface SpecLibraryRow {
   product_key: string;
+  /** Item 3 (23 Nov 2026): the product as the channel describes it; '' when no pool line carries one. */
+  product_name?: string;
   value: string;
   not_batched: boolean;
   source: SpecSource;
