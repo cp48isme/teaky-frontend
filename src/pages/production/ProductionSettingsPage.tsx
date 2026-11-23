@@ -12,9 +12,9 @@ import type { ProductionView } from '../../lib/productionView';
  * whole, audited on the server. Staff only; a shadow reader has no page. */
 
 const CHANNELS = ['', 'taylor', 'inspire', 'pagedna'] as const;
-const field: React.CSSProperties = { fontSize: 14, padding: '6px 8px', border: '1px solid #d9dde3', borderRadius: 6, background: '#fff' };
+const field: React.CSSProperties = { fontSize: 14, padding: '6px 8px', border: '1px solid var(--sg-line-3)', borderRadius: 6, background: 'var(--sg-surface)' };
 const button: React.CSSProperties = { ...field, cursor: 'pointer' };
-const card: React.CSSProperties = { background: '#fff', border: '1px solid #e1e5ea', borderRadius: 8, padding: 20, display: 'flex', flexDirection: 'column', gap: 12 };
+const card: React.CSSProperties = { background: 'var(--sg-surface)', border: '1px solid var(--sg-line)', borderRadius: 8, padding: 20, display: 'flex', flexDirection: 'column', gap: 12 };
 
 export function rulesForWire(rules: CustomerTagRule[]): CustomerTagRule[] {
   return rules.map((r) => ({ customer_match: r.customer_match.trim(), channel: r.channel, tags: r.tags.map((t) => t.trim()).filter(Boolean) }));
@@ -110,10 +110,10 @@ export default function ProductionSettingsPage({ readOnly = isShadowReader() }: 
   return (
     <ProductionLayout readOnly={readOnly}>
       <h1 style={{ margin: 0, fontSize: 24, fontWeight: 600 }}>Production settings</h1>
-      {error ? <div role="alert" style={{ color: '#a3331d' }}>{error}</div> : null}
-      {notice ? <div role="status" style={{ color: '#2e5c1f' }}>{notice}</div> : null}
+      {error ? <div role="alert" style={{ color: 'var(--sg-danger)' }}>{error}</div> : null}
+      {notice ? <div role="status" style={{ color: 'var(--sg-ok-2)' }}>{notice}</div> : null}
       {noRole || readOnly ? (
-        <div role="status" style={{ color: '#4b5563' }} data-testid="no-floor-role">
+        <div role="status" style={{ color: 'var(--sg-muted)' }} data-testid="no-floor-role">
           {NO_FLOOR_ROLE}
         </div>
       ) : (
@@ -122,28 +122,28 @@ export default function ProductionSettingsPage({ readOnly = isShadowReader() }: 
             <h2 id="view-default" style={{ margin: 0, fontSize: 16 }}>Batches opens as</h2>
             <div role="group" aria-label="List view default" style={{ display: 'flex', gap: 2 }}>
               {(['cards', 'list'] as const).map((v) => (
-                <button key={v} type="button" aria-pressed={view === v} disabled={busy || !settings} onClick={() => setView(v)} style={{ ...button, background: view === v ? '#5d4037' : '#fff', color: view === v ? '#fff' : '#1c1917' }}>
+                <button key={v} type="button" aria-pressed={view === v} disabled={busy || !settings} onClick={() => setView(v)} style={{ ...button, background: view === v ? 'var(--sg-brand-stem)' : 'var(--sg-surface)', color: view === v ? 'var(--sg-surface)' : 'var(--sg-ink)' }}>
                   {v === 'cards' ? 'Cards' : 'List'}
                 </button>
               ))}
             </div>
-            <div style={{ fontSize: 13, color: '#4b5563' }}>The shop's default; a browser's own toggle on Batches overrides it there.</div>
+            <div style={{ fontSize: 13, color: 'var(--sg-muted)' }}>The shop's default; a browser's own toggle on Batches overrides it there.</div>
           </section>
           <section style={card} aria-labelledby="bridge-bundles" data-testid="bridge-bundles">
             <h2 id="bridge-bundles" style={{ margin: 0, fontSize: 16 }}>Bridge writes batch files to the job-tickets folder</h2>
             <div role="group" aria-label="Bridge writes batch files" style={{ display: 'flex', gap: 2 }}>
               {([false, true] as const).map((on) => (
-                <button key={String(on)} type="button" aria-pressed={bridge === on} disabled={busy || !settings} onClick={() => setBridge(on)} style={{ ...button, background: bridge === on ? '#5d4037' : '#fff', color: bridge === on ? '#fff' : '#1c1917' }}>
+                <button key={String(on)} type="button" aria-pressed={bridge === on} disabled={busy || !settings} onClick={() => setBridge(on)} style={{ ...button, background: bridge === on ? 'var(--sg-brand-stem)' : 'var(--sg-surface)', color: bridge === on ? 'var(--sg-surface)' : 'var(--sg-ink)' }}>
                   {on ? 'On' : 'Off'}
                 </button>
               ))}
             </div>
-            <div style={{ fontSize: 13, color: '#4b5563' }}>Off (the default): the bridge on the shop's PC is offered no batch files and writes nothing; it only keeps the Taylor session. Switching it on is a deliberate step taken together with the shop, and every change is recorded with who made it.</div>
+            <div style={{ fontSize: 13, color: 'var(--sg-muted)' }}>Off (the default): the bridge on the shop's PC is offered no batch files and writes nothing; it only keeps the Taylor session. Switching it on is a deliberate step taken together with the shop, and every change is recorded with who made it.</div>
           </section>
           <section style={card} aria-labelledby="tag-rules" data-testid="tag-rules">
             <h2 id="tag-rules" style={{ margin: 0, fontSize: 16 }}>Tags by customer</h2>
-            <div style={{ fontSize: 13, color: '#4b5563' }}>Every new order of the customer gets these tags, on the channel named or on every channel. A tag set by hand stays; a rule only adds.</div>
-            {rules.length === 0 ? <div style={{ color: '#4b5563' }}>No rules yet.</div> : null}
+            <div style={{ fontSize: 13, color: 'var(--sg-muted)' }}>Every new order of the customer gets these tags, on the channel named or on every channel. A tag set by hand stays; a rule only adds.</div>
+            {rules.length === 0 ? <div style={{ color: 'var(--sg-muted)' }}>No rules yet.</div> : null}
             {rules.map((r, i) => (
               <div key={i} style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }} data-testid="tag-rule">
                 <input aria-label="Customer" placeholder="Customer, as the channel names it" style={{ ...field, flex: '1 1 200px' }} value={r.customer_match} disabled={busy} onChange={(e) => setRule(i, { customer_match: e.target.value })} />
@@ -164,7 +164,7 @@ export default function ProductionSettingsPage({ readOnly = isShadowReader() }: 
               <button type="button" style={button} disabled={busy} onClick={() => { setRules((all) => [...all, { customer_match: '', channel: '', tags: [] }]); setTagText((all) => [...all, '']); }}>
                 Add rule
               </button>
-              <button type="button" style={{ ...button, background: '#5d4037', color: '#fff' }} disabled={busy || settings === null} onClick={saveRules}>
+              <button type="button" style={{ ...button, background: 'var(--sg-brand-stem)', color: 'var(--sg-surface)' }} disabled={busy || settings === null} onClick={saveRules}>
                 Save rules
               </button>
             </div>

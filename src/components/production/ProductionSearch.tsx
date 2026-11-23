@@ -4,7 +4,7 @@ import type { CSSProperties } from 'react';
  * place in the head row, the same words and behaviour on Orders and on
  * Batches — a plain substring match over the row's visible fields, no
  * request. */
-const input: CSSProperties = { padding: '7px 10px', border: '1px solid #c9cfd6', borderRadius: 6, background: '#fff', font: 'inherit', flex: 1 };
+const input: CSSProperties = { padding: '7px 10px', border: '1px solid var(--sg-line-2)', borderRadius: 6, background: 'var(--sg-surface)', font: 'inherit', flex: 1 };
 
 export default function ProductionSearch({ value, onChange, placeholder = 'PO, product, any field' }: { value: string; onChange: (next: string) => void; placeholder?: string }) {
   return (

@@ -13,11 +13,11 @@ import type { OrderWhereabouts } from '../../types/whereabouts';
  * what it waits on now. Reached from each order row on All Channel Orders.
  * The shadow_reader reads it as it reads the queue. */
 
-const card: React.CSSProperties = { background: '#fff', border: '1px solid #e1e5ea', borderRadius: 8, padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 12 };
-const lbl: React.CSSProperties = { fontSize: 12, color: '#4b5563', textTransform: 'uppercase', letterSpacing: '.02em' };
+const card: React.CSSProperties = { background: 'var(--sg-surface)', border: '1px solid var(--sg-line)', borderRadius: 8, padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 12 };
+const lbl: React.CSSProperties = { fontSize: 12, color: 'var(--sg-muted)', textTransform: 'uppercase', letterSpacing: '.02em' };
 const mono: React.CSSProperties = { fontFamily: "'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace", fontSize: 13 };
-const th: React.CSSProperties = { textAlign: 'left', fontSize: 12, color: '#4b5563', padding: '8px 10px', borderBottom: '1px solid #d9dde3', textTransform: 'uppercase', letterSpacing: '.02em', whiteSpace: 'nowrap' };
-const td: React.CSSProperties = { padding: '8px 10px', borderBottom: '1px solid #eef0f3', fontSize: 14, verticalAlign: 'top' };
+const th: React.CSSProperties = { textAlign: 'left', fontSize: 12, color: 'var(--sg-muted)', padding: '8px 10px', borderBottom: '1px solid var(--sg-line-3)', textTransform: 'uppercase', letterSpacing: '.02em', whiteSpace: 'nowrap' };
+const td: React.CSSProperties = { padding: '8px 10px', borderBottom: '1px solid var(--sg-surface-3)', fontSize: 14, verticalAlign: 'top' };
 const pill: React.CSSProperties = { display: 'inline-block', padding: '2px 8px', borderRadius: 999, fontSize: 12, fontWeight: 500 };
 
 function when(iso: string | null | undefined): string {
@@ -50,7 +50,7 @@ export default function WhereaboutsPage({ readOnly = isShadowReader() }: { readO
       <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: 16 }}>
         <h1 style={{ margin: 0, fontSize: 24, fontWeight: 600 }}>{data ? `Where did ${data.order_ref} go` : 'Where did this order go'}</h1>
         {data ? (
-          <span style={{ color: '#4b5563', fontSize: 14 }}>
+          <span style={{ color: 'var(--sg-muted)', fontSize: 14 }}>
             {data.channel} · {data.customer || 'no customer named'} · placed {ageText(ageSeconds(data.placed_at))} ago · {data.status}
             {data.release_state ? ` · ${data.release_state}` : ''}
           </span>
@@ -60,7 +60,7 @@ export default function WhereaboutsPage({ readOnly = isShadowReader() }: { readO
         </Link>
       </div>
       {error ? (
-        <div role="alert" style={{ color: '#a3331d' }}>
+        <div role="alert" style={{ color: 'var(--sg-danger)' }}>
           {error}
         </div>
       ) : null}
@@ -114,7 +114,7 @@ export default function WhereaboutsPage({ readOnly = isShadowReader() }: { readO
                       <td style={{ ...td, ...mono }}>{u.reference}</td>
                       <td style={td}>{u.kind}</td>
                       <td style={td}>
-                        <span style={{ ...pill, background: u.cancelled_at ? '#e9ebef' : u.holds.some((h) => !h.cleared_at) ? '#fdebe6' : '#e6f3ee', color: u.cancelled_at ? '#3f4854' : u.holds.some((h) => !h.cleared_at) ? '#a3331d' : '#558b2f' }}>{unitStateText(u)}</span>
+                        <span style={{ ...pill, background: u.cancelled_at ? 'var(--sg-pill)' : u.holds.some((h) => !h.cleared_at) ? 'var(--sg-danger-bg)' : 'var(--sg-ok-bg)', color: u.cancelled_at ? 'var(--sg-muted-2)' : u.holds.some((h) => !h.cleared_at) ? 'var(--sg-danger)' : 'var(--sg-ok)' }}>{unitStateText(u)}</span>
                       </td>
                       <td style={td}>{locationText(u)}</td>
                       <td style={{ ...td, ...mono }}>{when(u.location.since)}</td>
@@ -132,7 +132,7 @@ export default function WhereaboutsPage({ readOnly = isShadowReader() }: { readO
           <section style={card} aria-labelledby="scans">
             <h2 id="scans" style={{ margin: 0, fontSize: 17, fontWeight: 600 }}>Scans</h2>
             {data.units.every((u) => u.scans.length === 0) ? (
-              <div style={{ color: '#4b5563', fontSize: 14 }}>No scan yet.</div>
+              <div style={{ color: 'var(--sg-muted)', fontSize: 14 }}>No scan yet.</div>
             ) : (
               <table style={{ borderCollapse: 'collapse', width: '100%' }} data-testid="scans-table">
                 <thead>

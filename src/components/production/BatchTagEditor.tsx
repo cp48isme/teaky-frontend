@@ -110,18 +110,18 @@ export default function BatchTagEditor({
     <div data-testid="batch-tag-editor">
       <TagEditor tags={batch.tags ?? []} options={options} readOnly={false} compact busy={busy} onChange={propose} />
       {plan ? (
-        <div role="dialog" aria-label={confirmText(plan)} style={{ marginTop: 6, padding: 8, border: '1px solid #d9dde3', borderRadius: 6, background: '#fffbe6', fontSize: 13, display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
+        <div role="dialog" aria-label={confirmText(plan)} style={{ marginTop: 6, padding: 8, border: '1px solid var(--sg-line-3)', borderRadius: 6, background: 'var(--sg-warn-bg-2)', fontSize: 13, display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
           <span data-testid="batch-tag-confirm-text">{confirmText(plan)}</span>
-          <button type="button" style={{ fontSize: 12, padding: '2px 8px', cursor: 'pointer', background: '#5d4037', color: '#fff', border: 0, borderRadius: 4 }} disabled={busy} onClick={confirm}>
+          <button type="button" style={{ fontSize: 12, padding: '2px 8px', cursor: 'pointer', background: 'var(--sg-brand-stem)', color: 'var(--sg-surface)', border: 0, borderRadius: 4 }} disabled={busy} onClick={confirm}>
             Confirm
           </button>
-          <button type="button" style={{ fontSize: 12, padding: '2px 8px', cursor: 'pointer', border: '1px solid #d9dde3', borderRadius: 4, background: '#fff' }} disabled={busy} onClick={() => setPlan(null)}>
+          <button type="button" style={{ fontSize: 12, padding: '2px 8px', cursor: 'pointer', border: '1px solid var(--sg-line-3)', borderRadius: 4, background: 'var(--sg-surface)' }} disabled={busy} onClick={() => setPlan(null)}>
             Cancel
           </button>
         </div>
       ) : null}
       {notice ? (
-        <div role="status" style={{ marginTop: 4, fontSize: 12, color: notice.startsWith('Stopped') ? '#a3331d' : '#2e5c1f' }} data-testid="batch-tag-notice">
+        <div role="status" style={{ marginTop: 4, fontSize: 12, color: notice.startsWith('Stopped') ? 'var(--sg-danger)' : 'var(--sg-ok-2)' }} data-testid="batch-tag-notice">
           {notice}
         </div>
       ) : null}

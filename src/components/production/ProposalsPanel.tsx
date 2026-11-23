@@ -33,21 +33,21 @@ const KINDS_FOR: Record<ActionProposalTarget, ActionProposalKind[]> = {
 const CATEGORIES: PushAloneReason[] = ['rush', 'stock', 'finishing', 'other'];
 
 const STATUS_PILL: Record<ActionProposal['status'], { background: string; color: string; text: string }> = {
-  proposed: { background: '#fbf1d9', color: '#7a5a12', text: 'proposed — waiting for a decision' },
-  approved: { background: '#e6f3ee', color: '#558b2f', text: 'approved and applied' },
-  declined: { background: '#e9ebef', color: '#3f4854', text: 'declined' },
-  withdrawn: { background: '#e9ebef', color: '#3f4854', text: 'withdrawn by the proposer' },
-  failed: { background: '#fdebe6', color: '#a3331d', text: 'approved, but the action refused' },
+  proposed: { background: 'var(--sg-warn-bg)', color: 'var(--sg-warn)', text: 'proposed — waiting for a decision' },
+  approved: { background: 'var(--sg-ok-bg)', color: 'var(--sg-ok)', text: 'approved and applied' },
+  declined: { background: 'var(--sg-pill)', color: 'var(--sg-muted-2)', text: 'declined' },
+  withdrawn: { background: 'var(--sg-pill)', color: 'var(--sg-muted-2)', text: 'withdrawn by the proposer' },
+  failed: { background: 'var(--sg-danger-bg)', color: 'var(--sg-danger)', text: 'approved, but the action refused' },
 };
 
-const card: React.CSSProperties = { background: '#fff', border: '1px solid #e1e5ea', borderRadius: 8, padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 12 };
-const lbl: React.CSSProperties = { fontSize: 12, color: '#4b5563', textTransform: 'uppercase', letterSpacing: '.02em' };
-const btn: React.CSSProperties = { padding: '9px 14px', borderRadius: 6, border: '1px solid #c9cfd6', background: '#fff', fontWeight: 500, minHeight: 44, font: 'inherit', cursor: 'pointer' };
-const primary: React.CSSProperties = { ...btn, background: colors.vein, color: '#fff', borderColor: colors.vein };
-const danger: React.CSSProperties = { ...btn, borderColor: '#a3331d', color: '#a3331d' };
-const field: React.CSSProperties = { padding: '9px 10px', border: '1px solid #c9cfd6', borderRadius: 6, font: 'inherit', minHeight: 44, background: '#fff' };
-const overlay: React.CSSProperties = { position: 'fixed', inset: 0, background: 'rgba(28, 25, 23, 0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, zIndex: 50 };
-const dialogBox: React.CSSProperties = { ...card, maxWidth: 560, width: '100%', boxShadow: '0 12px 32px rgba(0,0,0,0.25)' };
+const card: React.CSSProperties = { background: 'var(--sg-surface)', border: '1px solid var(--sg-line)', borderRadius: 8, padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 12 };
+const lbl: React.CSSProperties = { fontSize: 12, color: 'var(--sg-muted)', textTransform: 'uppercase', letterSpacing: '.02em' };
+const btn: React.CSSProperties = { padding: '9px 14px', borderRadius: 6, border: '1px solid var(--sg-line-2)', background: 'var(--sg-surface)', fontWeight: 500, minHeight: 44, font: 'inherit', cursor: 'pointer' };
+const primary: React.CSSProperties = { ...btn, background: colors.vein, color: 'var(--sg-surface)', borderColor: colors.vein };
+const danger: React.CSSProperties = { ...btn, borderColor: 'var(--sg-danger)', color: 'var(--sg-danger)' };
+const field: React.CSSProperties = { padding: '9px 10px', border: '1px solid var(--sg-line-2)', borderRadius: 6, font: 'inherit', minHeight: 44, background: 'var(--sg-surface)' };
+const overlay: React.CSSProperties = { position: 'fixed', inset: 0, background: 'var(--sg-overlay)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, zIndex: 50 };
+const dialogBox: React.CSSProperties = { ...card, maxWidth: 560, width: '100%', boxShadow: '0 12px 32px var(--sg-shadow)' };
 const mono: React.CSSProperties = { fontFamily: "'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace", fontSize: 13 };
 const pill: React.CSSProperties = { display: 'inline-block', padding: '2px 8px', borderRadius: 999, fontSize: 12, fontWeight: 500 };
 
@@ -94,14 +94,14 @@ function ProposalCard({
         <span style={{ marginLeft: 'auto', ...pill, background: status.background, color: status.color }}>{status.text}</span>
       </div>
       <div style={{ fontSize: 14 }}>
-        <span style={{ color: '#4b5563' }}>Proposed by</span> <span data-testid="proposed-by">{who(proposal.proposed_by)}</span>{' '}
-        <span style={{ color: '#4b5563' }}>· {ageText(ageSeconds(proposal.proposed_at))} ago</span>
-        {proposal.category ? <span style={{ color: '#4b5563' }}> · {proposal.category}</span> : null}
+        <span style={{ color: 'var(--sg-muted)' }}>Proposed by</span> <span data-testid="proposed-by">{who(proposal.proposed_by)}</span>{' '}
+        <span style={{ color: 'var(--sg-muted)' }}>· {ageText(ageSeconds(proposal.proposed_at))} ago</span>
+        {proposal.category ? <span style={{ color: 'var(--sg-muted)' }}> · {proposal.category}</span> : null}
       </div>
       <div style={{ fontSize: 14 }}>
         <span style={lbl}>Reason</span>
         <div data-testid="proposal-reason">{proposal.reason}</div>
-        {proposal.note ? <div style={{ color: '#4b5563' }}>{proposal.note}</div> : null}
+        {proposal.note ? <div style={{ color: 'var(--sg-muted)' }}>{proposal.note}</div> : null}
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '8px 16px' }} data-testid="proposal-facts">
         {factsText(proposal).map((f) => (
@@ -110,14 +110,14 @@ function ProposalCard({
         <Fact label="Facts as of" value={new Date(proposal.facts.captured_at).toLocaleString('en-US')} />
       </div>
       {!open ? (
-        <div style={{ fontSize: 13, color: '#4b5563' }}>
+        <div style={{ fontSize: 13, color: 'var(--sg-muted)' }}>
           {proposal.status === 'withdrawn' ? 'Withdrawn' : 'Decided'} by {who(proposal.decided_by)}
           {proposal.decided_at ? ` · ${new Date(proposal.decided_at).toLocaleString('en-US')}` : ''}
           {proposal.decision_note ? ` · ${proposal.decision_note}` : ''}
-          {proposal.failure && !refusal ? <div style={{ color: '#a3331d' }}>The action refused: {proposal.failure}</div> : null}
+          {proposal.failure && !refusal ? <div style={{ color: 'var(--sg-danger)' }}>The action refused: {proposal.failure}</div> : null}
         </div>
       ) : readOnly ? (
-        <div style={{ fontSize: 13, color: '#4b5563' }} data-testid="waiting-for-a-decision">
+        <div style={{ fontSize: 13, color: 'var(--sg-muted)' }} data-testid="waiting-for-a-decision">
           Waiting for a decision by a staff member.
         </div>
       ) : (
@@ -128,7 +128,7 @@ function ProposalCard({
               Approve…
             </button>
           ) : proposal.kind === 'mark_done' ? (
-            <span style={{ ...pill, background: '#fffbe6', color: '#7a5a12' }} data-testid="awaiting-confirmation">
+            <span style={{ ...pill, background: 'var(--sg-warn-bg-2)', color: 'var(--sg-warn)' }} data-testid="awaiting-confirmation">
               awaiting your confirmation
             </span>
           ) : (
@@ -144,7 +144,7 @@ function ProposalCard({
             <div role="dialog" aria-modal="true" aria-label={`Mark ${proposal.facts.reference} done?`} style={overlay} data-testid="mark-done-dialog">
               <div style={dialogBox}>
                 <div style={{ fontSize: 18, fontWeight: 600 }}>Mark {proposal.facts.reference} done?</div>
-                <div style={{ fontSize: 14, color: '#a3331d' }} data-testid="approve-confirm-note">
+                <div style={{ fontSize: 14, color: 'var(--sg-danger)' }} data-testid="approve-confirm-note">
                   Approving marks {proposal.facts.reference} done: every remaining route step is skipped by a person, with this reason kept. Nothing is printed by it.
                 </div>
                 <div style={{ fontSize: 14 }}>
@@ -165,7 +165,7 @@ function ProposalCard({
         </div>
       )}
       {refusal ? (
-        <div role="alert" data-testid="card-refusal" style={{ background: '#fdecea', border: '1px solid #f3b6ae', color: '#a3331d', borderRadius: 6, padding: '10px 12px', fontSize: 14 }}>
+        <div role="alert" data-testid="card-refusal" style={{ background: 'var(--sg-danger-bg-2)', border: '1px solid var(--sg-danger-line)', color: 'var(--sg-danger)', borderRadius: 6, padding: '10px 12px', fontSize: 14 }}>
           Refused: {refusal}
         </div>
       ) : null}
@@ -196,7 +196,7 @@ function ProposeForm({ targets, busy, onPropose }: { targets: ProposalTarget[]; 
     setNote('');
     setConfirmDone(false);
   }
-  if (!targets.length) return <div style={{ color: '#4b5563', fontSize: 14 }}>Nothing on this screen to propose an action for.</div>;
+  if (!targets.length) return <div style={{ color: 'var(--sg-muted)', fontSize: 14 }}>Nothing on this screen to propose an action for.</div>;
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }} data-testid="propose-form">
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center' }}>
@@ -240,11 +240,11 @@ function ProposeForm({ targets, busy, onPropose }: { targets: ProposalTarget[]; 
           {kind === 'mark_done' && confirmDone ? 'Yes, propose mark done' : kind === 'mark_done' ? 'Propose mark done…' : 'Propose'}
         </button>
         {kind === 'mark_done' && confirmDone ? (
-          <span style={{ fontSize: 13, color: '#a3331d' }} data-testid="propose-confirm-note">
+          <span style={{ fontSize: 13, color: 'var(--sg-danger)' }} data-testid="propose-confirm-note">
             Mark done skips every remaining route step for {target?.label}. Nothing is applied until a person approves the proposal.
           </span>
         ) : (
-          <span style={{ fontSize: 13, color: '#4b5563' }}>Nothing happens on propose. A person approves it; a short run still goes through the push-out confirmation.</span>
+          <span style={{ fontSize: 13, color: 'var(--sg-muted)' }}>Nothing happens on propose. A person approves it; a short run still goes through the push-out confirmation.</span>
         )}
       </div>
     </div>
@@ -344,15 +344,15 @@ export default function ProposalsPanel({ targets, readOnly = false, focusTargetI
     <section aria-labelledby="proposals" style={{ display: 'flex', flexDirection: 'column', gap: 16 }} data-testid="proposals-panel">
       <div>
         <h2 id="proposals" style={{ margin: 0, fontSize: 17, fontWeight: 600 }}>Proposals</h2>
-        <div style={{ color: '#4b5563', fontSize: 14 }}>
+        <div style={{ color: 'var(--sg-muted)', fontSize: 14 }}>
           {open.length} waiting for a decision · {decided.length} decided. An action is proposed with a reason and the facts present, and applied only when a person approves it.
         </div>
       </div>
-      {error ? <div role="alert" style={{ color: '#a3331d' }}>{error}</div> : null}
-      {noRole ? <div role="status" style={{ color: '#4b5563' }} data-testid="no-floor-role">{NO_FLOOR_ROLE}</div> : null}
+      {error ? <div role="alert" style={{ color: 'var(--sg-danger)' }}>{error}</div> : null}
+      {noRole ? <div role="status" style={{ color: 'var(--sg-muted)' }} data-testid="no-floor-role">{NO_FLOOR_ROLE}</div> : null}
       {notice ? <div role="status" style={{ color: colors.vein }}>{notice}</div> : null}
       {readOnly ? (
-        <div style={{ fontSize: 13, color: '#4b5563' }} data-testid="proposals-read-only-note">
+        <div style={{ fontSize: 13, color: 'var(--sg-muted)' }} data-testid="proposals-read-only-note">
           Read-only: proposals are shown as staff see them; proposing and deciding are staff actions.
         </div>
       ) : (
@@ -396,7 +396,7 @@ export default function ProposalsPanel({ targets, readOnly = false, focusTargetI
             </select>
           </label>
           {targetFilter !== 'all' || kindFilter !== 'all' ? (
-            <span style={{ color: '#4b5563' }}>
+            <span style={{ color: 'var(--sg-muted)' }}>
               {open.length} waiting · {decided.length} decided in this view
             </span>
           ) : null}

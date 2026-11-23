@@ -22,8 +22,8 @@ import type { BatchSummary } from '../../types/production';
 
 const SLOT: Record<'filled' | 'fill' | 'blank', React.CSSProperties> = {
   filled: { background: colors.leaf },
-  fill: { background: '#f2b84b' },
-  blank: { background: '#e6e9ee', border: '1px dashed #b7bec8' },
+  fill: { background: 'var(--sg-warn-strong)' },
+  blank: { background: 'var(--sg-line)', border: '1px dashed var(--sg-line-2)' },
 };
 
 export function SlotStrip({ used, fillable, capacity, gap = 3 }: { used: number; fillable: number; capacity: number; gap?: number }) {
@@ -41,14 +41,14 @@ export function SlotStrip({ used, fillable, capacity, gap = 3 }: { used: number;
 }
 
 function stateText(b: BatchSummary): { text: string; color?: string } {
-  if (b.cancelled) return { text: 'cancelled', color: '#a3331d' };
+  if (b.cancelled) return { text: 'cancelled', color: 'var(--sg-danger)' };
   if (b.marked_done_at) return { text: `marked done · ${new Date(b.marked_done_at).toLocaleDateString()}` };
   if (b.docket_number) return { text: `pushed out · Docket ${b.docket_number}` };
-  if (b.release_state === 'needs_human') return { text: 'needs a person — check DocketManager', color: '#a3331d' };
-  if (b.release_state === 'releasing') return { text: 'pushing out…', color: '#7a5a12' };
-  if (b.release_state === 'retryable') return { text: 'push failed — try again', color: '#a3331d' };
+  if (b.release_state === 'needs_human') return { text: 'needs a person — check DocketManager', color: 'var(--sg-danger)' };
+  if (b.release_state === 'releasing') return { text: 'pushing out…', color: 'var(--sg-warn)' };
+  if (b.release_state === 'retryable') return { text: 'push failed — try again', color: 'var(--sg-danger)' };
   if (b.full) return { text: 'full', color: colors.vein };
-  return { text: `${b.blanks} blank if pushed out now`, color: '#7a5a12' };
+  return { text: `${b.blanks} blank if pushed out now`, color: 'var(--sg-warn)' };
 }
 
 export default function BatchesPage({ readOnly = isShadowReader() }: { readOnly?: boolean } = {}) {
@@ -158,7 +158,7 @@ export default function BatchesPage({ readOnly = isShadowReader() }: { readOnly?
     <ProductionLayout readOnly={readOnly}>
       <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: 16 }}>
         <h1 style={{ margin: 0, fontSize: 24, fontWeight: 600 }}>Batches</h1>
-        <span style={{ color: '#4b5563', fontSize: 14 }}>
+        <span style={{ color: 'var(--sg-muted)', fontSize: 14 }}>
           {open.length} open · {open.filter((b) => b.full).length} full and ready · next number {nextNumber}
         </span>
         <div role="group" aria-label="View" style={{ marginLeft: 'auto', display: 'flex', gap: 2, fontSize: 13 }} data-testid="view-toggle">
@@ -168,7 +168,7 @@ export default function BatchesPage({ readOnly = isShadowReader() }: { readOnly?
               type="button"
               onClick={() => chooseView(v)}
               aria-pressed={view === v}
-              style={{ padding: '6px 10px', border: '1px solid #c9cfd6', background: view === v ? colors.stem : '#fff', color: view === v ? '#fff' : '#1c1917', font: 'inherit', cursor: 'pointer', borderRadius: v === 'cards' ? '6px 0 0 6px' : '0 6px 6px 0' }}
+              style={{ padding: '6px 10px', border: '1px solid var(--sg-line-2)', background: view === v ? colors.stem : 'var(--sg-surface)', color: view === v ? 'var(--sg-surface)' : 'var(--sg-ink)', font: 'inherit', cursor: 'pointer', borderRadius: v === 'cards' ? '6px 0 0 6px' : '0 6px 6px 0' }}
             >
               {v === 'cards' ? 'Cards' : 'List'}
             </button>
@@ -176,7 +176,7 @@ export default function BatchesPage({ readOnly = isShadowReader() }: { readOnly?
         </div>
         <label style={{ fontSize: 14, display: 'flex', gap: 8, alignItems: 'center' }}>
           Show
-          <select value={show} onChange={(e) => setShow(e.target.value)} style={{ padding: '7px 10px', border: '1px solid #c9cfd6', borderRadius: 6, background: '#fff', font: 'inherit' }}>
+          <select value={show} onChange={(e) => setShow(e.target.value)} style={{ padding: '7px 10px', border: '1px solid var(--sg-line-2)', borderRadius: 6, background: 'var(--sg-surface)', font: 'inherit' }}>
             {['Open', 'Pushed out', 'Done', 'All'].map((o) => (
               <option key={o}>{o}</option>
             ))}
@@ -186,7 +186,7 @@ export default function BatchesPage({ readOnly = isShadowReader() }: { readOnly?
       </div>
       {tags.length ? (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', fontSize: 14 }} data-testid="tag-chips">
-          <span style={{ color: '#4b5563' }}>Tags</span>
+          <span style={{ color: 'var(--sg-muted)' }}>Tags</span>
           {tags.map((tag) => {
             const mode = tagMode(tagFilter, tag);
             return (
@@ -197,7 +197,7 @@ export default function BatchesPage({ readOnly = isShadowReader() }: { readOnly?
                 aria-pressed={mode !== null}
                 data-mode={mode ?? 'off'}
                 title={mode === null ? `Only ${tag}` : mode === 'include' ? `Hide ${tag}` : 'Clear'}
-                style={{ padding: '4px 10px', border: '1px solid', borderRadius: 999, cursor: 'pointer', font: 'inherit', background: mode === 'include' ? colors.leaf : mode === 'exclude' ? '#fde8e4' : '#fff', color: mode === 'include' ? '#fff' : mode === 'exclude' ? '#a3331d' : '#1c1917', borderColor: mode === 'exclude' ? '#e5a79a' : '#c9cfd6', textDecoration: mode === 'exclude' ? 'line-through' : 'none' }}
+                style={{ padding: '4px 10px', border: '1px solid', borderRadius: 999, cursor: 'pointer', font: 'inherit', background: mode === 'include' ? colors.leaf : mode === 'exclude' ? 'var(--sg-danger-bg-2)' : 'var(--sg-surface)', color: mode === 'include' ? 'var(--sg-surface)' : mode === 'exclude' ? 'var(--sg-danger)' : 'var(--sg-ink)', borderColor: mode === 'exclude' ? 'var(--sg-danger-line)' : 'var(--sg-line-2)', textDecoration: mode === 'exclude' ? 'line-through' : 'none' }}
               >
                 {tag}
               </button>
@@ -205,17 +205,17 @@ export default function BatchesPage({ readOnly = isShadowReader() }: { readOnly?
           })}
         </div>
       ) : null}
-      {error ? <div role="alert" style={{ color: '#a3331d' }}>{error}</div> : null}
-      {notice ? <div role="status" style={{ color: '#2e5c1f' }}>{notice}</div> : null}
+      {error ? <div role="alert" style={{ color: 'var(--sg-danger)' }}>{error}</div> : null}
+      {notice ? <div role="status" style={{ color: 'var(--sg-ok-2)' }}>{notice}</div> : null}
       {markingDone ? (
-        <div role="dialog" aria-modal="true" aria-label={`Mark Batch ${markingDone.batch.batch_number} done`} style={{ position: 'fixed', inset: 0, background: 'rgba(28, 25, 23, 0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, zIndex: 50 }} data-testid="mark-done-dialog">
-          <div style={{ background: '#fff', border: '1px solid #e1e5ea', borderRadius: 8, padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 560, width: '100%' }}>
+        <div role="dialog" aria-modal="true" aria-label={`Mark Batch ${markingDone.batch.batch_number} done`} style={{ position: 'fixed', inset: 0, background: 'var(--sg-overlay)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, zIndex: 50 }} data-testid="mark-done-dialog">
+          <div style={{ background: 'var(--sg-surface)', border: '1px solid var(--sg-line)', borderRadius: 8, padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 560, width: '100%' }}>
             <div style={{ fontSize: 18, fontWeight: 600 }}>Mark Batch {markingDone.batch.batch_number} done</div>
             {!markingDone.confirming ? (
               <>
                 <label style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 14 }}>
                   Reason (kept with the batch)
-                  <input aria-label="Reason" value={markingDone.reason} onChange={(e) => setMarkingDone({ ...markingDone, reason: e.target.value })} placeholder="e.g. finished on the old press by hand" style={{ padding: '9px 10px', border: '1px solid #c9cfd6', borderRadius: 6, font: 'inherit', minHeight: 44 }} />
+                  <input aria-label="Reason" value={markingDone.reason} onChange={(e) => setMarkingDone({ ...markingDone, reason: e.target.value })} placeholder="e.g. finished on the old press by hand" style={{ padding: '9px 10px', border: '1px solid var(--sg-line-2)', borderRadius: 6, font: 'inherit', minHeight: 44 }} />
                 </label>
                 <div style={{ display: 'flex', gap: 10 }}>
                   <button type="button" disabled={markingDone.reason.trim().length < 3} onClick={() => setMarkingDone({ ...markingDone, confirming: true })} style={{ ...btn, ...btnPrimary }} data-testid="mark-done-next">
@@ -228,7 +228,7 @@ export default function BatchesPage({ readOnly = isShadowReader() }: { readOnly?
               </>
             ) : (
               <>
-                <div style={{ fontSize: 14, color: '#a3331d' }} data-testid="mark-done-note">
+                <div style={{ fontSize: 14, color: 'var(--sg-danger)' }} data-testid="mark-done-note">
                   Marking Batch {markingDone.batch.batch_number} done skips every remaining route step by a person, with this reason kept. Nothing is printed by it.
                 </div>
                 <div style={{ display: 'flex', gap: 10 }}>
@@ -244,11 +244,11 @@ export default function BatchesPage({ readOnly = isShadowReader() }: { readOnly?
           </div>
         </div>
       ) : null}
-      {noRole ? <div role="status" style={{ color: '#4b5563' }} data-testid="no-floor-role">{NO_FLOOR_ROLE}</div> : null}
+      {noRole ? <div role="status" style={{ color: 'var(--sg-muted)' }} data-testid="no-floor-role">{NO_FLOOR_ROLE}</div> : null}
       {view === 'list' ? (
         <BatchesTable batches={shown} readOnly={readOnly} emptyText={emptyText} shopTags={shopTags} onTagsWritten={loadBatches} sort={sort} onSort={(key) => setSort((s) => (s.key === key ? { key, direction: s.direction === 'asc' ? 'desc' : 'asc' } : { key, direction: key === 'oldest' || key === 'batch' ? 'desc' : 'asc' }))} />
       ) : null}
-      {view === 'cards' && first ? <BatchCard batch={first} featured readOnly={readOnly} refusal={cardRefusals[first.unit_id]} onPushOut={() => navigate(`/production/batches/${first.unit_id}/push-out`)} onHalfBatch={() => halfBatch(first)} onMarkDone={() => setMarkingDone({ batch: first, reason: '', confirming: false })} /> : view === 'cards' ? <div style={{ color: '#4b5563' }} data-testid="no-batches">{emptyText}</div> : null}
+      {view === 'cards' && first ? <BatchCard batch={first} featured readOnly={readOnly} refusal={cardRefusals[first.unit_id]} onPushOut={() => navigate(`/production/batches/${first.unit_id}/push-out`)} onHalfBatch={() => halfBatch(first)} onMarkDone={() => setMarkingDone({ batch: first, reason: '', confirming: false })} /> : view === 'cards' ? <div style={{ color: 'var(--sg-muted)' }} data-testid="no-batches">{emptyText}</div> : null}
       {view === 'cards' && rest.length ? (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 16 }}>
           {rest.map((b) => (
@@ -257,10 +257,10 @@ export default function BatchesPage({ readOnly = isShadowReader() }: { readOnly?
         </div>
       ) : null}
       <ProposalsPanel targets={proposalTargets} readOnly={readOnly} />
-      <div style={{ background: '#f9fafb', border: '1px solid #e1e5ea', borderRadius: 8, padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div style={{ background: 'var(--sg-surface-2)', border: '1px solid var(--sg-line)', borderRadius: 8, padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
         <div style={{ fontWeight: 500 }}>Pushed out</div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 24, fontSize: 14 }}>
-          {pushedOut.length === 0 ? <span style={{ color: '#4b5563' }}>None yet.</span> : null}
+          {pushedOut.length === 0 ? <span style={{ color: 'var(--sg-muted)' }}>None yet.</span> : null}
           {pushedOut.map((b) => (
             <span key={b.unit_id}>
               <span style={mono}>{b.batch_number}</span> · {b.stock} · {b.used}/{b.capacity}
@@ -268,7 +268,7 @@ export default function BatchesPage({ readOnly = isShadowReader() }: { readOnly?
               {b.released_at ? ` · ${new Date(b.released_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}` : ''}
             </span>
           ))}
-          <span style={{ color: '#4b5563' }}>Every push-out has a Docket number or a written reason. None are missing.</span>
+          <span style={{ color: 'var(--sg-muted)' }}>Every push-out has a Docket number or a written reason. None are missing.</span>
         </div>
       </div>
     </ProductionLayout>
@@ -298,7 +298,7 @@ function BatchCard({ batch, featured = false, readOnly = false, refusal, onPushO
       aria-label={readOnly ? undefined : `Batch ${batch.batch_number}: ${batch.marked_done_at ? 'done' : 'open'}`}
       onClick={readOnly ? undefined : (e) => { if ((e.target as HTMLElement).closest('a, button, input, select')) return; onPushOut(); }}
       onKeyDown={readOnly ? undefined : (e) => { if (e.key === 'Enter' && e.target === e.currentTarget) onPushOut(); }}
-      style={{ background: '#fff', border: `${featured ? 2 : 1}px solid ${featured ? colors.vein : '#e1e5ea'}`, borderRadius: 8, padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 12, cursor: readOnly ? 'default' : 'pointer' }}
+      style={{ background: 'var(--sg-surface)', border: `${featured ? 2 : 1}px solid ${featured ? colors.vein : 'var(--sg-line)'}`, borderRadius: 8, padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 12, cursor: readOnly ? 'default' : 'pointer' }}
     >
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'center' }}>
         <div>
@@ -323,7 +323,7 @@ function BatchCard({ batch, featured = false, readOnly = false, refusal, onPushO
         </div>
         <div>
           <span style={lbl}>Oldest line</span>
-          <div style={{ fontSize: 16, ...(batch.oldest_line_age_seconds != null && batch.oldest_line_age_seconds > 7 * 86400 ? { color: '#a3331d', fontWeight: 600 } : {}) }}>
+          <div style={{ fontSize: 16, ...(batch.oldest_line_age_seconds != null && batch.oldest_line_age_seconds > 7 * 86400 ? { color: 'var(--sg-danger)', fontWeight: 600 } : {}) }}>
             {batch.oldest_line_age_seconds != null ? `${ageText(batch.oldest_line_age_seconds)} · ${batch.oldest_line_ref ?? ''}` : '—'}
           </div>
         </div>
@@ -359,13 +359,13 @@ function BatchCard({ batch, featured = false, readOnly = false, refusal, onPushO
         </div>
       </div>
       {refusal ? (
-        <div role="alert" data-testid="batch-refusal" style={{ background: '#fdecea', border: '1px solid #f3b6ae', color: '#a3331d', borderRadius: 6, padding: '10px 12px', fontSize: 14 }}>
+        <div role="alert" data-testid="batch-refusal" style={{ background: 'var(--sg-danger-bg-2)', border: '1px solid var(--sg-danger-line)', color: 'var(--sg-danger)', borderRadius: 6, padding: '10px 12px', fontSize: 14 }}>
           Refused: {refusal}
         </div>
       ) : null}
       <SlotStrip used={batch.used} fillable={batch.fillable_slots} capacity={batch.capacity} />
       {batch.fill_candidates.length ? (
-        <div style={{ background: '#fbf6e8', border: '1px solid #efd9a3', borderRadius: 6, padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div style={{ background: 'var(--sg-warn-bg-2)', border: '1px solid var(--sg-warn-line)', borderRadius: 6, padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 8 }}>
           <div style={{ fontWeight: 500 }}>
             Fill advice — {batch.fillable_slots} of the {batch.blanks} blank{batch.blanks === 1 ? '' : 's'} can be filled now, by orders already received
           </div>
@@ -379,10 +379,10 @@ function BatchCard({ batch, featured = false, readOnly = false, refusal, onPushO
           ))}
         </div>
       ) : batch.blanks > 0 && !batch.docket_number ? (
-        <div style={{ fontSize: 13, color: '#4b5563' }}>No waiting order of this stock fits the blanks; they stay blank unless one arrives.</div>
+        <div style={{ fontSize: 13, color: 'var(--sg-muted)' }}>No waiting order of this stock fits the blanks; they stay blank unless one arrives.</div>
       ) : null}
       {featured && !readOnly ? (
-        <div style={{ fontSize: 13, color: '#4b5563' }}>
+        <div style={{ fontSize: 13, color: 'var(--sg-muted)' }}>
           Pushing out writes the art files and the job ticket, creates the Docket order <span style={mono}>BC Batch{batch.stock} {batch.batch_number}</span> and records its number on the batch. You confirm on the next screen; nothing moves until then.
         </div>
       ) : null}
@@ -397,7 +397,7 @@ function BatchCard({ batch, featured = false, readOnly = false, refusal, onPushO
   );
 }
 
-const lbl: React.CSSProperties = { fontSize: 12, color: '#4b5563', textTransform: 'uppercase', letterSpacing: '.02em' };
+const lbl: React.CSSProperties = { fontSize: 12, color: 'var(--sg-muted)', textTransform: 'uppercase', letterSpacing: '.02em' };
 const mono: React.CSSProperties = { fontFamily: "'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace", fontSize: 13 };
-const btn: React.CSSProperties = { padding: '9px 14px', borderRadius: 6, border: '1px solid #c9cfd6', background: '#fff', fontWeight: 500, minHeight: 44, font: 'inherit', cursor: 'pointer' };
-const btnPrimary: React.CSSProperties = { background: colors.vein, color: '#fff', borderColor: colors.vein };
+const btn: React.CSSProperties = { padding: '9px 14px', borderRadius: 6, border: '1px solid var(--sg-line-2)', background: 'var(--sg-surface)', fontWeight: 500, minHeight: 44, font: 'inherit', cursor: 'pointer' };
+const btnPrimary: React.CSSProperties = { background: colors.vein, color: 'var(--sg-surface)', borderColor: colors.vein };

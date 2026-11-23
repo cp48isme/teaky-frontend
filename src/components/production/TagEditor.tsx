@@ -5,9 +5,9 @@ import { useState } from 'react';
  * control on the order page and inline on each orders row (compact). A
  * read-only reader gets the chips and nothing else. */
 
-const chip: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 8px', borderRadius: 999, fontSize: 12, fontWeight: 500, lineHeight: '18px', background: '#eef2f6', color: '#3f4854' };
-const removeStyle: React.CSSProperties = { border: 0, background: 'transparent', cursor: 'pointer', color: '#6b7280', padding: 0, fontSize: 13, lineHeight: 1 };
-const ctl: React.CSSProperties = { fontSize: 12, padding: '2px 6px', border: '1px solid #d9dde3', borderRadius: 4, background: '#fff' };
+const chip: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 8px', borderRadius: 999, fontSize: 12, fontWeight: 500, lineHeight: '18px', background: 'var(--sg-surface-3)', color: 'var(--sg-muted-2)' };
+const removeStyle: React.CSSProperties = { border: 0, background: 'transparent', cursor: 'pointer', color: 'var(--sg-muted)', padding: 0, fontSize: 13, lineHeight: 1 };
+const ctl: React.CSSProperties = { fontSize: 12, padding: '2px 6px', border: '1px solid var(--sg-line-3)', borderRadius: 4, background: 'var(--sg-surface)' };
 
 export function nextTags(current: readonly string[], raw: string): string[] {
   const tag = raw.trim();
@@ -55,7 +55,7 @@ export default function TagEditor({
         </span>
       ))}
       {readOnly ? null : !open ? (
-        <button type="button" aria-label="Add tag" title="Add a tag" style={{ ...ctl, cursor: 'pointer', color: '#4b5563' }} disabled={busy} onClick={() => setOpen(true)}>
+        <button type="button" aria-label="Add tag" title="Add a tag" style={{ ...ctl, cursor: 'pointer', color: 'var(--sg-muted)' }} disabled={busy} onClick={() => setOpen(true)}>
           + tag
         </button>
       ) : (

@@ -17,3 +17,161 @@
   --font-sans: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
   --font-heading: 'Outfit', ui-sans-serif, system-ui, sans-serif;
 }
+
+/* ---- The production floor's theme tokens (dark mode, ruling 20 Nov 2026,
+   rev 47). The floor's screens read these and nothing else for colour; the
+   admin shell is untouched this rev, so the tokens live on the floor's root,
+   not on :root. Three states: no attribute (the system decides through the
+   media query), data-theme="light", data-theme="dark" (the per-user choice). */
+.production-root {
+  color-scheme: light;
+  --sg-page: #f4f5f7;
+  --sg-surface: #ffffff;
+  --sg-surface-2: #f9fafb;
+  --sg-surface-3: #eef0f3;
+  --sg-ink: #1c1917;
+  --sg-muted: #4b5563;
+  --sg-muted-2: #3f4854;
+  --sg-line: #e1e5ea;
+  --sg-line-2: #c9cfd6;
+  --sg-line-3: #d9dde3;
+  --sg-pill: #e9ebef;
+  --sg-pill-ink: #3f4854;
+  --sg-ok: #558b2f;
+  --sg-ok-2: #2e5c1f;
+  --sg-ok-bg: #e6f3ee;
+  --sg-ok-line: #cfe9b8;
+  --sg-warn: #7a5a12;
+  --sg-warn-bg: #fbf1d9;
+  --sg-warn-bg-2: #fffbe6;
+  --sg-warn-line: #efd9a3;
+  --sg-warn-strong: #f2b84b;
+  --sg-danger: #a3331d;
+  --sg-danger-bg: #fdebe6;
+  --sg-danger-bg-2: #fdecea;
+  --sg-danger-line: #f3b6ae;
+  --sg-danger-tint: #fff8f6;
+  --sg-info: #1d4e89;
+  --sg-info-bg: #e3eefb;
+  --sg-accent2: #5b3aa6;
+  --sg-accent2-bg: #efe9fb;
+  --sg-paper: #f5f0ea;
+  --sg-paper-2: #f6ede0;
+  --sg-paper-3: #f3efe5;
+  --sg-paper-line: #d9d2c8;
+  --sg-paper-muted: #bdb5ab;
+  --sg-brand-stem: #5d4037;
+  --sg-brand-teak: #a0693c;
+  --sg-brand-leaf: #7cb342;
+  --sg-overlay: rgba(28, 25, 23, 0.45);
+  --sg-shadow: rgba(0, 0, 0, 0.25);
+  --sg-chip-done: #2e4a1f;
+  --sg-chip-done-ink: #cfe9b8;
+  --sg-chip-at: #7a4a10;
+  --sg-chip-at-ink: #fbf1d9;
+  --sg-chip-skipped: #3a3530;
+  --sg-chip-skipped-ink: #bdb5ab;
+  --sg-chip-danger: #5a1f14;
+}
+.production-root[data-theme="dark"] {
+  color-scheme: dark;
+  --sg-page: #16140f;
+  --sg-surface: #1f1c18;
+  --sg-surface-2: #262220;
+  --sg-surface-3: #2d2926;
+  --sg-ink: #f3efe8;
+  --sg-muted: #b8b0a6;
+  --sg-muted-2: #cfc8bf;
+  --sg-line: #3b3632;
+  --sg-line-2: #4a443f;
+  --sg-line-3: #433d38;
+  --sg-pill: #34302c;
+  --sg-pill-ink: #d8d1c8;
+  --sg-ok: #9ccc65;
+  --sg-ok-2: #b6dd8c;
+  --sg-ok-bg: #22301b;
+  --sg-ok-line: #3f5a2a;
+  --sg-warn: #f2c66b;
+  --sg-warn-bg: #3a2f14;
+  --sg-warn-bg-2: #3f3418;
+  --sg-warn-line: #6a5420;
+  --sg-warn-strong: #f2b84b;
+  --sg-danger: #ff8a73;
+  --sg-danger-bg: #3d1f18;
+  --sg-danger-bg-2: #42211a;
+  --sg-danger-line: #7a3a2c;
+  --sg-danger-tint: #2d1a16;
+  --sg-info: #8ab4f0;
+  --sg-info-bg: #1b2a40;
+  --sg-accent2: #b9a3ec;
+  --sg-accent2-bg: #2b2340;
+  --sg-paper: #2a2522;
+  --sg-paper-2: #2f2926;
+  --sg-paper-3: #2c2724;
+  --sg-paper-line: #4a433d;
+  --sg-paper-muted: #8f877d;
+  --sg-brand-stem: #c9a48f;
+  --sg-brand-teak: #c08a5a;
+  --sg-brand-leaf: #9ccc65;
+  --sg-overlay: rgba(0, 0, 0, 0.6);
+  --sg-shadow: rgba(0, 0, 0, 0.6);
+  --sg-chip-done: #3f6a2a;
+  --sg-chip-done-ink: #e3f4cf;
+  --sg-chip-at: #9a5e14;
+  --sg-chip-at-ink: #fff3d6;
+  --sg-chip-skipped: #4a443f;
+  --sg-chip-skipped-ink: #d8d1c8;
+  --sg-chip-danger: #7a2a1c;
+}
+@media (prefers-color-scheme: dark) {
+  .production-root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --sg-page: #16140f;
+    --sg-surface: #1f1c18;
+    --sg-surface-2: #262220;
+    --sg-surface-3: #2d2926;
+    --sg-ink: #f3efe8;
+    --sg-muted: #b8b0a6;
+    --sg-muted-2: #cfc8bf;
+    --sg-line: #3b3632;
+    --sg-line-2: #4a443f;
+    --sg-line-3: #433d38;
+    --sg-pill: #34302c;
+    --sg-pill-ink: #d8d1c8;
+    --sg-ok: #9ccc65;
+    --sg-ok-2: #b6dd8c;
+    --sg-ok-bg: #22301b;
+    --sg-ok-line: #3f5a2a;
+    --sg-warn: #f2c66b;
+    --sg-warn-bg: #3a2f14;
+    --sg-warn-bg-2: #3f3418;
+    --sg-warn-line: #6a5420;
+    --sg-warn-strong: #f2b84b;
+    --sg-danger: #ff8a73;
+    --sg-danger-bg: #3d1f18;
+    --sg-danger-bg-2: #42211a;
+    --sg-danger-line: #7a3a2c;
+    --sg-danger-tint: #2d1a16;
+    --sg-info: #8ab4f0;
+    --sg-info-bg: #1b2a40;
+    --sg-accent2: #b9a3ec;
+    --sg-accent2-bg: #2b2340;
+    --sg-paper: #2a2522;
+    --sg-paper-2: #2f2926;
+    --sg-paper-3: #2c2724;
+    --sg-paper-line: #4a433d;
+    --sg-paper-muted: #8f877d;
+    --sg-brand-stem: #c9a48f;
+    --sg-brand-teak: #c08a5a;
+    --sg-brand-leaf: #9ccc65;
+    --sg-overlay: rgba(0, 0, 0, 0.6);
+    --sg-shadow: rgba(0, 0, 0, 0.6);
+    --sg-chip-done: #3f6a2a;
+    --sg-chip-done-ink: #e3f4cf;
+    --sg-chip-at: #9a5e14;
+    --sg-chip-at-ink: #fff3d6;
+    --sg-chip-skipped: #4a443f;
+    --sg-chip-skipped-ink: #d8d1c8;
+    --sg-chip-danger: #7a2a1c;
+  }
+}

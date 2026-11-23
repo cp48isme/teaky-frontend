@@ -31,18 +31,18 @@ function remember(key: string, value: string) {
   }
 }
 
-const dark: React.CSSProperties = { background: '#1c1917', color: '#f5f0ea', borderRadius: 10, padding: '22px 24px', display: 'flex', flexDirection: 'column', gap: 16 };
+const dark: React.CSSProperties = { background: 'var(--sg-ink)', color: 'var(--sg-paper)', borderRadius: 10, padding: '22px 24px', display: 'flex', flexDirection: 'column', gap: 16 };
 const mono: React.CSSProperties = { fontFamily: "'IBM Plex Mono', monospace" };
-const btn: React.CSSProperties = { padding: '14px 18px', borderRadius: 8, border: '1px solid #3f3a35', background: '#2a2522', color: '#f5f0ea', fontWeight: 600, minHeight: 56, minWidth: 200, font: 'inherit', fontSize: 17, cursor: 'pointer' };
+const btn: React.CSSProperties = { padding: '14px 18px', borderRadius: 8, border: '1px solid var(--sg-muted-2)', background: 'var(--sg-paper)', color: 'var(--sg-paper)', fontWeight: 600, minHeight: 56, minWidth: 200, font: 'inherit', fontSize: 17, cursor: 'pointer' };
 const go: React.CSSProperties = { ...btn, background: colors.vein, borderColor: colors.vein };
 const quiet: React.CSSProperties = { ...btn, minWidth: 0, minHeight: 44, fontSize: 14, fontWeight: 500, padding: '8px 12px' };
 
 function stepPill(step: RouteStep): React.CSSProperties {
   const base: React.CSSProperties = { display: 'inline-block', padding: '4px 10px', borderRadius: 999, fontSize: 13, fontWeight: 500 };
-  if (step.state === 'done') return { ...base, background: '#2e4a1f', color: '#cfe9b8' };
-  if (step.state === 'at') return { ...base, background: '#7a4a10', color: '#ffe3b3' };
-  if (step.state === 'skipped') return { ...base, background: '#3a3530', color: '#bdb5ab' };
-  return { ...base, background: '#2a2522', color: '#bdb5ab' };
+  if (step.state === 'done') return { ...base, background: 'var(--sg-chip-done)', color: 'var(--sg-chip-done-ink)' };
+  if (step.state === 'at') return { ...base, background: 'var(--sg-chip-at)', color: 'var(--sg-chip-at-ink)' };
+  if (step.state === 'skipped') return { ...base, background: 'var(--sg-chip-skipped)', color: 'var(--sg-chip-skipped-ink)' };
+  return { ...base, background: 'var(--sg-paper)', color: 'var(--sg-paper-muted)' };
 }
 
 export default function FloorPage() {
@@ -148,19 +148,19 @@ export default function FloorPage() {
     <ProductionLayout footnote="The job ticket's barcode is the unit id. The floor touches only Teaky; Docket keeps the record.">
       <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: 16 }}>
         <h1 style={{ margin: 0, fontSize: 24, fontWeight: 600 }}>Floor</h1>
-        <span style={{ color: '#4b5563', fontSize: 14 }}>Station view · {station || 'no station yet'} · scanner or phone</span>
+        <span style={{ color: 'var(--sg-muted)', fontSize: 14 }}>Station view · {station || 'no station yet'} · scanner or phone</span>
         {!choosing ? (
-          <button type="button" onClick={() => setChoosing(true)} style={{ ...quiet, background: '#fff', color: '#1c1917', borderColor: '#c9cfd6', marginLeft: 'auto' }}>
+          <button type="button" onClick={() => setChoosing(true)} style={{ ...quiet, background: 'var(--sg-surface)', color: 'var(--sg-ink)', borderColor: 'var(--sg-line-2)', marginLeft: 'auto' }}>
             Station: {station} · you: {person} — change
           </button>
         ) : null}
       </div>
 
       {choosing ? (
-        <form onSubmit={chooseStation} data-testid="choose-station" style={{ background: '#fff', border: '1px solid #e1e5ea', borderRadius: 8, padding: 20, display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'end' }}>
+        <form onSubmit={chooseStation} data-testid="choose-station" style={{ background: 'var(--sg-surface)', border: '1px solid var(--sg-line)', borderRadius: 8, padding: 20, display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'end' }}>
           <label style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 14 }}>
             This device is the station
-            <select aria-label="Station" value={station} onChange={(e) => setStation(e.target.value)} style={{ padding: '10px 12px', border: '1px solid #c9cfd6', borderRadius: 6, font: 'inherit', minHeight: 44, minWidth: 200 }}>
+            <select aria-label="Station" value={station} onChange={(e) => setStation(e.target.value)} style={{ padding: '10px 12px', border: '1px solid var(--sg-line-2)', borderRadius: 6, font: 'inherit', minHeight: 44, minWidth: 200 }}>
               <option value="">Choose…</option>
               {STATIONS.map((s) => (
                 <option key={s} value={s}>
@@ -171,12 +171,12 @@ export default function FloorPage() {
           </label>
           <label style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 14 }}>
             Your name or initials (on every scan)
-            <input aria-label="Your name" value={person} onChange={(e) => setPerson(e.target.value)} placeholder="D." style={{ padding: '10px 12px', border: '1px solid #c9cfd6', borderRadius: 6, font: 'inherit', minHeight: 44, width: 160 }} />
+            <input aria-label="Your name" value={person} onChange={(e) => setPerson(e.target.value)} placeholder="D." style={{ padding: '10px 12px', border: '1px solid var(--sg-line-2)', borderRadius: 6, font: 'inherit', minHeight: 44, width: 160 }} />
           </label>
           <button type="submit" disabled={!station || !person.trim()} style={{ ...go, minWidth: 0, minHeight: 44, fontSize: 15 }}>
             Remember on this device
           </button>
-          <span style={{ fontSize: 13, color: '#4b5563', flexBasis: '100%' }}>Chosen once; the browser remembers it. Nothing else to type at the station.</span>
+          <span style={{ fontSize: 13, color: 'var(--sg-muted)', flexBasis: '100%' }}>Chosen once; the browser remembers it. Nothing else to type at the station.</span>
         </form>
       ) : null}
 
@@ -197,19 +197,19 @@ export default function FloorPage() {
               }}
               placeholder="Scan the batch ticket's barcode when it arrives and when it leaves. Nothing to type."
               autoComplete="off"
-              style={{ ...mono, flex: '1 1 320px', padding: '12px 14px', borderRadius: 8, border: '1px solid #3f3a35', background: '#0f0d0c', color: '#f5f0ea', fontSize: 16, minHeight: 48 }}
+              style={{ ...mono, flex: '1 1 320px', padding: '12px 14px', borderRadius: 8, border: '1px solid var(--sg-muted-2)', background: 'var(--sg-ink)', color: 'var(--sg-paper)', fontSize: 16, minHeight: 48 }}
             />
             <button type="button" onClick={() => lookUp(scan)} disabled={busy || !scan.trim()} style={{ ...quiet }}>
               Look up
             </button>
           </div>
           {error ? (
-            <div role="alert" data-testid="floor-refusal" style={{ background: '#5a1f14', color: '#ffd9d1', padding: '12px 14px', borderRadius: 8, fontSize: 15 }}>
+            <div role="alert" data-testid="floor-refusal" style={{ background: 'var(--sg-chip-danger)', color: 'var(--sg-danger-line)', padding: '12px 14px', borderRadius: 8, fontSize: 15 }}>
               {error}
             </div>
           ) : null}
           {notice ? (
-            <div role="status" style={{ color: '#cfe9b8', fontSize: 15 }}>
+            <div role="status" style={{ color: 'var(--sg-ok-line)', fontSize: 15 }}>
               {notice}
             </div>
           ) : null}
@@ -217,7 +217,7 @@ export default function FloorPage() {
             <div data-testid="station-card" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'baseline' }}>
                 <span style={{ ...mono, fontSize: 40, fontWeight: 700 }}>{card.batch_number}</span>
-                <span style={{ fontSize: 15, color: '#d9d2c8' }}>
+                <span style={{ fontSize: 15, color: 'var(--sg-paper-line)' }}>
                   {card.stock ?? 'stock —'} · {card.steps.length} steps · {card.docket_number ? `Docket ${card.docket_number}` : 'no Docket number yet'}
                   {card.held ? ' · HELD' : ''}
                 </span>
@@ -229,7 +229,7 @@ export default function FloorPage() {
                       {s.position} · {s.name}
                       {s.state === 'at' ? ' — here' : s.state === 'done' ? ' ✓' : s.state === 'skipped' ? ' (skipped)' : ''}
                     </span>
-                    {s.position < card.steps.length ? <span style={{ color: '#7a7268' }}>→</span> : null}
+                    {s.position < card.steps.length ? <span style={{ color: 'var(--sg-muted)' }}>→</span> : null}
                   </li>
                 ))}
               </ol>
@@ -244,7 +244,7 @@ export default function FloorPage() {
                     </button>
                   </>
                 ) : (
-                  <span style={{ color: '#cfe9b8' }}>The route is finished — nothing is expected.</span>
+                  <span style={{ color: 'var(--sg-ok-line)' }}>The route is finished — nothing is expected.</span>
                 )}
                 {card.expected ? (
                   <button type="button" onClick={() => setHolding((h) => !h)} disabled={busy} style={{ ...quiet, marginLeft: 'auto' }}>
@@ -254,7 +254,7 @@ export default function FloorPage() {
               </div>
               {holding && card.expected ? (
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center' }}>
-                  <input aria-label="Why" value={holdNote} onChange={(e) => setHoldNote(e.target.value)} placeholder="What is wrong (shows on Held with your name and the step)" style={{ flex: '1 1 320px', padding: '10px 12px', borderRadius: 8, border: '1px solid #3f3a35', background: '#0f0d0c', color: '#f5f0ea', font: 'inherit', minHeight: 44 }} />
+                  <input aria-label="Why" value={holdNote} onChange={(e) => setHoldNote(e.target.value)} placeholder="What is wrong (shows on Held with your name and the step)" style={{ flex: '1 1 320px', padding: '10px 12px', borderRadius: 8, border: '1px solid var(--sg-muted-2)', background: 'var(--sg-ink)', color: 'var(--sg-paper)', font: 'inherit', minHeight: 44 }} />
                   <button type="button" onClick={hold} disabled={busy || holdNote.trim().length < 3} style={quiet}>
                     Hold batch {card.batch_number}
                   </button>
@@ -262,10 +262,10 @@ export default function FloorPage() {
               ) : null}
             </div>
           ) : (
-            <div style={{ color: '#bdb5ab', fontSize: 15 }}>Scan a ticket to see the batch's route and the next expected scan.</div>
+            <div style={{ color: 'var(--sg-paper-muted)', fontSize: 15 }}>Scan a ticket to see the batch's route and the next expected scan.</div>
           )}
-          <div style={{ borderTop: '1px solid #3f3a35', paddingTop: 12, fontSize: 14, color: '#d9d2c8' }}>
-            <span style={{ color: '#bdb5ab' }}>Last scans{station ? ` at ${station}` : ''}:</span>{' '}
+          <div style={{ borderTop: '1px solid var(--sg-muted-2)', paddingTop: 12, fontSize: 14, color: 'var(--sg-paper-line)' }}>
+            <span style={{ color: 'var(--sg-paper-muted)' }}>Last scans{station ? ` at ${station}` : ''}:</span>{' '}
             {scans.length ? (
               scans.slice(0, 6).map((s, i) => (
                 <span key={`${s.at}-${i}`} style={{ marginRight: 14 }}>
