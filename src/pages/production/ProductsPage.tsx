@@ -11,17 +11,17 @@ import type { SpecHistoryEntry, SpecLibraryRow, SpecSource } from '../../types/p
  * Details. A value is never thrown away; a correction supersedes. */
 
 const SRC: Record<SpecSource, { background: string; color: string; what: string }> = {
-  person: { background: '#e6f3ee', color: '#558b2f', what: 'someone answered a hold or edited here' },
-  import: { background: '#e9ebef', color: '#3f4854', what: "Andrew's product table" },
-  history: { background: '#e3eefb', color: '#1d4e89', what: 'what the product actually ran on' },
-  docket: { background: '#fbf1d9', color: '#7a5a12', what: 'a proposal from a Docket item code — never applied on its own' },
+  person: { background: 'var(--sg-ok-bg)', color: 'var(--sg-ok)', what: 'someone answered a hold or edited here' },
+  import: { background: 'var(--sg-pill)', color: 'var(--sg-muted-2)', what: "Andrew's product table" },
+  history: { background: 'var(--sg-info-bg)', color: 'var(--sg-info)', what: 'what the product actually ran on' },
+  docket: { background: 'var(--sg-warn-bg)', color: 'var(--sg-warn)', what: 'a proposal from a Docket item code — never applied on its own' },
 };
 const pill: React.CSSProperties = { display: 'inline-block', padding: '2px 8px', borderRadius: 999, fontSize: 12, fontWeight: 500 };
 const mono: React.CSSProperties = { fontFamily: "'IBM Plex Mono', monospace", fontSize: 13 };
-const th: React.CSSProperties = { textAlign: 'left', fontSize: 12, fontWeight: 600, color: '#4b5563', padding: '10px 12px', borderBottom: '1px solid #d9dde3', letterSpacing: '.02em', textTransform: 'uppercase', whiteSpace: 'nowrap' };
-const td: React.CSSProperties = { padding: '11px 12px', borderBottom: '1px solid #e6e9ee', fontSize: 14, verticalAlign: 'top' };
-const btn: React.CSSProperties = { padding: '9px 14px', borderRadius: 6, border: '1px solid #c9cfd6', background: '#fff', fontWeight: 500, minHeight: 44, font: 'inherit', cursor: 'pointer' };
-const lbl: React.CSSProperties = { fontSize: 12, color: '#4b5563', textTransform: 'uppercase', letterSpacing: '.02em' };
+const th: React.CSSProperties = { textAlign: 'left', fontSize: 12, fontWeight: 600, color: 'var(--sg-muted)', padding: '10px 12px', borderBottom: '1px solid var(--sg-line-3)', letterSpacing: '.02em', textTransform: 'uppercase', whiteSpace: 'nowrap' };
+const td: React.CSSProperties = { padding: '11px 12px', borderBottom: '1px solid var(--sg-line)', fontSize: 14, verticalAlign: 'top' };
+const btn: React.CSSProperties = { padding: '9px 14px', borderRadius: 6, border: '1px solid var(--sg-line-2)', background: 'var(--sg-surface)', fontWeight: 500, minHeight: 44, font: 'inherit', cursor: 'pointer' };
+const lbl: React.CSSProperties = { fontSize: 12, color: 'var(--sg-muted)', textTransform: 'uppercase', letterSpacing: '.02em' };
 
 export function SourcePill({ source }: { source: SpecSource }) {
   const s = SRC[source] ?? SRC.import;
@@ -137,25 +137,25 @@ export default function ProductsPage() {
     <ProductionLayout>
       <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: 16 }}>
         <h1 style={{ margin: 0, fontSize: 24, fontWeight: 600 }}>Products</h1>
-        <span style={{ color: '#4b5563', fontSize: 14 }}>
+        <span style={{ color: 'var(--sg-muted)', fontSize: 14 }}>
           {counts.total} products · {counts.unknown} without a stock · {counts.person} ruled by a person
         </span>
       </div>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center' }}>
         <label style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 14 }}>
           Search
-          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="product name, code or stock" style={{ padding: '9px 10px', border: '1px solid #c9cfd6', borderRadius: 6, font: 'inherit', minHeight: 44, width: 220 }} />
+          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="product name, code or stock" style={{ padding: '9px 10px', border: '1px solid var(--sg-line-2)', borderRadius: 6, font: 'inherit', minHeight: 44, width: 220 }} />
         </label>
         <span style={{ fontSize: 14 }}>Source:</span>
         {(['all', 'person', 'import', 'history', 'docket'] as const).map((s) => (
-          <button key={s} type="button" onClick={() => setSource(s)} aria-pressed={source === s} style={{ ...btn, minHeight: 36, padding: '6px 12px', borderColor: source === s ? colors.vein : '#c9cfd6', color: source === s ? colors.vein : undefined }} title={s === 'all' ? 'every source' : SRC[s].what}>
+          <button key={s} type="button" onClick={() => setSource(s)} aria-pressed={source === s} style={{ ...btn, minHeight: 36, padding: '6px 12px', borderColor: source === s ? colors.vein : 'var(--sg-line-2)', color: source === s ? colors.vein : undefined }} title={s === 'all' ? 'every source' : SRC[s].what}>
             {s}
           </button>
         ))}
       </div>
-      {error ? <div role="alert" style={{ color: '#a3331d' }}>{error}</div> : null}
+      {error ? <div role="alert" style={{ color: 'var(--sg-danger)' }}>{error}</div> : null}
       {notice ? <div role="status" style={{ color: colors.vein }}>{notice}</div> : null}
-      <div style={{ background: '#fff', border: '1px solid #e1e5ea', borderRadius: 8, overflowX: 'auto' }}>
+      <div style={{ background: 'var(--sg-surface)', border: '1px solid var(--sg-line)', borderRadius: 8, overflowX: 'auto' }}>
         <table style={{ borderCollapse: 'collapse', width: '100%' }}>
           <thead>
             <tr>
@@ -169,13 +169,13 @@ export default function ProductsPage() {
           <tbody>
             {shown.map((r) => (
               <>
-                <tr key={r.product_key} data-testid="product-row" style={open[r.product_key] ? { background: '#f6faf2' } : undefined}>
+                <tr key={r.product_key} data-testid="product-row" style={open[r.product_key] ? { background: 'var(--sg-ok-bg)' } : undefined}>
                   <td style={td}>
                     {/* Item 3 (23 Nov 2026, ruling: product name plus one dropdown): the name as the channel describes it, the code beneath. */}
                     {r.product_name ? (
                       <>
                         <div data-testid="product-name">{r.product_name}</div>
-                        <div style={{ ...mono, fontSize: 12, color: '#4b5563' }}>{r.product_key}</div>
+                        <div style={{ ...mono, fontSize: 12, color: 'var(--sg-muted)' }}>{r.product_key}</div>
                       </>
                     ) : (
                       <div style={mono}>{r.product_key}</div>
@@ -187,7 +187,7 @@ export default function ProductsPage() {
                       value={currentChoice(r)}
                       disabled={busy === r.product_key}
                       onChange={(e) => rule(r.product_key, e.target.value)}
-                      style={{ padding: '7px 10px', border: '1px solid #c9cfd6', borderRadius: 6, background: '#fff', font: 'inherit', minHeight: 40, color: currentChoice(r) === '' ? '#a3331d' : undefined }}
+                      style={{ padding: '7px 10px', border: '1px solid var(--sg-line-2)', borderRadius: 6, background: 'var(--sg-surface)', font: 'inherit', minHeight: 40, color: currentChoice(r) === '' ? 'var(--sg-danger)' : undefined }}
                     >
                       <option value="">unknown — choose a stock</option>
                       {options.map((s) => (
@@ -206,7 +206,7 @@ export default function ProductsPage() {
                 </tr>
                 {open[r.product_key] ? (
                   <tr key={`${r.product_key}-details`} data-testid="product-details">
-                    <td colSpan={3} style={{ ...td, background: '#fbfcfa' }}>
+                    <td colSpan={3} style={{ ...td, background: 'var(--sg-surface-2)' }}>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px 24px', fontSize: 14, marginBottom: 10 }}>
                         <span>
                           <span style={lbl}>Source</span> <SourcePill source={r.source} />
@@ -236,7 +236,7 @@ export default function ProductsPage() {
             ))}
             {!shown.length ? (
               <tr>
-                <td colSpan={3} style={{ ...td, color: '#4b5563' }}>
+                <td colSpan={3} style={{ ...td, color: 'var(--sg-muted)' }}>
                   No products match.
                 </td>
               </tr>
@@ -244,7 +244,7 @@ export default function ProductsPage() {
           </tbody>
         </table>
       </div>
-      <div style={{ fontSize: 13, color: '#4b5563' }}>
+      <div style={{ fontSize: 13, color: 'var(--sg-muted)' }}>
         Choosing a stock records your ruling against the product; nothing is thrown away — the previous row stays as history behind Details. "not batched" keeps the product on the hotel path.
       </div>
     </ProductionLayout>
@@ -252,7 +252,7 @@ export default function ProductsPage() {
 }
 
 function HistoryCells({ entry, superseded }: { entry: SpecHistoryEntry; superseded: boolean }) {
-  const cell: React.CSSProperties = { padding: '6px 0', borderBottom: '1px solid #eef0f3', color: superseded ? '#4b5563' : undefined };
+  const cell: React.CSSProperties = { padding: '6px 0', borderBottom: '1px solid var(--sg-surface-3)', color: superseded ? 'var(--sg-muted)' : undefined };
   const evidence = entry.evidence.map((e) => `${e.kind}: ${e.stock} — ${e.detail}`).join('; ');
   return (
     <>

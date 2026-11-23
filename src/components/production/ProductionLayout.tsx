@@ -4,6 +4,7 @@ import AccountMenu from '../layout/AccountMenu';
 import SiteFooter from '../layout/SiteFooter';
 import { isShadowReader } from '../../lib/roles';
 import { useProductionShell } from '../../hooks/useProductionShell';
+import { themeAttribute, useThemePreference } from '../../lib/theme';
 
 /** The production side's shell (canvas boards 1–5, 5–6 Nov 2026): the
  * co-branded header and the teak sidebar with the production vocabulary —
@@ -14,7 +15,7 @@ import { useProductionShell } from '../../hooks/useProductionShell';
 
 const TEAKY_WORDMARK = '/production/teaky-wordmark-white.png';
 
-const INK = '#1c1917';
+const INK = '#1c1917'; // the header and nav stay brand-dark on both themes
 const LEAF = '#7cb342';
 const TEAK = '#a0693c';
 const STEM = '#5d4037';
@@ -36,9 +37,11 @@ const READ_ONLY_NAV = new Set(['/production/orders', '/production/batches', '/pr
 export default function ProductionLayout({ children, footnote, readOnly = isShadowReader() }: { children: ReactNode; footnote?: string; readOnly?: boolean }) {
   const nav = readOnly ? NAV.filter((item) => READ_ONLY_NAV.has(item.to)) : NAV;
   const shell = useProductionShell();
+  // Dark mode (ruling 20 Nov 2026, rev 47): the floor follows the system setting with a per-user choice.
+  const [theme] = useThemePreference();
   const teakysOwn = shell !== null && shell.mark.source === 'teaky';
   return (
-    <div style={{ minHeight: '100vh', background: '#f4f5f7', color: INK, fontFamily: "'DM Sans', system-ui, sans-serif" }}>
+    <div className="production-root" data-theme={themeAttribute(theme)} data-testid="production-root" style={{ minHeight: '100vh', background: 'var(--sg-page)', color: 'var(--sg-ink)', fontFamily: "'DM Sans', system-ui, sans-serif" }}>
       <header
         style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 16, padding: '10px 24px', background: INK, borderBottom: `3px solid ${LEAF}` }}
       >
@@ -68,13 +71,13 @@ export default function ProductionLayout({ children, footnote, readOnly = isShad
       <div style={{ display: 'flex', flexWrap: 'wrap', minHeight: 'calc(100vh - 67px)' }}>
         <nav
           aria-label="Production"
-          style={{ flex: '0 0 200px', background: TEAK, color: '#f6ede0', padding: '24px 0', display: 'flex', flexDirection: 'column', gap: 2 }}
+          style={{ flex: '0 0 200px', background: TEAK, color: 'var(--sg-paper-2)', padding: '24px 0', display: 'flex', flexDirection: 'column', gap: 2 }}
         >
-          <div style={{ padding: '0 20px 20px', fontWeight: 600, color: '#fff', fontSize: 15, minHeight: 38 }} data-testid="shell-name">
+          <div style={{ padding: '0 20px 20px', fontWeight: 600, color: 'var(--sg-surface)', fontSize: 15, minHeight: 38 }} data-testid="shell-name">
             {shell?.name ?? ''}
           </div>
           {!readOnly ? (
-            <NavLink to="/dashboard" style={{ display: 'block', padding: '10px 20px', color: '#d7dbe0', textDecoration: 'none', borderBottom: '1px solid rgba(255,255,255,0.12)', marginBottom: 6 }} data-testid="dashboard-link">
+            <NavLink to="/dashboard" style={{ display: 'block', padding: '10px 20px', color: 'var(--sg-line-2)', textDecoration: 'none', borderBottom: '1px solid rgba(255,255,255,0.12)', marginBottom: 6 }} data-testid="dashboard-link">
               ← Dashboard
             </NavLink>
           ) : null}
@@ -86,7 +89,7 @@ export default function ProductionLayout({ children, footnote, readOnly = isShad
                 style={({ isActive }) => ({
                   display: 'block',
                   padding: '10px 20px',
-                  color: isActive ? '#fff' : '#d7dbe0',
+                  color: isActive ? 'var(--sg-surface)' : 'var(--sg-line-2)',
                   background: isActive ? STEM : 'transparent',
                   fontWeight: isActive ? 500 : 400,
                   textDecoration: 'none',
@@ -95,18 +98,18 @@ export default function ProductionLayout({ children, footnote, readOnly = isShad
                 {item.label}
               </NavLink>
             ) : (
-              <span key={item.to} aria-disabled="true" title="Not built yet" style={{ display: 'block', padding: '10px 20px', color: '#e9d9c6', opacity: 0.7 }}>
+              <span key={item.to} aria-disabled="true" title="Not built yet" style={{ display: 'block', padding: '10px 20px', color: 'var(--sg-paper-line)', opacity: 0.7 }}>
                 {item.label}
               </span>
             ),
           )}
           {readOnly ? (
-            <div data-testid="read-only-note" style={{ padding: '10px 20px', color: '#f0e2cf', fontSize: 13 }}>
+            <div data-testid="read-only-note" style={{ padding: '10px 20px', color: 'var(--sg-paper-line)', fontSize: 13 }}>
               Read-only view
             </div>
           ) : null}
-          {footnote ? <div style={{ padding: '10px 20px', color: '#f0e2cf', fontSize: 13, marginTop: 'auto' }}>{footnote}</div> : null}
-          <NavLink to="/account" style={{ display: 'block', padding: '10px 20px', color: '#d7dbe0', textDecoration: 'none', marginTop: footnote ? 0 : 'auto' }} data-testid="account-link">
+          {footnote ? <div style={{ padding: '10px 20px', color: 'var(--sg-paper-line)', fontSize: 13, marginTop: 'auto' }}>{footnote}</div> : null}
+          <NavLink to="/account" style={{ display: 'block', padding: '10px 20px', color: 'var(--sg-line-2)', textDecoration: 'none', marginTop: footnote ? 0 : 'auto' }} data-testid="account-link">
             Account · sign out
           </NavLink>
         </nav>
@@ -117,4 +120,5 @@ export default function ProductionLayout({ children, footnote, readOnly = isShad
   );
 }
 
-export const colors = { ink: INK, leaf: LEAF, teak: TEAK, stem: STEM, vein: '#558b2f' };
+/** The floor's colours as tokens (dark mode, 23 Nov 2026): every screen reads these; the dark block in index.css redefines them. */
+export const colors = { ink: 'var(--sg-ink)', leaf: 'var(--sg-brand-leaf)', teak: 'var(--sg-brand-teak)', stem: 'var(--sg-brand-stem)', vein: 'var(--sg-ok)' };

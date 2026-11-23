@@ -13,8 +13,8 @@ import BatchTagEditor from './BatchTagEditor';
  * rev 44 shipped the number alone), the batch number staying a real link for
  * the keyboard and a new tab; a read-only reader gets no link and no action. */
 
-const th: React.CSSProperties = { textAlign: 'left', fontSize: 12, color: '#4b5563', padding: '8px 10px', borderBottom: '1px solid #d9dde3', textTransform: 'uppercase', letterSpacing: '.02em', cursor: 'pointer', whiteSpace: 'nowrap' };
-const td: React.CSSProperties = { padding: '10px 10px', borderBottom: '1px solid #eceff2', fontSize: 14, verticalAlign: 'top' };
+const th: React.CSSProperties = { textAlign: 'left', fontSize: 12, color: 'var(--sg-muted)', padding: '8px 10px', borderBottom: '1px solid var(--sg-line-3)', textTransform: 'uppercase', letterSpacing: '.02em', cursor: 'pointer', whiteSpace: 'nowrap' };
+const td: React.CSSProperties = { padding: '10px 10px', borderBottom: '1px solid var(--sg-line)', fontSize: 14, verticalAlign: 'top' };
 const mono: React.CSSProperties = { fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace' };
 
 const HEADERS: { key: SortKey | null; label: string }[] = [
@@ -52,7 +52,7 @@ export default function BatchesTable({
   const rows = sortBatches(batches, sort.key, sort.direction);
   const navigate = useNavigate();
   return (
-    <div style={{ overflowX: 'auto', background: '#fff', border: '1px solid #e1e5ea', borderRadius: 8 }} data-testid="batches-table">
+    <div style={{ overflowX: 'auto', background: 'var(--sg-surface)', border: '1px solid var(--sg-line)', borderRadius: 8 }} data-testid="batches-table">
       <table style={{ width: '100%', borderCollapse: 'collapse' }}>
         <thead>
           <tr>
@@ -93,14 +93,14 @@ export default function BatchesTable({
                 <td style={td}>{b.stock}</td>
                 <td style={td}>
                   <div>{slotsText(b)}</div>
-                  <div style={{ marginTop: 4, height: 6, width: 60, background: '#e5e7eb', borderRadius: 3 }} aria-hidden="true">
+                  <div style={{ marginTop: 4, height: 6, width: 60, background: 'var(--sg-line)', borderRadius: 3 }} aria-hidden="true">
                     <div style={{ height: 6, width: `${pct}%`, background: colors.leaf, borderRadius: 3 }} />
                   </div>
                 </td>
                 <td style={td}>{b.orders} · {b.lines}</td>
                 <td style={td}>
                   {b.oldest_line_age_seconds != null ? ageText(b.oldest_line_age_seconds) : '—'}
-                  {b.oldest_line_ref ? <span style={{ ...mono, marginLeft: 6, color: '#a3331d' }}>{b.oldest_line_ref}</span> : null}
+                  {b.oldest_line_ref ? <span style={{ ...mono, marginLeft: 6, color: 'var(--sg-danger)' }}>{b.oldest_line_ref}</span> : null}
                 </td>
                 <td style={td}>{(b.business_entities ?? []).join(', ')}</td>
                 <td style={td}>{readOnly ? (b.tags ?? []).join(', ') : <BatchTagEditor batch={b} options={shopTags} onWritten={onTagsWritten} />}</td>

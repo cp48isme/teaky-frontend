@@ -4,6 +4,7 @@ import { logout as apiLogout } from '../../api/auth';
 import { useOptionalAuth } from '../../contexts/AuthContext';
 import { initialsFor, labelFor, signedInIdentity, type SignedInIdentity } from '../../lib/identity';
 import { loadCurrentUser } from '../../lib/currentUser';
+import { useThemePreference, type ThemePreference } from '../../lib/theme';
 import type { MeResponse } from '../../types/auth';
 
 /** The account menu both shells share (dispatch 19 Nov 2026): the avatar with
@@ -38,6 +39,8 @@ export default function AccountMenu({ showSettings = true, onDark = false }: { s
     // ready or changes, so a shell mounted before the silent refresh answered
     // still shows the person, not the fallback.
   }, [auth?.ready, auth?.authenticated]);
+  // Dark mode (rev 47): the floor's per-user theme — shown where the menu sits on the floor (onDark).
+  const [theme, setTheme] = useThemePreference();
   const identity: SignedInIdentity = me
     ? { email: me.email, displayName: me.display_name }
     : signedInIdentity();
@@ -94,6 +97,26 @@ export default function AccountMenu({ showSettings = true, onDark = false }: { s
           <Link to="/account" role="menuitem" onClick={() => setOpen(false)} className="block px-4 py-2 text-sm text-gray-700 transition hover:bg-gray-50">
             Account
           </Link>
+          {onDark ? (
+            <div className="border-t border-gray-100 px-4 py-2" data-testid="theme-control">
+              <p className="text-xs uppercase tracking-wide text-gray-500">Theme</p>
+              <div className="mt-1 flex gap-1" role="radiogroup" aria-label="Theme">
+                {(['system', 'light', 'dark'] as ThemePreference[]).map((choice) => (
+                  <button
+                    key={choice}
+                    type="button"
+                    role="radio"
+                    aria-checked={theme === choice}
+                    onClick={() => setTheme(choice)}
+                    className={`rounded px-2 py-1 text-xs ${theme === choice ? 'bg-teak-dark text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                    data-testid={`theme-${choice}`}
+                  >
+                    {choice === 'system' ? 'System' : choice === 'light' ? 'Light' : 'Dark'}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
           {showSettings ? (
             <Link to="/settings/team" role="menuitem" onClick={() => setOpen(false)} className="block px-4 py-2 text-sm text-gray-700 transition hover:bg-gray-50">
               Settings

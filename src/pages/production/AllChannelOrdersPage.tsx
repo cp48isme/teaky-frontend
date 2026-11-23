@@ -61,21 +61,21 @@ const HEADERS: { key: SortKey | null; label: string }[] = [
 ];
 
 const CHANNEL_PILL: Record<OrderRow['channel'], { background: string; color: string }> = {
-  Taylor: { background: '#e3eefb', color: '#1d4e89' },
-  PageDNA: { background: '#efe9fb', color: '#5b3aa6' },
-  'RGI portal': { background: '#e6f3ee', color: '#558b2f' },
-  Email: { background: '#f3efe5', color: '#7a5a12' },
+  Taylor: { background: 'var(--sg-info-bg)', color: 'var(--sg-info)' },
+  PageDNA: { background: 'var(--sg-accent2-bg)', color: 'var(--sg-accent2)' },
+  'RGI portal': { background: 'var(--sg-ok-bg)', color: 'var(--sg-ok)' },
+  Email: { background: 'var(--sg-paper-3)', color: 'var(--sg-warn)' },
 };
 const LANE_PILL: Record<OrderRow['lane'], { background: string; color: string; text: string }> = {
-  press_run: { background: '#e9ebef', color: '#3f4854', text: 'Press run' },
-  stocked_goods: { background: '#e6f3ee', color: '#1f6f4a', text: 'Stocked goods' },
+  press_run: { background: 'var(--sg-pill)', color: 'var(--sg-muted-2)', text: 'Press run' },
+  stocked_goods: { background: 'var(--sg-ok-bg)', color: 'var(--sg-ok-2)', text: 'Stocked goods' },
 };
 const STATUS_PILL: Record<OrderRow['statusKind'], { background: string; color: string }> = {
-  placed: { background: '#e6f3ee', color: '#558b2f' },
-  held: { background: '#fdebe6', color: '#a3331d' },
-  waiting: { background: '#fbf1d9', color: '#7a5a12' },
-  unbatched: { background: '#fbf1d9', color: '#7a5a12' },
-  released: { background: '#e9ebef', color: '#3f4854' },
+  placed: { background: 'var(--sg-ok-bg)', color: 'var(--sg-ok)' },
+  held: { background: 'var(--sg-danger-bg)', color: 'var(--sg-danger)' },
+  waiting: { background: 'var(--sg-warn-bg)', color: 'var(--sg-warn)' },
+  unbatched: { background: 'var(--sg-warn-bg)', color: 'var(--sg-warn)' },
+  released: { background: 'var(--sg-pill)', color: 'var(--sg-muted-2)' },
 };
 
 export function channelLabel(channel: string): OrderRow['channel'] {
@@ -251,10 +251,10 @@ export default function AllChannelOrdersPage({ readOnly = isShadowReader() }: { 
     <ProductionLayout readOnly={readOnly}>
       <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: 16 }}>
         <h1 style={{ margin: 0, fontSize: 24, fontWeight: 600 }}>All Channel Orders</h1>
-        <span style={{ color: '#4b5563', fontSize: 14 }}>
+        <span style={{ color: 'var(--sg-muted)', fontSize: 14 }}>
           {all.length} lines · from {channels} channel{channels === 1 ? '' : 's'} · oldest {ageText(oldest)}
         </span>
-        <span style={{ marginLeft: 'auto', fontSize: 13, color: '#4b5563' }}>Lines arrive as orders are placed. Nothing here is a weekly pull.</span>
+        <span style={{ marginLeft: 'auto', fontSize: 13, color: 'var(--sg-muted)' }}>Lines arrive as orders are placed. Nothing here is a weekly pull.</span>
       </div>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center' }}>
         <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14 }}>
@@ -285,7 +285,7 @@ export default function AllChannelOrdersPage({ readOnly = isShadowReader() }: { 
       </div>
       {tags.length ? (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', fontSize: 14 }} data-testid="tag-chips">
-          <span style={{ color: '#4b5563' }}>Tags</span>
+          <span style={{ color: 'var(--sg-muted)' }}>Tags</span>
           {tags.map((tag) => {
             const mode = tagMode(tagFilter, tag);
             return (
@@ -304,7 +304,7 @@ export default function AllChannelOrdersPage({ readOnly = isShadowReader() }: { 
                   font: 'inherit',
                   fontSize: 13,
                   minHeight: 32,
-                  ...(mode === 'include' ? { background: '#e6f3ee', color: '#558b2f', borderColor: '#558b2f' } : mode === 'exclude' ? { background: '#fdebe6', color: '#a3331d', borderColor: '#a3331d', textDecoration: 'line-through' } : { background: '#fff', color: '#3f4854', borderColor: '#c9cfd6' }),
+                  ...(mode === 'include' ? { background: 'var(--sg-ok-bg)', color: 'var(--sg-ok)', borderColor: 'var(--sg-ok)' } : mode === 'exclude' ? { background: 'var(--sg-danger-bg)', color: 'var(--sg-danger)', borderColor: 'var(--sg-danger)', textDecoration: 'line-through' } : { background: 'var(--sg-surface)', color: 'var(--sg-muted-2)', borderColor: 'var(--sg-line-2)' }),
                 }}
               >
                 {mode === 'include' ? `only ${tag}` : mode === 'exclude' ? `no ${tag}` : tag}
@@ -312,26 +312,26 @@ export default function AllChannelOrdersPage({ readOnly = isShadowReader() }: { 
             );
           })}
           {tagFilter.include.length || tagFilter.exclude.length ? (
-            <span style={{ color: '#4b5563' }} data-testid="tag-filter-text">
+            <span style={{ color: 'var(--sg-muted)' }} data-testid="tag-filter-text">
               {tagFilterText(tagFilter)} ·{' '}
-              <button type="button" onClick={() => setTagFilter(EMPTY_TAG_FILTER)} style={{ all: 'unset', color: '#558b2f', cursor: 'pointer', textDecoration: 'underline' }}>
+              <button type="button" onClick={() => setTagFilter(EMPTY_TAG_FILTER)} style={{ all: 'unset', color: 'var(--sg-ok)', cursor: 'pointer', textDecoration: 'underline' }}>
                 clear
               </button>
             </span>
           ) : (
-            <span style={{ color: '#4b5563' }}>press once to keep only, twice to hide</span>
+            <span style={{ color: 'var(--sg-muted)' }}>press once to keep only, twice to hide</span>
           )}
         </div>
       ) : null}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 12 }}>
         <Tile label="Waiting for a batch" value={String(waiting)} note={`${waitingOld} older than 2 days`} />
         <Tile label="In open batches" value={String(inOpen)} note={`${openBatches.length} batches, ${openBatches.filter((b) => b.full).length} full`} />
-        <Tile label="Held" value={String(held)} note={held ? 'waiting on you' : 'nothing held'} color={held ? '#a3331d' : undefined} />
+        <Tile label="Held" value={String(held)} note={held ? 'waiting on you' : 'nothing held'} color={held ? 'var(--sg-danger)' : undefined} />
         <Tile label="Order → received" value={taylor.length ? 'minutes' : '—'} note="was 3.5 days by weekly pull" />
       </div>
-      {error ? <div role="alert" style={{ color: '#a3331d' }}>{error}</div> : null}
-      {noRole ? <div role="status" style={{ color: '#4b5563' }} data-testid="no-floor-role">{NO_FLOOR_ROLE}</div> : null}
-      <div style={{ background: '#fff', border: '1px solid #e1e5ea', borderRadius: 8, overflowX: 'auto' }}>
+      {error ? <div role="alert" style={{ color: 'var(--sg-danger)' }}>{error}</div> : null}
+      {noRole ? <div role="status" style={{ color: 'var(--sg-muted)' }} data-testid="no-floor-role">{NO_FLOOR_ROLE}</div> : null}
+      <div style={{ background: 'var(--sg-surface)', border: '1px solid var(--sg-line)', borderRadius: 8, overflowX: 'auto' }}>
         <table style={{ borderCollapse: 'collapse', width: '100%' }}>
           <thead>
             <tr>
@@ -341,7 +341,7 @@ export default function AllChannelOrdersPage({ readOnly = isShadowReader() }: { 
                     <button
                       type="button"
                       onClick={() => setSort((s) => nextSort(s, h.key as SortKey, ['received']))}
-                      style={{ all: 'unset', cursor: 'pointer', font: 'inherit', color: sort.key === h.key ? '#558b2f' : 'inherit', textTransform: 'inherit', letterSpacing: 'inherit', padding: '4px 0', minHeight: 24 }}
+                      style={{ all: 'unset', cursor: 'pointer', font: 'inherit', color: sort.key === h.key ? 'var(--sg-ok)' : 'inherit', textTransform: 'inherit', letterSpacing: 'inherit', padding: '4px 0', minHeight: 24 }}
                     >
                       {h.label}
                       {sort.key === h.key ? (sort.direction === 'asc' ? ' ▲' : ' ▼') : ''}
@@ -356,15 +356,15 @@ export default function AllChannelOrdersPage({ readOnly = isShadowReader() }: { 
           <tbody>
             {rows.length === 0 ? (
               <tr>
-                <td style={{ ...tdStyle, color: '#4b5563' }} colSpan={HEADERS.length} data-testid="no-rows">
+                <td style={{ ...tdStyle, color: 'var(--sg-muted)' }} colSpan={HEADERS.length} data-testid="no-rows">
                   {search.trim() ? `No results for "${search.trim()}"` : 'Nothing to show.'}
                 </td>
               </tr>
             ) : null}
             {rows.map((r) => (
-              <tr key={r.id} style={r.statusKind === 'held' ? { background: '#fff8f6' } : undefined}>
+              <tr key={r.id} style={r.statusKind === 'held' ? { background: 'var(--sg-danger-tint)' } : undefined}>
                 <td style={{ ...tdStyle, ...mono }}>{receivedText(r.received)}</td>
-                <td style={{ ...tdStyle, ...(r.age > 2 * 86400 ? { color: '#a3331d', fontWeight: 600 } : {}) }}>{ageText(r.age)}</td>
+                <td style={{ ...tdStyle, ...(r.age > 2 * 86400 ? { color: 'var(--sg-danger)', fontWeight: 600 } : {}) }}>{ageText(r.age)}</td>
                 <td style={tdStyle}>
                   <span style={{ ...pill, ...CHANNEL_PILL[r.channel] }}>{r.channel}</span>
                 </td>
@@ -373,7 +373,7 @@ export default function AllChannelOrdersPage({ readOnly = isShadowReader() }: { 
                 </td>
                 <td style={{ ...tdStyle, ...mono }}>
                   {r.orderId ? (
-                    <Link to={`/production/orders/${r.orderId}/whereabouts`} style={{ color: '#558b2f' }} title="Where did this order go" data-testid="whereabouts-link">
+                    <Link to={`/production/orders/${r.orderId}/whereabouts`} style={{ color: 'var(--sg-ok)' }} title="Where did this order go" data-testid="whereabouts-link">
                       {r.order}
                     </Link>
                   ) : (
@@ -386,7 +386,7 @@ export default function AllChannelOrdersPage({ readOnly = isShadowReader() }: { 
                   ) : r.tags.length ? (
                     <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 2 }}>
                       {r.tags.map((t) => (
-                        <span key={t} style={{ ...pill, background: '#eef2f6', color: '#3f4854', fontSize: 11 }} data-testid="row-tag">
+                        <span key={t} style={{ ...pill, background: 'var(--sg-surface-3)', color: 'var(--sg-muted-2)', fontSize: 11 }} data-testid="row-tag">
                           {t}
                         </span>
                       ))}
@@ -400,13 +400,13 @@ export default function AllChannelOrdersPage({ readOnly = isShadowReader() }: { 
                   {r.qty} × {r.pack}
                 </td>
                 <td style={{ ...tdStyle, ...mono }}>{r.slots}</td>
-                <td style={{ ...tdStyle, ...(r.stock ? {} : { color: '#a3331d' }) }}>{r.stock || 'unknown'}</td>
+                <td style={{ ...tdStyle, ...(r.stock ? {} : { color: 'var(--sg-danger)' }) }}>{r.stock || 'unknown'}</td>
                 <td style={tdStyle}>
                   <span style={{ ...pill, ...STATUS_PILL[r.statusKind] }}>{r.status}</span>
                 </td>
                 <td style={tdStyle}>
                   {r.batch != null ? (
-                    <Link to="/production/batches" style={{ ...mono, color: '#558b2f' }}>
+                    <Link to="/production/batches" style={{ ...mono, color: 'var(--sg-ok)' }}>
                       {r.batch}
                     </Link>
                   ) : (
@@ -418,7 +418,7 @@ export default function AllChannelOrdersPage({ readOnly = isShadowReader() }: { 
           </tbody>
         </table>
       </div>
-      <div style={{ fontSize: 13, color: '#4b5563' }}>
+      <div style={{ fontSize: 13, color: 'var(--sg-muted)' }}>
         Every row is a line, whatever channel it came from. A line's slots are qty × pack ÷ 250. "Waiting" means its batch is open and not yet full; age counts from when the
         customer placed the order, not from when we received it. PageDNA and email lines have no source yet; a Taylor PO is an order whose lines are pool lines, and a raw Taylor line appears here only until it is written (or while it is blocked).
       </div>
@@ -428,16 +428,16 @@ export default function AllChannelOrdersPage({ readOnly = isShadowReader() }: { 
 
 function Tile({ label, value, note, color }: { label: string; value: string; note: string; color?: string }) {
   return (
-    <div style={{ background: '#fff', border: '1px solid #e1e5ea', borderRadius: 8, padding: '14px 16px' }}>
-      <div style={{ fontSize: 12, color: '#4b5563', textTransform: 'uppercase', letterSpacing: '.02em' }}>{label}</div>
+    <div style={{ background: 'var(--sg-surface)', border: '1px solid var(--sg-line)', borderRadius: 8, padding: '14px 16px' }}>
+      <div style={{ fontSize: 12, color: 'var(--sg-muted)', textTransform: 'uppercase', letterSpacing: '.02em' }}>{label}</div>
       <div style={{ fontSize: 26, fontWeight: 600, marginTop: 4, color }}>{value}</div>
-      <div style={{ fontSize: 13, color: '#4b5563' }}>{note}</div>
+      <div style={{ fontSize: 13, color: 'var(--sg-muted)' }}>{note}</div>
     </div>
   );
 }
 
-const selectStyle: React.CSSProperties = { padding: '7px 10px', border: '1px solid #c9cfd6', borderRadius: 6, background: '#fff', font: 'inherit', fontSize: 14 };
-const thStyle: React.CSSProperties = { textAlign: 'left', fontSize: 12, fontWeight: 600, color: '#4b5563', padding: '10px 12px', borderBottom: '1px solid #d9dde3', letterSpacing: '.02em', textTransform: 'uppercase', whiteSpace: 'nowrap' };
-const tdStyle: React.CSSProperties = { padding: '11px 12px', borderBottom: '1px solid #e6e9ee', fontSize: 14, verticalAlign: 'top' };
+const selectStyle: React.CSSProperties = { padding: '7px 10px', border: '1px solid var(--sg-line-2)', borderRadius: 6, background: 'var(--sg-surface)', font: 'inherit', fontSize: 14 };
+const thStyle: React.CSSProperties = { textAlign: 'left', fontSize: 12, fontWeight: 600, color: 'var(--sg-muted)', padding: '10px 12px', borderBottom: '1px solid var(--sg-line-3)', letterSpacing: '.02em', textTransform: 'uppercase', whiteSpace: 'nowrap' };
+const tdStyle: React.CSSProperties = { padding: '11px 12px', borderBottom: '1px solid var(--sg-line)', fontSize: 14, verticalAlign: 'top' };
 const mono: React.CSSProperties = { fontFamily: "'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace", fontSize: 13 };
 const pill: React.CSSProperties = { display: 'inline-block', padding: '2px 8px', borderRadius: 999, fontSize: 12, fontWeight: 500, lineHeight: '18px' };
