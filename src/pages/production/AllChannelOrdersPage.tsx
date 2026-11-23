@@ -21,6 +21,8 @@ export interface OrderRow {
   received: string; // ISO
   age: number; // seconds since the customer placed it
   channel: 'Taylor' | 'RGI portal' | 'PageDNA' | 'Email';
+  /** t10 e (23 Nov 2026): the production lane — a press run, or stocked goods (pick and pack, never a press run). */
+  lane: 'press_run' | 'stocked_goods';
   order: string;
   /** 20 Nov 2026: who the order is for — the Taylor grid's customer, the portal order's for_whom. */
   customer: string;
@@ -40,12 +42,13 @@ export interface OrderRow {
   tags: string[];
 }
 
-type SortKey = keyof Pick<OrderRow, 'received' | 'age' | 'channel' | 'order' | 'customer' | 'product' | 'slots' | 'stock' | 'status' | 'batch'>;
+type SortKey = keyof Pick<OrderRow, 'received' | 'age' | 'channel' | 'lane' | 'order' | 'customer' | 'product' | 'slots' | 'stock' | 'status' | 'batch'>;
 
 const HEADERS: { key: SortKey | null; label: string }[] = [
   { key: 'received', label: 'Received' },
   { key: 'age', label: 'Age' },
   { key: 'channel', label: 'Channel' },
+  { key: 'lane', label: 'Lane' },
   { key: 'order', label: 'Order' },
   { key: 'customer', label: 'Customer' },
   { key: null, label: 'Line' },
@@ -62,6 +65,10 @@ const CHANNEL_PILL: Record<OrderRow['channel'], { background: string; color: str
   PageDNA: { background: '#efe9fb', color: '#5b3aa6' },
   'RGI portal': { background: '#e6f3ee', color: '#558b2f' },
   Email: { background: '#f3efe5', color: '#7a5a12' },
+};
+const LANE_PILL: Record<OrderRow['lane'], { background: string; color: string; text: string }> = {
+  press_run: { background: '#e9ebef', color: '#3f4854', text: 'Press run' },
+  stocked_goods: { background: '#e6f3ee', color: '#1f6f4a', text: 'Stocked goods' },
 };
 const STATUS_PILL: Record<OrderRow['statusKind'], { background: string; color: string }> = {
   placed: { background: '#e6f3ee', color: '#558b2f' },
@@ -107,6 +114,7 @@ export function rowsFromOrders(orders: Order[], batches: BatchSummary[], now: Da
         received: order.placed_at,
         age: ageSeconds(order.placed_at, now),
         channel: 'RGI portal',
+        lane: 'press_run',
         order: order.po_number || order.order_number,
         customer: order.for_whom?.name ?? '',
         line: String(order.line_items.indexOf(li) + 1),
@@ -133,6 +141,7 @@ export function rowsFromTaylor(lines: TaylorPoolLine[], now: Date): OrderRow[] {
     received: l.received_at,
     age: ageSeconds(l.source_created_at, now),
     channel: 'Taylor',
+    lane: l.lane === 'stocked_goods' ? 'stocked_goods' : 'press_run',
     order: l.po,
     customer: l.customer ?? '',
     line: String(l.line_no),
@@ -165,6 +174,7 @@ export default function AllChannelOrdersPage({ readOnly = isShadowReader() }: { 
   const [noRole, setNoRole] = useState(false);
   const [sort, setSort] = useState<SortState<SortKey>>({ key: 'received', direction: 'desc' });
   const [channel, setChannel] = useState('All');
+  const [lane, setLane] = useState('All');
   const [show, setShow] = useState('Waiting and held');
   const [search, setSearch] = useState('');
   const [tagFilter, setTagFilter] = useState<TagFilter>(EMPTY_TAG_FILTER);
@@ -216,6 +226,8 @@ export default function AllChannelOrdersPage({ readOnly = isShadowReader() }: { 
     const q = search.trim().toLowerCase();
     return all.filter((r) => {
       if (channel !== 'All' && r.channel !== channel) return false;
+      if (lane === 'Stocked goods' && r.lane !== 'stocked_goods') return false;
+      if (lane === 'Press run' && r.lane !== 'press_run') return false;
       if (show === 'Waiting and held' && r.statusKind === 'released') return false;
       if (show === 'In an open batch' && !(r.batch && r.statusKind !== 'released')) return false;
       if (show === 'Pushed out' && r.statusKind !== 'released') return false;
@@ -223,7 +235,7 @@ export default function AllChannelOrdersPage({ readOnly = isShadowReader() }: { 
       if (!passesTagFilter(tagFilter, r.tags)) return false;
       return true;
     });
-  }, [all, channel, show, search, tagFilter]);
+  }, [all, channel, lane, show, search, tagFilter]);
   const tags = useMemo(() => tagUniverse(orders.map((o) => o.tags)), [orders]);
   const rows = useMemo(() => sortRows(filtered, sort.key, sort.direction), [filtered, sort]);
 
@@ -249,6 +261,14 @@ export default function AllChannelOrdersPage({ readOnly = isShadowReader() }: { 
           Channel
           <select value={channel} onChange={(e) => setChannel(e.target.value)} style={selectStyle}>
             {['All', 'Taylor', 'PageDNA', 'RGI portal', 'Email'].map((c) => (
+              <option key={c}>{c}</option>
+            ))}
+          </select>
+        </label>
+        <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14 }}>
+          Lane
+          <select aria-label="Lane" value={lane} onChange={(e) => setLane(e.target.value)} style={selectStyle}>
+            {['All', 'Press run', 'Stocked goods'].map((c) => (
               <option key={c}>{c}</option>
             ))}
           </select>
@@ -347,6 +367,9 @@ export default function AllChannelOrdersPage({ readOnly = isShadowReader() }: { 
                 <td style={{ ...tdStyle, ...(r.age > 2 * 86400 ? { color: '#a3331d', fontWeight: 600 } : {}) }}>{ageText(r.age)}</td>
                 <td style={tdStyle}>
                   <span style={{ ...pill, ...CHANNEL_PILL[r.channel] }}>{r.channel}</span>
+                </td>
+                <td style={tdStyle}>
+                  <span style={{ ...pill, ...LANE_PILL[r.lane] }} data-testid="lane">{LANE_PILL[r.lane].text}</span>
                 </td>
                 <td style={{ ...tdStyle, ...mono }}>
                   {r.orderId ? (

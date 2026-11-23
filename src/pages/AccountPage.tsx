@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { changePassword, listSessions, logoutAll, type SessionSummary } from '../api/auth';
 import { ApiError } from '../api/client';
 import { useAuth } from '../contexts/AuthContext';
@@ -23,6 +23,10 @@ function ago(iso: string): string {
 export default function AccountPage() {
   const { logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  // Walk of rev 46 (23 Nov 2026, t10 a): Back returns to the page the person
+  // came from; the root only when this page was opened directly.
+  const goBack = () => (location.key !== 'default' ? navigate(-1) : navigate('/'));
   const [sessions, setSessions] = useState<SessionSummary[] | null>(null);
   const [current, setCurrent] = useState('');
   const [next, setNext] = useState('');
@@ -125,7 +129,9 @@ export default function AccountPage() {
         </div>
       </div>
       <p className="mt-6 text-center text-sm">
-        <Link to="/" className="font-medium text-teak-dark transition hover:text-teak">Back</Link>
+        <button type="button" onClick={goBack} className="font-medium text-teak-dark transition hover:text-teak" data-testid="account-back">
+          Back
+        </button>
       </p>
     </AuthShell>
   );

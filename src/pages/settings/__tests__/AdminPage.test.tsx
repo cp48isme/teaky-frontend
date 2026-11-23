@@ -1,6 +1,7 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
+import { clearSession, setSession } from '../../../api/client';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import AdminPage from '../AdminPage';
 import SettingsLayout from '../SettingsLayout';
@@ -70,7 +71,8 @@ function renderPage() {
 
 describe('AdminPage', () => {
   beforeEach(() => {
-    localStorage.setItem('access_token', token(['printer_admin']));
+  clearSession();
+    setSession({ access_token: token(['printer_admin']), token_type: 'bearer', expires_in: 900 });
     settings = { require_second_approver_floor: false, require_second_approver_admin: false };
     proposals = [];
     Object.values(api).forEach((fn) => fn.mockClear());
@@ -163,14 +165,14 @@ describe('AdminPage', () => {
   });
 
   it('a non-admin gets a line and no page; the Admin tab is hidden for them and shown for an admin', async () => {
-    localStorage.setItem('access_token', token(['shadow_reader'], 'u-shadow'));
+    setSession({ access_token: token(['shadow_reader'], 'u-shadow'), token_type: 'bearer', expires_in: 900 });
     renderPage();
     expect(await screen.findByTestId('admin-no-access')).toBeInTheDocument();
     expect(screen.queryByTestId('admin-page')).not.toBeInTheDocument();
     expect(api.listAdminMembers).not.toHaveBeenCalled();
     render(<MemoryRouter initialEntries={['/settings/team']}><SettingsLayout /></MemoryRouter>);
     expect(screen.queryByRole('link', { name: 'Admin' })).not.toBeInTheDocument();
-    localStorage.setItem('access_token', token(['printer_admin']));
+    setSession({ access_token: token(['printer_admin']), token_type: 'bearer', expires_in: 900 });
     render(<MemoryRouter initialEntries={['/settings/team']}><SettingsLayout /></MemoryRouter>);
     expect(screen.getByRole('link', { name: 'Admin' })).toBeInTheDocument();
   });

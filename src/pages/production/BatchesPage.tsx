@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { getProductionSettings, listBatches, markBatchDone, markHalfBatch } from '../../api/production';
 import { listShopTags } from '../../api/orders';
 import BatchesTable from '../../components/production/BatchesTable';
@@ -76,6 +76,12 @@ export default function BatchesPage({ readOnly = isShadowReader() }: { readOnly?
   // Walk t09 (20 Nov 2026): Mark done sits in the card's actions beside Push out — the same two steps as the proposal: the reason, then a confirmation naming the batch.
   const [markingDone, setMarkingDone] = useState<{ batch: BatchSummary; reason: string; confirming: boolean } | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const location = useLocation();
+  useEffect(() => {
+    // t10 d: a mark done applied elsewhere (the Held page's proposals, a batch's page) lands here with its notice.
+    const carried = (location.state as { notice?: string } | null)?.notice;
+    if (carried) setNotice(carried);
+  }, [location.state]);
 
   async function confirmMarkDone() {
     if (!markingDone) return;
@@ -86,6 +92,9 @@ export default function BatchesPage({ readOnly = isShadowReader() }: { readOnly?
       setMarkingDone(null);
       setNotice(`Batch ${batch.batch_number} marked done; ${skipped} remaining step${skipped === 1 ? '' : 's'} skipped.`);
       await loadBatches();
+      // t10 d (23 Nov 2026): back to the Batches list — the Open section, from the top.
+      setShow('Open');
+      window.scrollTo({ top: 0 });
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Mark done was refused');
     }

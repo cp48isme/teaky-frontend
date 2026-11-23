@@ -62,7 +62,7 @@ export default function ProductionLayout({ children, footnote, readOnly = isShad
           ) : null}
           {/* The same account menu as the admin shell (dispatch 19 Nov 2026);
               Settings is staff's, a read-only reader gets Account and Sign out. */}
-          <AccountMenu showSettings={!readOnly} />
+          <AccountMenu showSettings={!readOnly} onDark />
         </div>
       </header>
       <div style={{ display: 'flex', flexWrap: 'wrap', minHeight: 'calc(100vh - 67px)' }}>
