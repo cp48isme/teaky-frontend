@@ -13,7 +13,7 @@ const row = (over: Partial<SpecLibraryRow>): SpecLibraryRow => ({
   product_key: 'UHBC', value: '120#', not_batched: false, source: 'import', asserted_by_id: null, asserted_by: null,
   asserted_at: '2026-11-16T00:00:00Z', evidence: [], prior_units: 3, agrees: true, ...over,
 });
-const rows = [row({}), row({ product_key: 'HFAC-APT', value: 'unknown', source: 'person', asserted_by: 'Dana', prior_units: 0, agrees: null })];
+const rows = [row({}), row({ product_key: 'HFAC-APT', value: 'unknown', source: 'person', asserted_by: 'Dana', prior_units: 0, agrees: null }), row({ product_key: 'PLU1020', product_name: 'Plush bear, 6 pack', value: 'unknown', source: 'person', asserted_by: 'Dana', prior_units: 0, agrees: null })];
 const correctStock = vi.fn(() => Promise.resolve({}));
 const markNotBatched = vi.fn(() => Promise.resolve({}));
 const getSpecHistory = vi.fn(() => Promise.resolve([]));
@@ -64,5 +64,15 @@ describe('the stock rulings screen', () => {
     expect(within(details).getByText(/Andrew's table/)).toBeInTheDocument();
     expect(getSpecHistory).toHaveBeenCalledWith('UHBC');
     expect(screen.getAllByTestId('product-details')).toHaveLength(1);
+  });
+
+  it('names the product as the channel describes it, with the code beneath; the search finds it by name', async () => {
+    mount();
+    const named = (await screen.findByTestId('product-name')).closest('tr')!;
+    expect(named).toHaveTextContent('Plush bear, 6 pack');
+    expect(named).toHaveTextContent('PLU1020');
+    await userEvent.type(screen.getByPlaceholderText('product name, code or stock'), 'plush');
+    expect(screen.getAllByTestId('product-row')).toHaveLength(1);
+    expect(screen.getByTestId('product-name')).toHaveTextContent('Plush bear, 6 pack');
   });
 });

@@ -89,7 +89,7 @@ export default function ProductsPage() {
   const options = useMemo(() => stockOptions(rows, shopStocks), [rows, shopStocks]);
   const shown = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return rows.filter((r) => (source === 'all' || r.source === source) && (!q || r.product_key.toLowerCase().includes(q) || r.value.toLowerCase().includes(q)));
+    return rows.filter((r) => (source === 'all' || r.source === source) && (!q || r.product_key.toLowerCase().includes(q) || (r.product_name ?? '').toLowerCase().includes(q) || r.value.toLowerCase().includes(q)));
   }, [rows, search, source]);
   const counts = {
     total: rows.length,
@@ -144,7 +144,7 @@ export default function ProductsPage() {
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center' }}>
         <label style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 14 }}>
           Search
-          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="product or stock" style={{ padding: '9px 10px', border: '1px solid #c9cfd6', borderRadius: 6, font: 'inherit', minHeight: 44, width: 220 }} />
+          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="product name, code or stock" style={{ padding: '9px 10px', border: '1px solid #c9cfd6', borderRadius: 6, font: 'inherit', minHeight: 44, width: 220 }} />
         </label>
         <span style={{ fontSize: 14 }}>Source:</span>
         {(['all', 'person', 'import', 'history', 'docket'] as const).map((s) => (
@@ -170,7 +170,17 @@ export default function ProductsPage() {
             {shown.map((r) => (
               <>
                 <tr key={r.product_key} data-testid="product-row" style={open[r.product_key] ? { background: '#f6faf2' } : undefined}>
-                  <td style={{ ...td, ...mono }}>{r.product_key}</td>
+                  <td style={td}>
+                    {/* Item 3 (23 Nov 2026, ruling: product name plus one dropdown): the name as the channel describes it, the code beneath. */}
+                    {r.product_name ? (
+                      <>
+                        <div data-testid="product-name">{r.product_name}</div>
+                        <div style={{ ...mono, fontSize: 12, color: '#4b5563' }}>{r.product_key}</div>
+                      </>
+                    ) : (
+                      <div style={mono}>{r.product_key}</div>
+                    )}
+                  </td>
                   <td style={td}>
                     <select
                       aria-label={`Stock for ${r.product_key}`}
