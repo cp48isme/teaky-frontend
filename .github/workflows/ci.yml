@@ -48,6 +48,12 @@ jobs:
             exit 0
           fi
           npm run types:api:check -- "https://api.github.com/repos/TeakyDev/printer-agent2/contents/openapi.json?ref=main"
+      # Dispatch 23 Nov 2026 (item 7): npm audit as a ratchet against the
+      # committed baseline — nothing fails today, anything new fails tomorrow.
+      - name: npm audit ratchet
+        run: |
+          npm audit --json > /tmp/npm-audit.json || true
+          node scripts/npm-audit-ratchet.mjs check /tmp/npm-audit.json
 
       - name: Build
         run: npm run build
