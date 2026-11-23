@@ -1,9 +1,12 @@
 import { NavLink, Outlet } from 'react-router-dom';
 import Breadcrumbs from '../../components/ui/Breadcrumbs';
+import { canAdministerShop } from '../../lib/roles';
 
 const SETTINGS_TABS = [
   { to: '/settings/company', label: 'Company' },
   { to: '/settings/team', label: 'Team' },
+  // The admin surface (t03): printer_admin only — hidden from everyone else.
+  { to: '/settings/admin', label: 'Admin', adminOnly: true },
   { to: '/settings/notifications', label: 'Notifications' },
   { to: '/settings/integrations', label: 'Integrations' },
   { to: '/settings/stripe', label: 'Stripe' },
@@ -11,6 +14,8 @@ const SETTINGS_TABS = [
 ];
 
 export default function SettingsLayout() {
+  const admin = canAdministerShop();
+  const tabs = SETTINGS_TABS.filter((tab) => !('adminOnly' in tab) || admin);
   return (
     <div className="mx-auto max-w-5xl">
       <Breadcrumbs items={[
@@ -21,7 +26,7 @@ export default function SettingsLayout() {
 
       <div className="mt-4 border-b border-gray-200">
         <nav className="flex gap-6">
-          {SETTINGS_TABS.map((tab) => (
+          {tabs.map((tab) => (
             <NavLink
               key={tab.to}
               to={tab.to}
