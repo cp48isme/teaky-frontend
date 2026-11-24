@@ -1,5 +1,5 @@
 // Generated from the backend's openapi.json by scripts/api-types.mjs — do not edit.
-// Document sha256 de01de7ce885ca543194cb3c07ee29f5969577f1ddb3b952f9f9b24827c7cc74 · backend 64de09ed4d0a43ecb31445e04e28b3fb686dc26d.
+// Document sha256 f6b1769a99069c83785ea70bb244e7d3a6eaa94e9b1ca5c6813aac654310a93f · backend f37bde18c7b09453901e327659bed702982fe776.
 export interface paths {
     "/admin/agent-feedback/platform": {
         parameters: {
@@ -5930,6 +5930,70 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/stocked-goods/units": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Units
+         * @description The shop's stocked-goods units, oldest first, with their picked state
+         *     and shipping row. Staff only this rev: the shadow reader's three routes
+         *     are pinned by ruling (#265, 18 Nov 2026) and by test; a fourth is a
+         *     ruling, not a side effect (dispatch 23 Nov, design question).
+         */
+        get: operations["list_units_stocked_goods_units_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/stocked-goods/units/{unit_id}/mark-picked": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Mark Picked
+         * @description Two steps: confirm false is the plan and writes nothing; confirm true
+         *     marks the unit picked, writes its shipping row and the audit row.
+         */
+        post: operations["mark_picked_stocked_goods_units__unit_id__mark_picked_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/stocked-goods/units/{unit_id}/shipping-csv": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Download Shipping Csv
+         * @description The unit's shipping row as the ALLORDER CSV, once written.
+         */
+        get: operations["download_shipping_csv_stocked_goods_units__unit_id__shipping_csv_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/stripe/connect/onboarding": {
         parameters: {
             query?: never;
@@ -10877,6 +10941,8 @@ export interface components {
              * Format: uuid
              */
             id: string;
+            /** Lane */
+            lane?: string | null;
             /** Line Total */
             line_total?: number | null;
             /** Needs Proof */
@@ -11213,6 +11279,31 @@ export interface components {
              * Format: uuid
              */
             unit_id: string;
+        };
+        /**
+         * MarkPickedRequest
+         * @description Two steps: confirm false answers with what would be written and writes
+         *     nothing; confirm true marks the unit picked and writes the shipping row.
+         */
+        MarkPickedRequest: {
+            /**
+             * Confirm
+             * @default false
+             */
+            confirm: boolean;
+        };
+        /** MarkPickedResult */
+        MarkPickedResult: {
+            /** Applied */
+            applied: boolean;
+            /** Mixed Po Note */
+            mixed_po_note?: string | null;
+            /**
+             * Shipping Rows
+             * @default 0
+             */
+            shipping_rows: number;
+            unit: components["schemas"]["StockedGoodsUnit"];
         };
         /** MarkReadRequest */
         MarkReadRequest: {
@@ -15957,6 +16048,88 @@ export interface components {
             steps?: components["schemas"]["RouteStep"][];
             /** Stock */
             stock?: string | null;
+            /**
+             * Unit Id
+             * Format: uuid
+             */
+            unit_id: string;
+        };
+        /**
+         * StockedGoodsFile
+         * @description The unit's shipping CSV as written: name, size, checksum, when.
+         */
+        StockedGoodsFile: {
+            /**
+             * File Id
+             * Format: uuid
+             */
+            file_id: string;
+            /** Filename */
+            filename: string;
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            /** Sha256 */
+            sha256: string;
+            /** Size Bytes */
+            size_bytes: number;
+        };
+        /** StockedGoodsLine */
+        StockedGoodsLine: {
+            /**
+             * Line Item Id
+             * Format: uuid
+             */
+            line_item_id: string;
+            /** Pack Size */
+            pack_size: number;
+            /** Product */
+            product: string;
+            /**
+             * Product Name
+             * @default
+             */
+            product_name: string;
+            /** Quantity */
+            quantity: number;
+        };
+        /** StockedGoodsUnit */
+        StockedGoodsUnit: {
+            /** Age Seconds */
+            age_seconds: number;
+            /**
+             * Customer
+             * @default
+             */
+            customer: string;
+            /** Lines */
+            lines?: components["schemas"]["StockedGoodsLine"][];
+            /**
+             * Mixed Po
+             * @default false
+             */
+            mixed_po: boolean;
+            /**
+             * Order Id
+             * Format: uuid
+             */
+            order_id: string;
+            /** Order Number */
+            order_number?: string | null;
+            /** Picked At */
+            picked_at?: string | null;
+            /** Picked By Id */
+            picked_by_id?: string | null;
+            /** Po */
+            po: string;
+            /**
+             * Received At
+             * Format: date-time
+             */
+            received_at: string;
+            shipping_csv?: components["schemas"]["StockedGoodsFile"] | null;
             /**
              * Unit Id
              * Format: uuid
@@ -27358,6 +27531,92 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SpecImportResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_units_stocked_goods_units_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StockedGoodsUnit"][];
+                };
+            };
+        };
+    };
+    mark_picked_stocked_goods_units__unit_id__mark_picked_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unit_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MarkPickedRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MarkPickedResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    download_shipping_csv_stocked_goods_units__unit_id__shipping_csv_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unit_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */
