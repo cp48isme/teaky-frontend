@@ -12,7 +12,9 @@
     "test:run": "vitest run --passWithNoTests",
     "lint:banned": "eslint -c eslint.banned.config.js .",
     "types:api": "node scripts/api-types.mjs generate",
-    "types:api:check": "node scripts/api-types.mjs check"
+    "types:api:check": "node scripts/api-types.mjs check",
+    "audit:check": "node scripts/npm-audit-ratchet.mjs check",
+    "audit:baseline": "node scripts/npm-audit-ratchet.mjs baseline"
   },
   "dependencies": {
     "@stripe/react-stripe-js": "^5.6.0",
