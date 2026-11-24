@@ -14,6 +14,7 @@ import WhereaboutsPage from './pages/production/WhereaboutsPage';
 import BatchesPage from './pages/production/BatchesPage';
 import PushOutConfirmPage from './pages/production/PushOutConfirmPage';
 import HeldPage from './pages/production/HeldPage';
+import StockedGoodsPage from './pages/production/StockedGoodsPage';
 import ProductsPage from './pages/production/ProductsPage';
 import FloorPage from './pages/production/FloorPage';
 import ProductionSettingsPage from './pages/production/ProductionSettingsPage';
@@ -200,6 +201,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <HeldPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/production/stocked-goods"
+            element={
+              <ProtectedRoute>
+                <StockedGoodsPage />
               </ProtectedRoute>
             }
           />

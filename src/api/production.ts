@@ -1,5 +1,8 @@
-import { apiRequest } from './client';
-import type { BatchSummary, MarkDoneResult, ProductionSettings, PushOutPreview, PushOutResult, ScanResult, SpecAssertion, SpecHistoryEntry, SpecLibraryRow, SpecSuggestion, StationHoldResult, StationScan, StationView, TagRules, TaylorPoolLine } from '../types/production';
+import { apiRequest, getAccessToken } from './client';
+import type { BatchSummary, MarkDoneResult, ProductionSettings, PushOutPreview, PushOutResult, ScanResult, SpecAssertion, SpecHistoryEntry, SpecLibraryRow, SpecSuggestion, StationHoldResult, StationScan, StationView, TagRules, TaylorPoolLine,
+  MarkPickedResult,
+  StockedGoodsUnit,
+} from '../types/production';
 
 export async function listBatches(): Promise<BatchSummary[]> {
   return apiRequest<BatchSummary[]>('/release-units');
@@ -119,5 +122,37 @@ export async function updateTagRules(rules: TagRules): Promise<TagRules> {
 /** The shop's press-run configuration (staff, production:rules); the stock rulings screen reads the Docket item-code keys as the stock list. */
 export async function getPressRunConfig(): Promise<{ docket_item_codes?: Record<string, string> }> {
   return apiRequest<{ docket_item_codes?: Record<string, string> }>('/organizations/me/press-run-config');
+}
+
+/** Stocked goods (dispatch 23 Nov 2026, item 1). */
+export async function listStockedGoodsUnits(): Promise<StockedGoodsUnit[]> {
+  return apiRequest<StockedGoodsUnit[]>('/stocked-goods/units');
+}
+
+export async function markPicked(unitId: string, confirm: boolean): Promise<MarkPickedResult> {
+  return apiRequest<MarkPickedResult>(`/stocked-goods/units/${unitId}/mark-picked`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ confirm }),
+  });
+}
+
+/** The unit's shipping row as the ALLORDER CSV: fetched with the session's
+ * token (a plain link would carry none) and handed to the browser as a file. */
+export async function downloadShippingCsv(unitId: string, filename: string): Promise<void> {
+  const headers: Record<string, string> = {};
+  const token = getAccessToken();
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  const response = await fetch(`/api/stocked-goods/units/${unitId}/shipping-csv`, { headers, credentials: 'include' });
+  if (!response.ok) throw new Error(`The shipping row could not be fetched (${response.status})`);
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
 }
 
