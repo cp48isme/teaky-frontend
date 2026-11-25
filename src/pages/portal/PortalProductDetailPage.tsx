@@ -1,4 +1,5 @@
 import { looksLikeEmail, looksLikePhone, PHONE_RULE } from '../../lib/recipientText';
+import { storefrontAssetUrl } from '../../lib/uploads';
 import { useState, useEffect } from 'react';
 import { packPriceLabel, packQuantityLabel } from '../../lib/pricing';
 import { QUOTES_ENABLED } from '../../lib/paymentTerms';
@@ -144,7 +145,7 @@ export default function PortalProductDetailPage() {
           {product.mockup_urls.length > 0 ? (
             <div>
               <img
-                src={product.mockup_urls[selectedImage]}
+                src={storefrontAssetUrl(portal.slug, product.mockup_urls[selectedImage])}
                 alt={product.name}
                 className="w-full rounded-lg border object-cover"
                 style={{ maxHeight: '400px' }}
@@ -161,7 +162,7 @@ export default function PortalProductDetailPage() {
                       }`}
                       style={i === selectedImage ? { borderColor: primaryColor } : undefined}
                     >
-                      <img src={url} alt="" className="h-full w-full object-cover" />
+                      <img src={storefrontAssetUrl(portal.slug, url)} alt="" className="h-full w-full object-cover" />
                     </button>
                   ))}
                 </div>

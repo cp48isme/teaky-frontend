@@ -1,4 +1,5 @@
 import { humanize } from '../../lib/labels';
+import { storefrontAssetUrl } from '../../lib/uploads';
 import { Link, useParams } from 'react-router-dom';
 import { usePortalContext } from '../../contexts/PortalContext';
 import { packPriceLabel } from '../../lib/pricing';
@@ -21,7 +22,7 @@ export default function PortalHomePage() {
       >
         {portal.brand_config?.banner_image_url ? (
           <img
-            src={portal.brand_config.banner_image_url}
+            src={storefrontAssetUrl(portal.slug, portal.brand_config.banner_image_url)}
             alt=""
             className="mx-auto mb-6 max-h-40 w-auto object-contain"
           />
@@ -29,7 +30,7 @@ export default function PortalHomePage() {
           <>
             {portal.brand_config?.logo_url && (
               <img
-                src={portal.brand_config.logo_url}
+                src={storefrontAssetUrl(portal.slug, portal.brand_config.logo_url)}
                 alt=""
                 className="mx-auto mb-4 h-16 w-auto object-contain"
                 onError={(e) => {
@@ -63,7 +64,7 @@ export default function PortalHomePage() {
               >
                 {product.mockup_urls.length > 0 ? (
                   <img
-                    src={product.mockup_urls[0]}
+                    src={storefrontAssetUrl(portal.slug, product.mockup_urls[0])}
                     alt={product.name}
                     className="h-40 w-full object-cover"
                     onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.parentElement!.querySelector('.img-fallback')?.classList.remove('hidden'); }}

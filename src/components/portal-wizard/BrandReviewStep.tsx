@@ -1,4 +1,5 @@
 import { type FormEvent } from 'react';
+import AuthedImage from '../ui/AuthedImage';
 import { uploadFile } from '../../api/uploads';
 import type { BrandConfig } from '../../types/portal';
 
@@ -60,7 +61,7 @@ export default function BrandReviewStep({
           <div>
             <label className="block text-sm font-medium text-gray-700">Logo</label>
             {brandConfig.logo_url && (
-              <img
+              <AuthedImage
                 src={brandConfig.logo_url}
                 alt="Logo preview"
                 className="mt-1 mb-2 h-12 w-auto object-contain rounded bg-white p-1 border"
@@ -81,7 +82,7 @@ export default function BrandReviewStep({
           <div>
             <label className="block text-sm font-medium text-gray-700">Favicon</label>
             {brandConfig.favicon_url && (
-              <img
+              <AuthedImage
                 src={brandConfig.favicon_url}
                 alt="Favicon preview"
                 className="mt-1 mb-2 h-6 w-6 object-contain rounded"
@@ -181,7 +182,7 @@ export default function BrandReviewStep({
               style={{ backgroundColor: brandConfig.primary_color || '#558B2F' }}
             >
               {brandConfig.logo_url && (
-                <img
+                <AuthedImage
                   src={brandConfig.logo_url}
                   alt=""
                   className="h-6 w-auto object-contain"

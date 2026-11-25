@@ -1,4 +1,5 @@
 import { useState, useEffect, type FormEvent } from 'react';
+import AuthedImage from '../ui/AuthedImage';
 import { scrapeWebsite } from '../../api/scraping';
 import { checkSlugAvailable } from '../../api/portals';
 import type { ScrapeWebsiteResponse } from '../../types/scraping';
@@ -197,7 +198,7 @@ export default function ClientInfoStep({ data, onUpdate, onNext }: Props) {
           <h3 className="text-sm font-medium text-green-900">Brand detected!</h3>
           <div className="flex items-center gap-4">
             {data.brandConfig.logo_url && (
-              <img
+              <AuthedImage
                 src={data.brandConfig.logo_url}
                 alt="Client logo"
                 className="h-10 w-auto object-contain rounded bg-white p-1 border"

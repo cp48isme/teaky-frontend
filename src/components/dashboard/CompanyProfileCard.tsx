@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import AuthedImage from '../ui/AuthedImage';
 import { canEditCompany, currentRoles } from '../../lib/roles';
 import type { CompanyProfile } from '../../types/companyProfile';
 
@@ -66,7 +67,7 @@ export default function CompanyProfileCard({ profile, name = null, managed = fal
 
       <div className="mt-4 flex items-start gap-4">
         {profile.logo_url && (
-          <img
+          <AuthedImage
             src={profile.logo_url}
             alt={name ? `${name} logo` : 'Logo'}
             className="h-20 w-20 rounded-md border object-contain bg-white p-1"

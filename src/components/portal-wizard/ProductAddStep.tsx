@@ -1,4 +1,5 @@
 import { PRODUCT_CATEGORIES as CATEGORIES, DEFAULT_PRODUCT_CATEGORY } from '../../lib/productCategories';
+import AuthedImage from '../ui/AuthedImage';
 import { useState, type FormEvent } from 'react';
 import { uploadFile } from '../../api/uploads';
 import SpreadsheetImport from './SpreadsheetImport';
@@ -463,7 +464,7 @@ function ProductForm({ product, onChange, onSave, onCancel }: ProductFormProps) 
           <div className="mt-1 flex gap-2 flex-wrap">
             {(product.mockup_urls ?? []).map((url, i) => (
               <div key={i} className="relative">
-                <img src={url} alt="" className="h-16 w-16 rounded border object-cover" />
+                <AuthedImage src={url} alt="" className="h-16 w-16 rounded border object-cover" />
                 <button
                   type="button"
                   onClick={() =>

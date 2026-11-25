@@ -1,4 +1,5 @@
 import { DEFAULT_PRODUCT_CATEGORY } from '../../lib/productCategories';
+import AuthedImage from '../ui/AuthedImage';
 import type { BrandConfig } from '../../types/portal';
 import type { WizardProduct } from './ProductAddStep';
 import type { PortalSettingsData } from './PortalSettingsStep';
@@ -63,7 +64,7 @@ export default function ReviewPublishStep({
               <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide">Branding</h3>
               <div className="mt-2 flex items-center gap-3">
                 {brandConfig.logo_url && (
-                  <img
+                  <AuthedImage
                     src={brandConfig.logo_url}
                     alt=""
                     className="h-8 w-auto object-contain rounded border p-0.5"
@@ -164,7 +165,7 @@ export default function ReviewPublishStep({
               <div className="px-4 py-3" style={{ backgroundColor: primaryColor }}>
                 <div className="flex items-center gap-2">
                   {brandConfig.logo_url ? (
-                    <img
+                    <AuthedImage
                       src={brandConfig.logo_url}
                       alt=""
                       className="h-6 w-auto object-contain rounded"
@@ -186,7 +187,7 @@ export default function ReviewPublishStep({
                 {/* Banner area */}
                 {brandConfig.banner_image_url ? (
                   <div className="mb-3 h-16 rounded-md overflow-hidden">
-                    <img
+                    <AuthedImage
                       src={brandConfig.banner_image_url}
                       alt=""
                       className="h-full w-full object-cover"

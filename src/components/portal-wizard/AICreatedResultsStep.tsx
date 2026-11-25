@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import AuthedImage from '../ui/AuthedImage';
 import { useNavigate } from 'react-router-dom';
 import { listProducts } from '../../api/products';
 import type { StoreCreationResult } from '../../api/portals';
@@ -146,11 +147,12 @@ export default function AICreatedResultsStep({ result, onCreateNew }: Props) {
               <div key={product.id} className="rounded-lg border border-gray-200 bg-white p-4 hover:shadow-md transition">
                 <div className="aspect-square rounded-md bg-gray-100 mb-3 flex items-center justify-center overflow-hidden">
                   {product.mockup_urls && product.mockup_urls.length > 0 && !brokenMockups.has(product.id) ? (
-                    <img
+                    <AuthedImage
                       src={product.mockup_urls[0]}
                       alt={product.name}
                       className="w-full h-full object-cover rounded-md"
                       onError={() => setBrokenMockups((prev) => new Set(prev).add(product.id))}
+                      onUnavailable={() => setBrokenMockups((prev) => new Set(prev).add(product.id))}
                     />
                   ) : (
                     <div className="flex flex-col items-center justify-center h-full">

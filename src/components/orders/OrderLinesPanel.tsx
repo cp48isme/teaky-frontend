@@ -1,4 +1,5 @@
 import type { Order } from "../../types/order";
+import AuthedDownloadLink from '../ui/AuthedDownloadLink';
 import { recipientText } from "../../lib/recipientText";
 import { staffArtworkLine } from "../../lib/artworkCopy";
 
@@ -47,14 +48,12 @@ export default function OrderLinesPanel({ order }: Props) {
                 </p>
               )}
               {item.artwork_upload_url && (
-                <a
+                <AuthedDownloadLink
                   href={item.artwork_upload_url}
                   className="text-xs text-teak-dark hover:text-teak"
-                  target="_blank"
-                  rel="noreferrer"
                 >
                   New art uploaded by the buyer
-                </a>
+                </AuthedDownloadLink>
               )}
               {item.needs_proof && (
                 <span
