@@ -65,12 +65,17 @@ describe('uploadApiPath', () => {
   });
 });
 
+// The stored shape (backend #320 at fa89727, `_unique_object_name` +
+// `owned_filename`, parsed by `owner_of` with
+// `^[0-9a-f]{32}_o([0-9a-f]{32})u([0-9a-f]{32})_`): the unique prefix first,
+// then the owner tag, then the filename. Older objects have no tag.
 describe('uploadDisplayName', () => {
-  it('strips the owner tag and the unique prefix of a tagged object name', () => {
-    expect(uploadDisplayName(`/uploads/o${HEX}u${HEX2}_${HEX3}_artwork final.pdf`)).toBe('artwork final.pdf');
+  it('strips the unique prefix and then the owner tag of a tagged object name (uuid first, then the tag)', () => {
+    expect(uploadDisplayName(`/uploads/${HEX3}_o${HEX}u${HEX2}_artwork final.pdf`)).toBe('artwork final.pdf');
+    expect(uploadDisplayName(`${HEX3}_o${HEX}u${HEX2}_mark.png`)).toBe('mark.png');
   });
 
-  it('strips the unique prefix of an older, untagged object name', () => {
+  it('strips only the unique prefix of an older, untagged object name', () => {
     expect(uploadDisplayName(`/uploads/${HEX3}_mark.png`)).toBe('mark.png');
     expect(uploadDisplayName(`${HEX3}_mark.png`)).toBe('mark.png');
   });

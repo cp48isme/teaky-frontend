@@ -59,18 +59,21 @@ export function uploadApiPath(name: string): string {
   return `${UPLOAD_PATH_PREFIX}${encodeURIComponent(name)}`;
 }
 
-// The object name the backend stores (file_storage_service._unique_object_name):
-// an optional owner tag `o<32 hex>u<32 hex>_`, then `<32 hex>_`, then the
-// filename the person gave with any slash made `_`. Both prefixes are
-// stripped to show that filename; anything else is shown whole.
-const OWNER_TAG = /^o[0-9a-f]{32}u[0-9a-f]{32}_/;
+// The object name the backend stores (file_storage_service._unique_object_name
+// and owned_filename, backend #320 at fa89727): `<32 hex>_` (the unique
+// prefix), then for an upload through POST /uploads the owner tag
+// `o<32 hex>u<32 hex>_`, then the filename the person gave with any slash
+// made `_`. Older objects are `<32 hex>_<filename>` with no tag. The unique
+// prefix is stripped first, then the tag if one follows, to show that
+// filename; a name with neither is shown whole.
 const UNIQUE_PREFIX = /^[0-9a-f]{32}_/;
+const OWNER_TAG = /^o[0-9a-f]{32}u[0-9a-f]{32}_/;
 
 /** The filename the person uploaded, out of a stored upload URL or object name. */
 export function uploadDisplayName(urlOrName: string): string {
   const name = uploadName(urlOrName) ?? urlOrName;
-  const untagged = name.replace(OWNER_TAG, '');
-  const stripped = untagged.replace(UNIQUE_PREFIX, '');
+  const unprefixed = name.replace(UNIQUE_PREFIX, '');
+  const stripped = unprefixed.replace(OWNER_TAG, '');
   return stripped || name;
 }
 
