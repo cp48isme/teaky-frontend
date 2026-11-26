@@ -34,9 +34,24 @@ beforeEach(() => {
 });
 
 describe('the signup gate', () => {
-  it('off: the root page keeps its sign-in card and forgot-password link and offers no sign-up', async () => {
+  // Ruling 26 Nov 2026 item 10(b), bead hasx (word given 26 Nov afternoon, item 5):
+  // the landing card is gone, so the gate's "off" behaviour is /login's; the
+  // root page offers no sign-up and links to /login.
+  it('off: /login keeps the sign-in form and forgot-password link; the root page offers no sign-up and links to /login', async () => {
     enabled = false;
-    mount('/', 'landing');
+    const landing = mount('/', 'landing');
+    await waitFor(() => expect(getSignupAvailability).toHaveBeenCalledTimes(1));
+    await new Promise((r) => setTimeout(r, 0));
+    expect(screen.queryByTestId('sign-in-form')).toBeNull();
+    const signInLinks = screen.getAllByRole('link', { name: /^sign in$/i });
+    expect(signInLinks.length).toBeGreaterThanOrEqual(1);
+    for (const link of signInLinks) expect(link).toHaveAttribute('href', '/login');
+    expect(offers()).toEqual([]);
+    landing.unmount();
+
+    resetSignupAvailability();
+    getSignupAvailability.mockClear();
+    mount('/login', 'login');
     await waitFor(() => expect(getSignupAvailability).toHaveBeenCalledTimes(1));
     await new Promise((r) => setTimeout(r, 0));
     expect(screen.getByTestId('sign-in-form')).toBeTruthy();
