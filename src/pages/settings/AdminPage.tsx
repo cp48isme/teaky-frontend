@@ -30,7 +30,7 @@ const ROLE_OPTIONS = ['printer_admin', 'store_creator', 'sales_rep', 'sales_team
 
 /** Walk C5 (26 Nov 2026): an invitation past its expiry is not pending — its
  * link is dead and nobody accepted — so it renders as Expired with nothing to
- * resend or revoke. The server does not yet offer a route that clears one. */
+ * resend or revoke. Walk C6: one click clears it (POST /team/invitations/{id}/clear). */
 export function invitationExpired(inv: Pick<Invitation, 'expires_at'>, now: number = Date.now()): boolean {
   const t = Date.parse(inv.expires_at);
   return !Number.isNaN(t) && t <= now;
@@ -67,9 +67,6 @@ function fmt(iso: string | null | undefined): string {
   return Number.isNaN(d.getTime()) ? '—' : d.toLocaleString();
 }
 
-function isExpired(inv: Invitation, now: number): boolean {
-  return new Date(inv.expires_at).getTime() <= now;
-}
 
 export default function AdminPage() {
   const admin = canAdministerShop();
@@ -210,7 +207,6 @@ export default function AdminPage() {
     const m = members.find((x) => x.user_id === id);
     return m ? m.display_name || m.email : id === me ? 'you' : 'a member';
   };
-  const now = Date.now();
 
   return (
     <div className="space-y-8" data-testid="admin-page">
@@ -339,28 +335,14 @@ export default function AdminPage() {
                   <td className="py-2 pr-4">{fmt(inv.created_at)}</td>
                   <td className="py-2 pr-4">{fmt(inv.expires_at)}</td>
                   <td className="py-2 pr-4">
-                    {inv.revoked_at ? (
-                      <span className="text-xs text-gray-600" data-testid={`cleared-${inv.id}`}>Cleared</span>
-                    ) : isExpired(inv, now) ? (
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="rounded-full bg-gray-200 px-2 py-0.5 text-xs font-medium text-gray-700">Expired</span>
-                        <button type="button" className="text-xs text-gray-700 underline" disabled={busy} onClick={() => clearExpired(inv)}>
-                          Clear
-                        </button>
-                        {clearErrors[inv.id] && (
-                          <span className="text-xs text-red-700" role="alert">{clearErrors[inv.id]}</span>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="flex gap-2">
-                        <button type="button" className="text-xs text-teak-dark underline" onClick={() => openForm({ kind: 'resend_invitation', targetKind: 'invitation', targetId: inv.id, label: inv.invited_email })}>
-                          Resend
-                        </button>
-                        <button type="button" className="text-xs text-red-700 underline" onClick={() => openForm({ kind: 'revoke_invitation', targetKind: 'invitation', targetId: inv.id, label: inv.invited_email })}>
-                          Revoke
-                        </button>
-                      </div>
-                    )}
+                    <div className="flex gap-2">
+                      <button type="button" className="text-xs text-teak-dark underline" onClick={() => openForm({ kind: 'resend_invitation', targetKind: 'invitation', targetId: inv.id, label: inv.invited_email })}>
+                        Resend
+                      </button>
+                      <button type="button" className="text-xs text-red-700 underline" onClick={() => openForm({ kind: 'revoke_invitation', targetKind: 'invitation', targetId: inv.id, label: inv.invited_email })}>
+                        Revoke
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -373,7 +355,7 @@ export default function AdminPage() {
         <section data-testid="admin-expired-invitations">
           <h2 className="font-heading text-lg font-semibold text-brand-dark">Expired invitations</h2>
           <p className="mt-1 text-sm text-gray-600">
-            The link in each of these stopped working on the date shown and nobody accepted it, so there is nothing to resend or revoke. If the person still needs access, send a fresh invitation from the Team tab. Clearing an expired invitation from this list is a separate, coming change.
+            The link in each of these stopped working on the date shown and nobody accepted it, so there is nothing to resend or revoke. Clear takes it off this list (one click, no proposal). If the person still needs access, send a fresh invitation from the Team tab.
           </p>
           <table className="mt-3 min-w-full text-sm">
             <thead>
@@ -393,7 +375,19 @@ export default function AdminPage() {
                   <td className="py-2 pr-4">{fmt(inv.created_at)}</td>
                   <td className="py-2 pr-4">{fmt(inv.expires_at)}</td>
                   <td className="py-2 pr-4">
-                    <span className="rounded-full bg-gray-200 px-2 py-0.5 text-xs font-medium text-gray-700">Expired</span>
+                    {inv.revoked_at ? (
+                      <span className="text-xs text-gray-600" data-testid={`cleared-${inv.id}`}>Cleared</span>
+                    ) : (
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="rounded-full bg-gray-200 px-2 py-0.5 text-xs font-medium text-gray-700">Expired</span>
+                        <button type="button" className="text-xs text-gray-700 underline" disabled={busy} onClick={() => clearExpired(inv)}>
+                          Clear
+                        </button>
+                        {clearErrors[inv.id] && (
+                          <span className="text-xs text-red-700" role="alert">{clearErrors[inv.id]}</span>
+                        )}
+                      </div>
+                    )}
                   </td>
                 </tr>
               ))}
