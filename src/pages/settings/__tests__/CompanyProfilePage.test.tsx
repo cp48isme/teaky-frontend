@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import CompanyProfilePage from '../CompanyProfilePage';
 
 // t06 (19 Nov 2026): the shop's company page — display name (the
@@ -19,6 +19,9 @@ const updateCompanyProfile = vi.fn().mockResolvedValue({ ...profile, logo_url: '
 const createCompanyProfile = vi.fn();
 const uploadFile = vi.fn().mockResolvedValue({ url: '/uploads/new.png', filename: 'mark.png', content_type: 'image/png' });
 let roles: string[] = ['printer_admin'];
+// Backend #320 (ruled 26 Nov 2026, item 9): the logo preview is read through
+// the authenticated client and shown from an object URL, not a bare /uploads src.
+const fetchMock = vi.fn<(url: string, init?: RequestInit) => Promise<Response>>();
 
 vi.mock('../../../api/organizations', () => ({
   getMyOrganization: vi.fn(() => Promise.resolve({ id: 'o1', name: 'Single Source US', is_managed: false })),
@@ -54,6 +57,16 @@ describe('CompanyProfilePage', () => {
     createCompanyProfile.mockClear();
     uploadFile.mockClear();
     roles = ['printer_admin'];
+    fetchMock.mockReset();
+    // A fresh Response per call: a body can be read once, and the page reads the old logo and then the new.
+    fetchMock.mockImplementation(() => Promise.resolve(new Response(new Blob(['png']), { status: 200 })));
+    vi.stubGlobal('fetch', fetchMock);
+    Object.defineProperty(URL, 'createObjectURL', { value: () => 'blob:test-object', configurable: true, writable: true });
+    Object.defineProperty(URL, 'revokeObjectURL', { value: () => undefined, configurable: true, writable: true });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
   it('loads the name and the profile, and saves a new name through PATCH /organizations/me and the details through the profile', async () => {
@@ -85,7 +98,8 @@ describe('CompanyProfilePage', () => {
     await userEvent.upload(screen.getByLabelText('Upload logo'), file);
     await waitFor(() => expect(screen.getByLabelText('Logo URL')).toHaveValue('/uploads/new.png'));
     expect(uploadFile).toHaveBeenCalledTimes(1);
-    expect(screen.getByRole('img', { name: 'Single Source US logo' })).toHaveAttribute('src', '/uploads/new.png');
+    expect(await screen.findByRole('img', { name: 'Single Source US logo' })).toHaveAttribute('src', 'blob:test-object');
+    expect(fetchMock).toHaveBeenLastCalledWith('/api/uploads/new.png', expect.anything());
   });
 
   it('is read-only for a sales_rep: no Save, no upload, fields disabled', async () => {
