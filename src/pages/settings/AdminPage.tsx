@@ -11,7 +11,7 @@ import {
 import { listInvitations } from '../../api/team';
 import type { AdminMember, AdminProposal, AdminProposalKind, AdminSettings } from '../../types/adminSurface';
 import type { Invitation } from '../../types/team';
-import { canAdministerShop, currentUserId } from '../../lib/roles';
+import { canAdministerShop, currentUserId, roleLabel } from '../../lib/roles';
 import Spinner from '../../components/ui/Spinner';
 
 /** The shop admin surface (t03, ruled 19 Nov 2026): every act here is a
@@ -20,13 +20,15 @@ import Spinner from '../../components/ui/Spinner';
  * oneself; never on the shop's last printer_admin; the two second-approver
  * switches. printer_admin only; the shadow_reader never sees it. */
 
-const ROLE_OPTIONS = [
-  { value: 'printer_admin', label: 'Printer Admin' },
-  { value: 'store_creator', label: 'Portal Creator' },
-  { value: 'sales_rep', label: 'Sales Rep' },
-  { value: 'sales_team_lead', label: 'Sales Team Lead' },
-  { value: 'billing_contact', label: 'Billing Contact' },
-];
+const ROLE_OPTIONS = ['printer_admin', 'store_creator', 'sales_rep', 'sales_team_lead', 'billing_contact'].map((value) => ({ value, label: roleLabel(value) }));
+
+/** Walk C5 (26 Nov 2026): an invitation past its expiry is not pending — its
+ * link is dead and nobody accepted — so it renders as Expired with nothing to
+ * resend or revoke. The server does not yet offer a route that clears one. */
+export function invitationExpired(inv: Pick<Invitation, 'expires_at'>, now: number = Date.now()): boolean {
+  const t = Date.parse(inv.expires_at);
+  return !Number.isNaN(t) && t <= now;
+}
 
 const KIND_LABEL: Record<AdminProposalKind, string> = {
   deactivate_member: 'Deactivate',
@@ -101,6 +103,8 @@ export default function AdminPage() {
 
   const open = useMemo(() => proposals.filter((p) => p.status === 'proposed'), [proposals]);
   const decided = useMemo(() => proposals.filter((p) => p.status !== 'proposed'), [proposals]);
+  const pendingInvitations = useMemo(() => invitations.filter((inv) => !invitationExpired(inv)), [invitations]);
+  const expiredInvitations = useMemo(() => invitations.filter((inv) => invitationExpired(inv)), [invitations]);
 
   const submit = async () => {
     if (!act || reason.trim().length < 3) return;
@@ -168,6 +172,9 @@ export default function AdminPage() {
 
   return (
     <div className="space-y-8" data-testid="admin-page">
+      <p className="text-sm text-gray-600" data-testid="admin-purpose">
+        This page is where the shop's printer admin changes who is on the team — each change is proposed with a reason and takes effect when approved.
+      </p>
       {error && (
         <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">
           {error}
@@ -227,7 +234,12 @@ export default function AdminPage() {
                   <tr key={m.user_id} className="border-t border-gray-100" data-testid={`member-${m.user_id}`}>
                     <td className="py-2 pr-4">{m.display_name || '—'}{self ? ' (you)' : ''}</td>
                     <td className="py-2 pr-4">{m.email}</td>
-                    <td className="py-2 pr-4">{m.roles.join(', ')}</td>
+                    <td className="py-2 pr-4">
+                      <span data-testid="member-roles">{m.roles.map(roleLabel).join(', ')}</span>
+                      {m.roles.length > 0 && (
+                        <span className="ml-2 text-xs text-gray-400" title="The role's code, as the server's refusals name it">{m.roles.join(', ')}</span>
+                      )}
+                    </td>
                     <td className="py-2 pr-4">{m.is_active ? 'Yes' : 'Deactivated'}</td>
                     <td className="py-2 pr-4">{fmt(m.last_sign_in_at)}</td>
                     <td className="py-2 pr-4 tabular-nums">{m.open_sessions}</td>
@@ -264,7 +276,7 @@ export default function AdminPage() {
 
       <section>
         <h2 className="font-heading text-lg font-semibold text-brand-dark">Pending invitations</h2>
-        {invitations.length === 0 ? (
+        {pendingInvitations.length === 0 ? (
           <p className="mt-2 text-sm text-gray-500">None pending.</p>
         ) : (
           <table className="mt-3 min-w-full text-sm" data-testid="admin-invitations">
@@ -278,10 +290,10 @@ export default function AdminPage() {
               </tr>
             </thead>
             <tbody>
-              {invitations.map((inv) => (
-                <tr key={inv.id} className="border-t border-gray-100" data-testid={`invitation-${inv.id}`}>
+              {pendingInvitations.map((inv) => (
+                <tr key={inv.id} className="border-t border-gray-100" data-testid={`invitation-${inv.id}`} data-state="pending">
                   <td className="py-2 pr-4">{inv.invited_email}</td>
-                  <td className="py-2 pr-4">{inv.role}</td>
+                  <td className="py-2 pr-4">{roleLabel(inv.role)}</td>
                   <td className="py-2 pr-4">{fmt(inv.created_at)}</td>
                   <td className="py-2 pr-4">{fmt(inv.expires_at)}</td>
                   <td className="py-2 pr-4">
@@ -300,6 +312,39 @@ export default function AdminPage() {
           </table>
         )}
       </section>
+
+      {expiredInvitations.length > 0 && (
+        <section data-testid="admin-expired-invitations">
+          <h2 className="font-heading text-lg font-semibold text-brand-dark">Expired invitations</h2>
+          <p className="mt-1 text-sm text-gray-600">
+            The link in each of these stopped working on the date shown and nobody accepted it, so there is nothing to resend or revoke. If the person still needs access, send a fresh invitation from the Team tab. Clearing an expired invitation from this list is a separate, coming change.
+          </p>
+          <table className="mt-3 min-w-full text-sm">
+            <thead>
+              <tr className="text-left text-xs uppercase tracking-wide text-gray-500">
+                <th className="py-2 pr-4">Email</th>
+                <th className="py-2 pr-4">Role</th>
+                <th className="py-2 pr-4">Sent</th>
+                <th className="py-2 pr-4">Expired</th>
+                <th className="py-2 pr-4">State</th>
+              </tr>
+            </thead>
+            <tbody>
+              {expiredInvitations.map((inv) => (
+                <tr key={inv.id} className="border-t border-gray-100 text-gray-600" data-testid={`invitation-${inv.id}`} data-state="expired">
+                  <td className="py-2 pr-4">{inv.invited_email}</td>
+                  <td className="py-2 pr-4">{roleLabel(inv.role)}</td>
+                  <td className="py-2 pr-4">{fmt(inv.created_at)}</td>
+                  <td className="py-2 pr-4">{fmt(inv.expires_at)}</td>
+                  <td className="py-2 pr-4">
+                    <span className="rounded-full bg-gray-200 px-2 py-0.5 text-xs font-medium text-gray-700">Expired</span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
+      )}
 
       {act && (
         <section className="rounded border border-gray-200 bg-gray-50 p-4" data-testid="propose-form" aria-label="Propose an admin act">
@@ -346,14 +391,14 @@ export default function AdminPage() {
               <li key={p.id} className="rounded border border-gray-200 p-3 text-sm" data-testid={`proposal-${p.id}`}>
                 <div className="font-medium">
                   {KIND_LABEL[p.kind]}: {target}
-                  {p.new_role ? ` → ${p.new_role}` : ''}
+                  {p.new_role ? ` → ${roleLabel(p.new_role)}` : ''}
                 </div>
                 <div className="text-xs text-gray-600">
                   Proposed by {who(p.proposed_by)} on {fmt(p.proposed_at)} — "{p.reason}"
                 </div>
                 {p.facts.member && (
                   <div className="text-xs text-gray-500">
-                    At the time: {p.facts.member.roles.join(', ')}; {p.facts.member.is_active ? 'active' : 'deactivated'}; last sign-in {fmt(p.facts.member.last_sign_in_at)}; {p.facts.member.open_sessions} open session(s)
+                    At the time: {p.facts.member.roles.map(roleLabel).join(', ')};{p.facts.member.is_active ? 'active' : 'deactivated'}; last sign-in {fmt(p.facts.member.last_sign_in_at)}; {p.facts.member.open_sessions} open session(s)
                   </div>
                 )}
                 <div className="mt-2 flex flex-wrap items-center gap-2">

@@ -9,17 +9,11 @@ import {
 } from '../../api/team';
 import type { TeamMember, Invitation } from '../../types/team';
 import { useAction } from '../../hooks/useAction';
+import { roleLabel } from '../../lib/roles';
 import Spinner from '../../components/ui/Spinner';
 
-const ROLE_OPTIONS = [
-  { value: 'printer_admin', label: 'Printer Admin' },
-  { value: 'store_creator', label: 'Portal Creator' },
-  { value: 'sales_rep', label: 'Sales Rep' },
-  { value: 'sales_team_lead', label: 'Sales Team Lead' },
-  { value: 'billing_contact', label: 'Billing Contact' },
-  { value: 'portal_admin', label: 'Portal Admin' },
-  { value: 'sub_portal_admin', label: 'Sub-Portal Admin' },
-];
+// Role words come from the one shared map (walk C5, 26 Nov 2026).
+const ROLE_OPTIONS = ['printer_admin', 'store_creator', 'sales_rep', 'sales_team_lead', 'billing_contact', 'portal_admin', 'sub_portal_admin'].map((value) => ({ value, label: roleLabel(value) }));
 
 export default function TeamPage() {
   const [members, setMembers] = useState<TeamMember[]>([]);
@@ -159,7 +153,7 @@ export default function TeamPage() {
                 <div>
                   <p className="text-sm font-medium text-gray-900">{inv.invited_email}</p>
                   <p className="text-xs text-gray-500">
-                    Role: {inv.role.replace(/_/g, ' ')} &middot; Expires{' '}
+                    Role: {roleLabel(inv.role)} &middot; Expires{' '}
                     {new Date(inv.expires_at).toLocaleDateString()}
                   </p>
                 </div>
@@ -191,7 +185,7 @@ export default function TeamPage() {
                 <div>
                   <p className="text-sm font-medium text-gray-700">{inv.invited_email}</p>
                   <p className="text-xs text-gray-500">
-                    Role: {inv.role.replace(/_/g, ' ')} &middot; Expired{' '}
+                    Role: {roleLabel(inv.role)} &middot; Expired{' '}
                     {new Date(inv.expires_at).toLocaleDateString()}
                   </p>
                 </div>
@@ -278,7 +272,7 @@ export default function TeamPage() {
                             key={r}
                             className="rounded-full bg-teak/10 px-2 py-0.5 text-xs font-medium text-teak-dark"
                           >
-                            {r.replace(/_/g, ' ')}
+                            {roleLabel(r)}
                           </span>
                         ))}
                       </span>

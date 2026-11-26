@@ -83,3 +83,26 @@ export function canEditCompany(roles: string[] = currentRoles()): boolean {
 export function canAdministerShop(roles: string[] = currentRoles()): boolean {
   return roles.includes('printer_admin') || roles.includes('super_admin');
 }
+
+/** Role codes in words (walk C5, 26 Nov 2026: the Admin page and the members
+ * list rendered `end_user` and `shadow_reader`). One map for every screen
+ * that names a role; an unknown code falls back to its words with the
+ * underscores dropped. */
+export const ROLE_LABELS: Record<string, string> = {
+  end_user: 'Buyer',
+  portal_admin: 'Portal admin',
+  sub_portal_admin: 'Portal sub-admin',
+  printer_admin: 'Printer admin',
+  sales_rep: 'Sales rep',
+  sales_team_lead: 'Sales team lead',
+  store_creator: 'Store creator',
+  shadow_reader: 'Shadow reader',
+  billing_contact: 'Billing contact',
+  super_admin: 'Teaky admin',
+};
+
+export function roleLabel(role: string | null | undefined): string {
+  const code = (role ?? '').trim();
+  if (!code) return '—';
+  return ROLE_LABELS[code.toLowerCase()] ?? code.replace(/_/g, ' ');
+}
