@@ -24,7 +24,6 @@ export default function TeamPage() {
   const [inviteRole, setInviteRole] = useState('sales_rep');
   const [inviting, setInviting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editRole, setEditRole] = useState('');
   const [editName, setEditName] = useState('');
   const [error, setError] = useState('');
 
@@ -89,13 +88,17 @@ export default function TeamPage() {
   const pending = invitations.filter((inv) => !isExpired(inv));
   const expired = invitations.filter(isExpired);
 
-  const handleUpdateRole = async (userId: string) => {
+  // Ruled 26 Nov 2026 (evening): the Team page edits what Settings → Admin does
+  // not — the display name (and, by API, portals and reports_to). A role change
+  // or a removal is a proposal with a reason on Settings → Admin; the direct
+  // routes for those are closed, so nothing here sends a role.
+  const handleSaveName = async (userId: string) => {
     try {
-      await updateMember(userId, { role: editRole, display_name: editName.trim() });
+      await updateMember(userId, { display_name: editName.trim() });
       setEditingId(null);
       await loadData();
     } catch {
-      setError('Failed to update role');
+      setError('Failed to save the name');
     }
   };
 
@@ -270,44 +273,25 @@ export default function TeamPage() {
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-900">{m.email}</td>
                   <td className="px-4 py-3 text-sm">
-                    {editingId === m.user_id ? (
-                      <div className="flex items-center gap-2">
-                        <select
-                          value={editRole}
-                          onChange={(e) => setEditRole(e.target.value)}
-                          className="rounded border border-gray-300 px-2 py-1 text-sm"
+                    <span className="inline-flex flex-wrap items-center gap-1">
+                      {m.roles.map((r) => (
+                        <span
+                          key={r}
+                          className="rounded-full bg-teak/10 px-2 py-0.5 text-xs font-medium text-teak-dark"
                         >
-                          {ROLE_OPTIONS.map((r) => (
-                            <option key={r.value} value={r.value}>
-                              {r.label}
-                            </option>
-                          ))}
-                        </select>
-                        <button
-                          onClick={() => handleUpdateRole(m.user_id)}
-                          className="text-sm text-teak-dark hover:text-teak"
+                          {roleLabel(r)}
+                        </span>
+                      ))}
+                      {editingId === m.user_id && (
+                        <Link
+                          to="/settings/admin"
+                          className="ml-1 text-xs text-teak-dark underline hover:text-teak"
+                          data-testid={`change-role-in-admin-${m.user_id}`}
                         >
-                          Save
-                        </button>
-                        <button
-                          onClick={() => setEditingId(null)}
-                          className="text-sm text-gray-500 hover:text-gray-700"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    ) : (
-                      <span className="inline-flex items-center gap-1">
-                        {m.roles.map((r) => (
-                          <span
-                            key={r}
-                            className="rounded-full bg-teak/10 px-2 py-0.5 text-xs font-medium text-teak-dark"
-                          >
-                            {roleLabel(r)}
-                          </span>
-                        ))}
-                      </span>
-                    )}
+                          Change role on Settings → Admin
+                        </Link>
+                      )}
+                    </span>
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-500">
                     {m.portal_assignments.length > 0
@@ -315,16 +299,33 @@ export default function TeamPage() {
                       : 'All'}
                   </td>
                   <td className="px-4 py-3 text-right text-sm">
-                    <button
-                      onClick={() => {
-                        setEditingId(m.user_id);
-                        setEditRole(m.roles[0] || 'sales_rep');
-                        setEditName(m.display_name ?? '');
-                      }}
-                      className="mr-3 text-teak-dark hover:text-teak"
-                    >
-                      Edit
-                    </button>
+                    {editingId === m.user_id ? (
+                      <>
+                        <button
+                          onClick={() => handleSaveName(m.user_id)}
+                          className="mr-3 text-teak-dark hover:text-teak"
+                        >
+                          Save
+                        </button>
+                        <button
+                          onClick={() => setEditingId(null)}
+                          className="mr-3 text-gray-500 hover:text-gray-700"
+                        >
+                          Cancel
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        onClick={() => {
+                          setEditingId(m.user_id);
+                          setEditName(m.display_name ?? '');
+                        }}
+                        className="mr-3 text-teak-dark hover:text-teak"
+                        title="Edit the display name"
+                      >
+                        Edit
+                      </button>
+                    )}
                     {/* Walk of rev 46 (23 Nov 2026, t10 b): removing, deactivating or
                         changing a role is a proposal with a reason on the Admin page —
                         the direct Remove is gone. */}

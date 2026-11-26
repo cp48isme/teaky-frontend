@@ -20,8 +20,10 @@ export interface InviteTeamMemberRequest {
   portal_ids?: string[];
 }
 
+/** The Team page's direct edit (ruled 26 Nov 2026, evening): display name,
+ *  portals, reports_to. A role change is a proposal on Settings → Admin, never
+ *  a field here — the server refuses one with 409. */
 export interface UpdateTeamMemberRequest {
-  role?: string;
   display_name?: string;
   portal_ids?: string[];
   reports_to?: string;
