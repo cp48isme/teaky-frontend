@@ -23,35 +23,56 @@ export function isShadowReader(roles: string[] = currentRoles()): boolean {
   return roles.includes('shadow_reader') && !roles.some((r) => r !== 'shadow_reader' && PRODUCTION_ROLES.has(r));
 }
 
-/** Roles that may act on the production screens. */
-const PRODUCTION_ROLES = new Set(['super_admin', 'printer_admin', 'sales_rep', 'sales_team_lead', 'store_creator']);
+/** Roles that may act on the production screens: exactly the holders of
+ * order:release in the backend's auth/permissions.py — printer_admin and the
+ * platform's super_admin. Until the ruling of 26 Nov 2026 (item 4) this set
+ * also named sales_rep, sales_team_lead and store_creator, which hold no
+ * order:release: they were shown Production and landed on a floor that
+ * answered 403 on every list. The permission model is the truth; this list
+ * only mirrors it for rendering before GET /auth/me has answered. */
+const PRODUCTION_ROLES = new Set(['super_admin', 'printer_admin']);
 
-/** Walk t07/t09 (20 Nov 2026): a role with a floor grant — staff who may act on production, or the read-only shadow reader — gets Production in the admin sidebar. */
+/** Walk t07/t09 (20 Nov 2026): a role with a floor grant — staff who may act
+ * on production (order:release), or the read-only shadow reader
+ * (production:shadow_read) — gets Production in the admin sidebar. Once
+ * GET /auth/me has answered, the server's has_floor decides with it
+ * (Sidebar). */
 export function hasFloorRole(roles: string[] = currentRoles()): boolean {
   return roles.some((r) => PRODUCTION_ROLES.has(r) || r === 'shadow_reader');
 }
 
-/** Buyer roles land on the portal they were invited to; everyone else — the
- * shop's staff and the read-only shadow_reader — lands on the production
- * screens. Ruling 17 Nov 2026 (BLOCKS): Andrew's shadow_reader invitation
- * landed him on the Sandbox Hotel ordering page because the accept page
- * routed by the invitation's portal, not its role. The sign-in path
- * (usePostLoginRedirect) already routes a shadow_reader to /production/batches;
- * this is the one rule for both. */
+/** Buyer roles land on the portal they were invited to (ruling 17 Nov 2026,
+ * BLOCKS: Andrew's shadow_reader invitation landed him on the Sandbox Hotel
+ * ordering page because the accept page routed by the invitation's portal,
+ * not its role). The shadow_reader lands on the production screens — the
+ * only screens its grant reads. A staff role lands on /dashboard (ruling 26
+ * Nov 2026 item 8(a), RGI prep): an RGI admin whose shop has no press-run
+ * config and no units landed on an empty floor; nothing the API exposes says
+ * honestly whether a shop has a floor (press-run-config and
+ * production-settings answer defaults for a shop without one), so every staff
+ * role lands where its later sign-ins already land (usePostLoginRedirect) and
+ * Production is one click away in the sidebar. The sign-in path routes the
+ * shadow_reader to /production/batches and staff to /dashboard; this is the
+ * one rule for both. */
 const BUYER_ROLES = new Set(['end_user', 'portal_admin', 'sub_portal_admin']);
 
 export const PRODUCTION_LANDING = '/production/batches';
+export const STAFF_LANDING = '/dashboard';
 
 export function isBuyerRole(role: string | null | undefined): boolean {
   return BUYER_ROLES.has((role ?? '').trim().toLowerCase());
 }
 
-/** Where an accepted invitation lands: a buyer on the invited portal (the
- * site root when the invitation names none); staff and shadow_reader on the
- * production screens, portal or no portal. */
+/** Where an accepted invitation lands when the server has not said (an
+ * older server; ruling 26 Nov 2026 item 4 makes GET /auth/me's `home` the
+ * answer and this the fallback): a buyer on the invited portal (the site root
+ * when the invitation names none); the shadow_reader on the production
+ * screens; every other role — the shop's staff — on /dashboard, never the
+ * floor, portal or no portal. */
 export function landingForInvitation(role: string | null | undefined, portalSlug: string | null | undefined): string {
   if (isBuyerRole(role)) return portalSlug ? `/p/${portalSlug}` : '/';
-  return PRODUCTION_LANDING;
+  if ((role ?? '').trim().toLowerCase() === 'shadow_reader') return PRODUCTION_LANDING;
+  return STAFF_LANDING;
 }
 
 /** The signed-in user's id (the token's `sub`), so a proposal the caller made

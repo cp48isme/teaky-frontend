@@ -20,6 +20,7 @@ interface Fields {
   logo_url: string;
   website_url: string;
   phone: string;
+  contact_email: string;
   address_line1: string;
   address_line2: string;
   location_city: string;
@@ -33,6 +34,7 @@ const EMPTY: Fields = {
   logo_url: '',
   website_url: '',
   phone: '',
+  contact_email: '',
   address_line1: '',
   address_line2: '',
   location_city: '',
@@ -41,9 +43,11 @@ const EMPTY: Fields = {
   postal_code: '',
 };
 
-const CONTACT_FIELDS: { key: keyof Fields; label: string; autoComplete?: string }[] = [
+const CONTACT_FIELDS: { key: keyof Fields; label: string; autoComplete?: string; type?: string }[] = [
   { key: 'website_url', label: 'Website' },
   { key: 'phone', label: 'Phone', autoComplete: 'tel' },
+  // Ruling 26 Nov 2026 item 8(b): where a reply to a staff invitation lands.
+  { key: 'contact_email', label: 'Contact email', autoComplete: 'email', type: 'email' },
   { key: 'address_line1', label: 'Address line 1', autoComplete: 'address-line1' },
   { key: 'address_line2', label: 'Address line 2', autoComplete: 'address-line2' },
   { key: 'location_city', label: 'City', autoComplete: 'address-level2' },
@@ -59,6 +63,7 @@ function fromProfile(name: string, profile: CompanyProfile | null): Fields {
     logo_url: profile?.logo_url ?? '',
     website_url: profile?.website_url ?? '',
     phone: profile?.phone ?? '',
+    contact_email: profile?.contact_email ?? '',
     address_line1: profile?.address_line1 ?? '',
     address_line2: profile?.address_line2 ?? '',
     location_city: profile?.location_city ?? '',
@@ -148,6 +153,7 @@ export default function CompanyProfilePage() {
         logo_url: fields.logo_url.trim() || undefined,
         website_url: fields.website_url.trim() || undefined,
         phone: fields.phone.trim() || undefined,
+        contact_email: fields.contact_email.trim() || undefined,
         address_line1: fields.address_line1.trim() || undefined,
         address_line2: fields.address_line2.trim() || undefined,
         location_city: fields.location_city.trim() || undefined,
@@ -225,7 +231,7 @@ export default function CompanyProfilePage() {
           {CONTACT_FIELDS.map((f) => (
             <label key={f.key} className="block text-sm font-medium text-gray-700">
               {f.label}
-              <input className={input} value={fields[f.key]} onChange={set(f.key)} disabled={!editable} autoComplete={f.autoComplete} />
+              <input className={input} type={f.type ?? 'text'} value={fields[f.key]} onChange={set(f.key)} disabled={!editable} autoComplete={f.autoComplete} />
             </label>
           ))}
         </div>

@@ -1,5 +1,5 @@
 // Generated from the backend's openapi.json by scripts/api-types.mjs — do not edit.
-// Document sha256 f6b1769a99069c83785ea70bb244e7d3a6eaa94e9b1ca5c6813aac654310a93f · backend f37bde18c7b09453901e327659bed702982fe776.
+// Document sha256 c8a8ca90b9fe937f6715fb9d9e6cd4a5dbcefd2c220f4abeaf3563171d3c82c8 · backend 77bff8c20315d738dc442caa52935729a6641a32.
 export interface paths {
     "/admin/agent-feedback/platform": {
         parameters: {
@@ -819,7 +819,9 @@ export interface paths {
          * Clear Lockout
          * @description A person clears a login lockout (j2o2): by the account's email, the
          *     source address, or both; recorded with who and when, the same override
-         *     principle as holds. The printer's team managers only.
+         *     principle as holds. The printer's team managers only. The clear reaches
+         *     every surface: the change-password surface keys by the user id, so the
+         *     address is resolved to the account (session security pass 25 Nov 2026).
          */
         post: operations["clear_lockout_auth_lockouts_clear_post"];
         delete?: never;
@@ -3781,6 +3783,34 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/p/{slug}/assets/{filename}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Public Storefront Asset
+         * @description Serve one storefront asset of a publicly accessible portal. No
+         *     authentication required. Serves exactly ``PUBLIC_STOREFRONT_ASSETS``:
+         *     a mockup of one of the portal's ACTIVE products
+         *     (``PublicProduct.mockup_urls``), or the portal's brand logo, banner or
+         *     favicon (``PublicPortalResponse.brand_config``). Every other file of the
+         *     shop, and every file of a portal that is not publicly accessible, is the
+         *     same 404 as an unknown slug (TEN-028). The response is the asset's bytes
+         *     (local backend) or a 307 to a short-lived presigned URL (object
+         *     storage); no shop data travels with it.
+         */
+        get: operations["get_public_storefront_asset_p__slug__assets__filename__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/p/{slug}/cart": {
         parameters: {
             query?: never;
@@ -3947,6 +3977,48 @@ export interface paths {
         get: operations["get_my_order_p__slug__orders__order_id__get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/p/{slug}/orders/{order_id}/proofs/{proof_id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Approve My Proof
+         * @description The buyer approves the proof on their own order (ruling 25 Nov 2026,
+         *     r04), optionally with a signature. Someone else's order is not found.
+         */
+        post: operations["approve_my_proof_p__slug__orders__order_id__proofs__proof_id__approve_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/p/{slug}/orders/{order_id}/proofs/{proof_id}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reject My Proof
+         * @description The buyer rejects the proof on their own order, with a reason (ruling
+         *     25 Nov 2026, r04). Someone else's order is not found.
+         */
+        post: operations["reject_my_proof_p__slug__orders__order_id__proofs__proof_id__reject_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -5178,6 +5250,10 @@ export interface paths {
          * Approve Proof
          * @description Approve a proof, optionally capturing a signature.
          *
+         *     Ruling 25 Nov 2026 (r04): the shop's staff, on the buyer's behalf,
+         *     recorded as such on the audit row. The buyer approves their own proof
+         *     through ``POST /p/{slug}/orders/{order_id}/proofs/{proof_id}/approve``.
+         *
          *     S74 D9 ruling-66 collapse: verify_order_access dropped — proof_service.
          *     get_by_id + .approve both enforce tenant at repo boundary via JOIN
          *     through DBOrder (ruling 56 INTERIM cleared).
@@ -5200,7 +5276,7 @@ export interface paths {
         put?: never;
         /**
          * Reject Proof
-         * @description Reject a proof with a reason.
+         * @description Reject a proof with a reason. Who may: as ``approve_proof``.
          *
          *     S74 D9 ruling-66 collapse: verify_order_access dropped — same rationale
          *     as approve_proof.
@@ -6069,6 +6145,28 @@ export interface paths {
          * @description Revoke a pending invitation.
          */
         delete: operations["revoke_invitation_team_invitations__invitation_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/team/invitations/{invitation_id}/clear": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Clear Expired Invitation
+         * @description Clear an invitation past its expiry in one click (walk C6, 26 Nov 2026):
+         *     no proposal — proposals are for acts against a live person. A live
+         *     invitation is refused with 409; revoke it through the Admin page's ledger.
+         */
+        post: operations["clear_expired_invitation_team_invitations__invitation_id__clear_post"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -8564,6 +8662,8 @@ export interface components {
             /** Address Line2 */
             address_line2?: string | null;
             brand_colors?: components["schemas"]["BrandColors"] | null;
+            /** Contact Email */
+            contact_email?: string | null;
             /**
              * Created At
              * Format: date-time
@@ -8765,6 +8865,8 @@ export interface components {
             /** Address Line2 */
             address_line2?: string | null;
             brand_colors?: components["schemas"]["BrandColors"] | null;
+            /** Contact Email */
+            contact_email?: string | null;
             /** Description */
             description?: string | null;
             /** Industry */
@@ -16698,6 +16800,8 @@ export interface components {
             /** Address Line2 */
             address_line2?: string | null;
             brand_colors?: components["schemas"]["BrandColors"] | null;
+            /** Contact Email */
+            contact_email?: string | null;
             /** Description */
             description?: string | null;
             /** Industry */
@@ -23313,6 +23417,38 @@ export interface operations {
             };
         };
     };
+    get_public_storefront_asset_p__slug__assets__filename__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                filename: string;
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_cart_p__slug__cart_get: {
         parameters: {
             query?: never;
@@ -23662,6 +23798,80 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Order"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    approve_my_proof_p__slug__orders__order_id__proofs__proof_id__approve_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                order_id: string;
+                proof_id: string;
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ApproveProofRequest"] | null;
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Proof"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reject_my_proof_p__slug__orders__order_id__proofs__proof_id__reject_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                order_id: string;
+                proof_id: string;
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RejectProofRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Proof"];
                 };
             };
             /** @description Validation Error */
@@ -27707,6 +27917,37 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    clear_expired_invitation_team_invitations__invitation_id__clear_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                invitation_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Invitation"];
+                };
             };
             /** @description Validation Error */
             422: {

@@ -5,6 +5,7 @@ import { acceptInvitation, getInvitationPreview, registerFromInvitation } from '
 import type { InvitationPreview } from '../types/team';
 import { rememberPortal, rememberSignedInEmail } from '../lib/portalSession';
 import { isBuyerRole, landingForInvitation } from '../lib/roles';
+import { serverHome } from '../hooks/usePostLoginRedirect';
 import {
   forgetInviteToken,
   inviteFragmentPath,
@@ -52,22 +53,26 @@ export default function AcceptInvitationPage() {
       .finally(() => setLoading(false));
   }, [token, pathToken, hash]);
 
-  // By role, not by portal (ruling 17 Nov 2026): a buyer lands on the invited
-  // portal; staff and the shadow_reader land on the production screens even
-  // when the invitation names a portal.
+  // The server decides the landing (ruling 26 Nov 2026, item 4): once the
+  // session exists, GET /auth/me says where this person goes — a printer role
+  // on a shop with a floor to the floor, an RGI admin to /dashboard, a buyer
+  // to the invited portal. This local rule (by role, not by portal — ruling 17
+  // Nov 2026; staff to /dashboard — item 8(a)) is the fallback for a server
+  // that does not carry `home`, and names the destination in the sign-in link
+  // before any session exists.
   const landing = landingForInvitation(preview?.role, preview?.portal_slug);
   // A buyer is going to the portal; staff and the shadow_reader are going to
-  // the shop's production screens, so the name and the verb follow the role.
+  // the shop's own screens, so the name and the verb follow the role.
   const buyer = isBuyerRole(preview?.role);
   const destinationName = (buyer ? preview?.portal_name : null) ?? preview?.organization_name ?? '';
   const purpose = buyer ? `order for ${destinationName}` : `work with ${destinationName}`;
 
-  const finish = () => {
+  const finish = async () => {
     forgetInviteToken();
     // Only a buyer's portal is remembered for the next sign-in; a staff or
     // shadow_reader sign-in must not be pulled back to the storefront.
     if (preview?.portal_slug && isBuyerRole(preview.role)) rememberPortal(preview.portal_slug);
-    navigate(landing, { replace: true });
+    navigate((await serverHome()) ?? landing, { replace: true });
   };
 
   const handleRegister = async (e: FormEvent) => {
@@ -81,7 +86,7 @@ export default function AcceptInvitationPage() {
       // The registration issued the session; the guarded landing must see it
       // now, or it bounces the new user through /login (walk of 18 Nov 2026).
       markSignedIn();
-      finish();
+      await finish();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not set your password');
     } finally {
@@ -96,7 +101,7 @@ export default function AcceptInvitationPage() {
     try {
       const invitation = await acceptInvitation(token);
       await switchOrganization(invitation.organization_id);
-      finish();
+      await finish();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to accept invitation');
     } finally {
@@ -214,7 +219,7 @@ export default function AcceptInvitationPage() {
             autoComplete="name"
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
-            placeholder="So your printer knows who is ordering"
+            placeholder="First and last name"
             className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-teak focus:ring-1 focus:ring-teak"
           />
         </div>

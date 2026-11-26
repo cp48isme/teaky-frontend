@@ -14,6 +14,8 @@ export interface CompanyProfile {
   industry: string | null;
   description: string | null;
   phone: string | null;
+  /** Ruling 26 Nov 2026 item 8(b): where a reply to a staff invitation lands. Optional as the generated API type has it. */
+  contact_email?: string | null;
   address_line1: string | null;
   address_line2: string | null;
   location_city: string | null;
@@ -32,6 +34,7 @@ export interface CreateCompanyProfileRequest {
   industry?: string;
   description?: string;
   phone?: string;
+  contact_email?: string;
   address_line1?: string;
   address_line2?: string;
   location_city?: string;
@@ -47,6 +50,7 @@ export interface UpdateCompanyProfileRequest {
   industry?: string;
   description?: string;
   phone?: string;
+  contact_email?: string;
   address_line1?: string;
   address_line2?: string;
   location_city?: string;
