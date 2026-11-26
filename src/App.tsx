@@ -6,6 +6,7 @@ import { PreviewProvider } from './context/PreviewContext';
 import StatusProvider from './contexts/StatusProvider';
 import ProtectedRoute from './components/ProtectedRoute';
 import ContentPage from './pages/ContentPage';
+import HelpPage from './pages/HelpPage';
 import ReportBugPage from './pages/ReportBugPage';
 import AccountPage from './pages/AccountPage';
 import AppLayout from './components/layout/AppLayout';
@@ -74,6 +75,8 @@ function App() {
           <Route path="/privacy" element={<ContentPage page="privacy" />} />
           <Route path="/terms" element={<ContentPage page="terms" />} />
           <Route path="/contact" element={<ContentPage page="contact" />} />
+          <Route path="/help" element={<HelpPage />} />
+          <Route path="/help/:slug" element={<HelpPage />} />
           <Route path="/report-a-bug" element={<ReportBugPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />

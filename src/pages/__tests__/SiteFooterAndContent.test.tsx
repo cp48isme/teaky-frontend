@@ -15,7 +15,7 @@ let authed = false;
 vi.mock('../../api/client', async (importOriginal) => ({ ...(await importOriginal<typeof import('../../api/client')>()), isAuthenticated: () => authed }));
 
 describe('the site footer and the content pages', () => {
-  it('the footer carries the four links and sits in the auth shell', () => {
+  it('the footer carries the five links and sits in the auth shell', () => {
     render(
       <MemoryRouter>
         <AuthShell title="x"><div /></AuthShell>
@@ -25,6 +25,7 @@ describe('the site footer and the content pages', () => {
     expect(Array.from(footer.querySelectorAll('a')).map((a) => [a.textContent, a.getAttribute('href')])).toEqual([
       ['Privacy', '/privacy'],
       ['Terms', '/terms'],
+      ['Help', '/help'],
       ['Contact Teaky', '/contact'],
       ['Report a bug', '/report-a-bug'],
     ]);
