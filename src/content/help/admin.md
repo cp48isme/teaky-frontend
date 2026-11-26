@@ -74,14 +74,14 @@ Press **Settings**. The tabs are **Company**, **Team**, **Admin** (the shop's pr
 ### Team
 
 1. **Invite Team Member**: the **Email**, a **Role** (Printer Admin, Portal Creator, Sales Rep, Sales Team Lead, Billing Contact, Portal Admin, Sub-Portal Admin), **Send Invite**.
-2. **Pending Invitations** lists each with **Revoke**. **Expired Invitations** — "The link in each of these has stopped working. Send a new invitation if the person still needs one."
+2. **Pending Invitations** lists each with **Revoke**. **Expired Invitations** — "The link in each of these has stopped working. Clear it, and send a new invitation if the person still needs one." — each with **Clear** (one click, no proposal; the row reads **Cleared**).
 3. **Team Members**: **Name**, **Email**, **Role**, **Portals** ("All" when unrestricted), **Actions**. **Edit** changes the name ("Shown on invitations they send") and the role; **Save** or **Cancel**. **Admin…** goes to the Admin tab, where removing, deactivating or changing a role is proposed with a reason.
 
 ### Admin: members, invitations, proposals, the second approver
 
 1. **Second approver** — "With a switch on, the person who proposes an act cannot be the one who approves it. Both are off unless you turn them on." The two switches: **Floor acts (void, push alone, short run, mark done)** and **Admin acts (deactivate, remove, role changes, invitations)**.
 2. **Members**: **Name**, **Email**, **Roles**, **Active** ("Yes" or "Deactivated"), **Last sign-in**, **Sessions**, and per member **Deactivate** (or **Reactivate**), **Change role** and **Remove**. Your own row reads "never on yourself".
-3. **Pending invitations**: **Email**, **Role**, **Sent**, **Expires**, with **Resend** and **Revoke**. "None pending." when there are none.
+3. **Pending invitations**: **Email**, **Role**, **Sent**, **Expires**, with **Resend** and **Revoke**; an invitation past its expiry reads **Expired** with **Clear** instead (no proposal — proposals are for acts against a live person). "None pending." when there are none.
 4. Pressing any of those opens the proposal box, headed for example **Remove from shop: name**. "Nothing happens until it is approved. Approving drops their roles on this shop only; their account and history stay." (Each act states its own effect.) For **Change role** choose the **New role**. Type **Why (kept with the record)** and press **Propose**, or **Cancel**.
 5. **Proposals** lists what waits: the act, who proposed it and when, the reason in quotes, and "At the time: …" (roles, active or not, last sign-in, open sessions). Type a note if you want and press **Approve** or **Decline** (your own, with the switch on, reads **Withdraw**). "Nothing waiting for a decision." when empty. **Decided (N)** opens the history.
 6. Anyone who is not the printer admin sees "The admin surface is the shop owner's (printer admin). You can see the team on the Team tab."

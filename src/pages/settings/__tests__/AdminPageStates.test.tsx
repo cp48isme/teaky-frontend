@@ -105,10 +105,11 @@ describe('the Admin page states', () => {
       const row = screen.getByTestId(`invitation-${id}`);
       expect(row).toHaveAttribute('data-state', 'expired');
       expect(within(row).getByText('Expired')).toBeInTheDocument();
-      expect(within(row).queryByRole('button')).toBeNull();
+      expect(within(row).queryByRole('button', { name: /resend|revoke/i })).toBeNull();
     }
     expect(screen.getByTestId('admin-expired-invitations')).toHaveTextContent(/nothing to resend or revoke/);
-    expect(screen.queryByRole('button', { name: /clear/i })).toBeNull();
+    // Ruled 26 Nov afternoon (item 5): one-click Clear per C6, once per expired row.
+    expect(screen.getAllByRole('button', { name: 'Clear' })).toHaveLength(3);
   });
 
   it('roles read as words on the invitations and in the members list', async () => {

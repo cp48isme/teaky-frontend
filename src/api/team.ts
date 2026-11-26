@@ -52,6 +52,15 @@ export async function revokeInvitation(invitationId: string): Promise<void> {
   });
 }
 
+/** Clear an invitation past its expiry in one click (walk C6, 26 Nov 2026): no
+ *  proposal — proposals are for acts against a live person. The server sets
+ *  revoked_at and keeps an audit row; a live invitation is refused with 409. */
+export async function clearExpiredInvitation(invitationId: string): Promise<Invitation> {
+  return apiRequest<Invitation>(`/team/invitations/${invitationId}/clear`, {
+    method: 'POST',
+  });
+}
+
 // The token goes in the request body on all three public calls, never in the
 // path or query: a path token is written to every access log on the way in
 // (bead nt7z, 29 Oct 2026).
