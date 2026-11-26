@@ -4,20 +4,17 @@ import { useAuth } from '../../contexts/AuthContext';
 import { ApiError } from '../../api/client';
 import { rememberSignedInEmail } from '../../lib/portalSession';
 
-/** The one sign-in form (t04, 18 Nov 2026): used by the root page's card and
- * by /login, so both carry the same fields, the same errors and the same
- * "Forgot your password?" link. `next` and `portalSlug` are /login's
- * context; the root page passes none. */
+/** The one sign-in form (t04, 18 Nov 2026), rendered by /login alone since
+ * ruling 26 Nov 2026 item 10(b): the root page links here instead of carrying
+ * its own card. `next` and `portalSlug` are /login's context. */
 export default function SignInForm({
   next = null,
   portalSlug,
   onSignedIn,
-  emailPlaceholder = 'you@company.com',
 }: {
   next?: string | null;
   portalSlug?: string;
   onSignedIn: () => Promise<void>;
-  emailPlaceholder?: string;
 }) {
   const { login } = useAuth();
   const [email, setEmail] = useState('');
@@ -64,7 +61,7 @@ export default function SignInForm({
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           className="mt-1.5 block w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-brand-dark placeholder-gray-400 transition focus:border-teak focus:outline-none focus:ring-1 focus:ring-teak"
-          placeholder={emailPlaceholder}
+          placeholder="you@company.com"
         />
       </div>
 

@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import SignInForm from '../components/auth/SignInForm';
 import { useSignupAvailability } from '../hooks/useSignupAvailability';
 import { isAuthenticated } from '../api/client';
 import Spinner from '../components/ui/Spinner';
@@ -75,8 +74,10 @@ export default function LandingPage() {
   const postLoginRedirect = usePostLoginRedirect();
   // t04 (18 Nov 2026): every sign-up offer on this page is shown only when the server says public sign-up is on.
   const signupOn = useSignupAvailability();
-  // belq (30 Oct 2026): this page carries a sign-in form, so it must never be
-  // where a signed-in user lands. One is sent on to their own place instead.
+  // belq (30 Oct 2026): this page is where a visitor is offered sign-in, so it
+  // must never be where a signed-in user lands. One is sent on to their own
+  // place instead. Ruling 26 Nov 2026 item 10(b), bead hasx: the sign-in form
+  // itself lives on /login alone; this page links to it.
   const signedIn = isAuthenticated();
   useEffect(() => {
     if (signedIn) void postLoginRedirect();
@@ -108,14 +109,12 @@ export default function LandingPage() {
             >
               Features
             </a>
-            <button
-              onClick={() =>
-                document.getElementById('login-form')?.scrollIntoView({ behavior: 'smooth' })
-              }
+            <Link
+              to="/login"
               className="hidden text-sm font-medium text-bark transition hover:text-teak sm:block"
             >
-              Sign In
-            </button>
+              Sign in
+            </Link>
             {signupOn && (
               <button
                 onClick={() => navigate('/register')}
@@ -138,8 +137,7 @@ export default function LandingPage() {
         </div>
 
         <div className="relative mx-auto max-w-7xl px-6 pb-24 pt-16 lg:pt-24">
-          <div className="grid items-center gap-16 lg:grid-cols-2 lg:gap-20">
-            {/* Left — copy */}
+          <div className="max-w-3xl">
             <div>
               <div className="mb-6 inline-flex items-center rounded-full border border-teak/20 bg-teak/5 px-4 py-1.5">
                 <span className="text-xs font-bold uppercase tracking-[0.2em] text-teak-dark">
@@ -163,6 +161,12 @@ export default function LandingPage() {
               </p>
 
               <div className="mt-10 flex flex-wrap gap-4">
+                <Link
+                  to="/login"
+                  className="rounded-full bg-teak-dark px-8 py-3.5 text-sm font-semibold text-white shadow-lg shadow-teak-dark/25 transition hover:bg-teak hover:shadow-xl hover:shadow-teak/30"
+                >
+                  Sign in
+                </Link>
                 {signupOn && (
                   <button
                     onClick={() => navigate('/register')}
@@ -178,31 +182,18 @@ export default function LandingPage() {
                   See Features
                 </a>
               </div>
-            </div>
 
-            {/* Right — login card */}
-            <div id="login-form" className="relative">
-              <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-xl shadow-black/5">
-                <div className="h-1 bg-gradient-to-r from-teak-dark via-teak to-teak-light" />
-                <div className="p-8">
-                  <h2 className="font-heading text-2xl font-bold text-brand-dark">Sign in to Teaky</h2>
-                  <p className="mt-1 text-sm text-wood">Access your portals, orders, and AI agents</p>
-
-                  <SignInForm onSignedIn={() => postLoginRedirect()} emailPlaceholder="you@yourshop.com" />
-
-                  {signupOn && (
-                    <p className="mt-6 text-center text-sm text-wood">
-                      New to Teaky?{' '}
-                      <Link
-                        to="/register"
-                        className="font-medium text-teak-dark transition hover:text-teak"
-                      >
-                        Create a free account
-                      </Link>
-                    </p>
-                  )}
-                </div>
-              </div>
+              {signupOn && (
+                <p className="mt-6 text-sm text-wood">
+                  New to Teaky?{' '}
+                  <Link
+                    to="/register"
+                    className="font-medium text-teak-dark transition hover:text-teak"
+                  >
+                    Create a free account
+                  </Link>
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -266,14 +257,12 @@ export default function LandingPage() {
                 Get Started Free
               </button>
             )}
-            <button
-              onClick={() =>
-                document.getElementById('login-form')?.scrollIntoView({ behavior: 'smooth' })
-              }
+            <Link
+              to="/login"
               className="rounded-full border border-white/30 px-10 py-3.5 text-sm font-semibold text-white transition hover:bg-white/10"
             >
-              Sign In
-            </button>
+              Sign in
+            </Link>
           </div>
         </div>
       </section>
