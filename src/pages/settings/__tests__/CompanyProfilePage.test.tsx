@@ -85,6 +85,17 @@ describe('CompanyProfilePage', () => {
     expect(createCompanyProfile).not.toHaveBeenCalled();
   });
 
+  // Ruling 26 Nov 2026 item 8(b): the shop's contact address — where a reply
+  // to a staff invitation lands — is set on this page.
+  it('saves the contact email on the company profile', async () => {
+    await renderPage();
+    const field = screen.getByLabelText('Contact email');
+    expect(field).toHaveAttribute('type', 'email');
+    await userEvent.type(field, 'hello@rgi.example');
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(updateCompanyProfile).toHaveBeenCalledWith('p1', expect.objectContaining({ contact_email: 'hello@rgi.example' })));
+  });
+
   it('leaves the organisation alone when the name is unchanged', async () => {
     await renderPage();
     await userEvent.click(screen.getByRole('button', { name: 'Save' }));

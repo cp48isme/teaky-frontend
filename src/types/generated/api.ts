@@ -1,5 +1,5 @@
 // Generated from the backend's openapi.json by scripts/api-types.mjs — do not edit.
-// Document sha256 f6b1769a99069c83785ea70bb244e7d3a6eaa94e9b1ca5c6813aac654310a93f · backend f37bde18c7b09453901e327659bed702982fe776.
+// Document sha256 9737c945470c89c0a4c6390ca36c826c59e203cd44212368db549cde55cba7b7 · backend 9f0344464d3a5b791ab304ac7f511146aaff0a75.
 export interface paths {
     "/admin/agent-feedback/platform": {
         parameters: {
@@ -8564,6 +8564,8 @@ export interface components {
             /** Address Line2 */
             address_line2?: string | null;
             brand_colors?: components["schemas"]["BrandColors"] | null;
+            /** Contact Email */
+            contact_email?: string | null;
             /**
              * Created At
              * Format: date-time
@@ -8765,6 +8767,8 @@ export interface components {
             /** Address Line2 */
             address_line2?: string | null;
             brand_colors?: components["schemas"]["BrandColors"] | null;
+            /** Contact Email */
+            contact_email?: string | null;
             /** Description */
             description?: string | null;
             /** Industry */
@@ -16698,6 +16702,8 @@ export interface components {
             /** Address Line2 */
             address_line2?: string | null;
             brand_colors?: components["schemas"]["BrandColors"] | null;
+            /** Contact Email */
+            contact_email?: string | null;
             /** Description */
             description?: string | null;
             /** Industry */

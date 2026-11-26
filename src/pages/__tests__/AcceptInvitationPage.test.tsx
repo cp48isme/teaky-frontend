@@ -117,15 +117,53 @@ describe('AcceptInvitationPage', () => {
     authed = false;
   });
 
-  it('lands invited staff (printer_admin with a portal attached) on the production screens too', async () => {
+  // Ruling 26 Nov 2026 item 8(a): staff land on /dashboard, never the floor
+  // (until this ruling the 17 Nov rule sent them to /production/batches).
+  it('lands invited staff (printer_admin with a portal attached) on /dashboard, not the portal and not the floor', async () => {
     authed = true;
     vi.mocked(getInvitationPreview).mockResolvedValue({ ...preview, role: 'printer_admin' });
     const user = userEvent.setup();
     renderPage();
     await user.click(await screen.findByRole('button', { name: 'Accept invitation' }));
     await waitFor(() => expect(acceptInvitation).toHaveBeenCalledWith('tok-123'));
-    expect(mockNavigate).toHaveBeenCalledWith('/production/batches', { replace: true });
+    expect(mockNavigate).toHaveBeenCalledWith('/dashboard', { replace: true });
+    expect(mockNavigate).not.toHaveBeenCalledWith('/production/batches', { replace: true });
     expect(rememberPortal).not.toHaveBeenCalled();
+  });
+
+  // RGI prep (ruling 26 Nov 2026 item 8(a)): Jeni's invitation — a
+  // printer_admin of a shop with no press-run config, no units and no portal
+  // on the invite — sets a password and lands on /dashboard, not an empty floor.
+  it('an RGI admin (printer_admin, no portal on the invite, no production) sets a password and lands on /dashboard', async () => {
+    authed = false;
+    vi.mocked(getInvitationPreview).mockResolvedValue({
+      ...preview,
+      invited_email: 'jeni@example.com',
+      role: 'printer_admin',
+      organization_name: 'Single Source RGI',
+      portal_slug: null,
+      portal_name: null,
+    });
+    const user = userEvent.setup();
+    renderPage();
+    expect(await screen.findByText("You're invited to Single Source RGI")).toBeInTheDocument();
+    await user.type(screen.getByLabelText('Password'), 'Walkthrough-2026!x');
+    await user.click(screen.getByRole('button', { name: 'Set password and go to Single Source RGI' }));
+    await waitFor(() => expect(registerFromInvitation).toHaveBeenCalledWith('tok-123', 'Walkthrough-2026!x', ''));
+    expect(mockNavigate).toHaveBeenCalledWith('/dashboard', { replace: true });
+    expect(mockNavigate).not.toHaveBeenCalledWith('/production/batches', { replace: true });
+    expect(rememberPortal).not.toHaveBeenCalled();
+  });
+
+  // Ruling 26 Nov 2026 item 8(c): the register form's name hint is neutral,
+  // not a buyer's sentence shown to staff.
+  it("the 'Your name' placeholder is a neutral hint, not a buyer's sentence", async () => {
+    authed = false;
+    vi.mocked(getInvitationPreview).mockResolvedValue({ ...preview, role: 'printer_admin', portal_slug: null, portal_name: null });
+    renderPage();
+    const name = await screen.findByLabelText('Your name');
+    expect(name).toHaveAttribute('placeholder', 'First and last name');
+    expect(name).not.toHaveAttribute('placeholder', expect.stringMatching(/printer knows/));
   });
 
   it('still lands a buyer on the invited portal and remembers it', async () => {

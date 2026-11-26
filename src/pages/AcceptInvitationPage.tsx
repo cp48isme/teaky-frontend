@@ -53,11 +53,12 @@ export default function AcceptInvitationPage() {
   }, [token, pathToken, hash]);
 
   // By role, not by portal (ruling 17 Nov 2026): a buyer lands on the invited
-  // portal; staff and the shadow_reader land on the production screens even
-  // when the invitation names a portal.
+  // portal even when staff are also attached to it; the shadow_reader lands on
+  // the production screens; staff land on /dashboard, never the floor (ruling
+  // 26 Nov 2026 item 8(a)).
   const landing = landingForInvitation(preview?.role, preview?.portal_slug);
   // A buyer is going to the portal; staff and the shadow_reader are going to
-  // the shop's production screens, so the name and the verb follow the role.
+  // the shop's own screens, so the name and the verb follow the role.
   const buyer = isBuyerRole(preview?.role);
   const destinationName = (buyer ? preview?.portal_name : null) ?? preview?.organization_name ?? '';
   const purpose = buyer ? `order for ${destinationName}` : `work with ${destinationName}`;
@@ -214,7 +215,7 @@ export default function AcceptInvitationPage() {
             autoComplete="name"
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
-            placeholder="So your printer knows who is ordering"
+            placeholder="First and last name"
             className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-teak focus:ring-1 focus:ring-teak"
           />
         </div>
