@@ -28,7 +28,7 @@ afterEach(() => {
 
 describe('AuthedImage', () => {
   it('fetches the upload with the bearer, shows the object URL, and revokes it on unmount', async () => {
-    fetchMock.mockResolvedValueOnce(new Response(new Blob(['png']), { status: 200 }));
+    fetchMock.mockResolvedValueOnce(new Response('png', { status: 200 }));
     const { unmount } = render(<AuthedImage src="/uploads/abc_mark.png" alt="Shop logo" className="h-20" />);
 
     expect(screen.queryByRole('img')).not.toBeInTheDocument();

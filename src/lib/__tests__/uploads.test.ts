@@ -105,7 +105,7 @@ describe('fetchUploadObjectUrl', () => {
   });
 
   it('GETs the bearer route under the API base with the token and makes an object URL of the bytes', async () => {
-    fetchMock.mockResolvedValueOnce(new Response(new Blob(['png']), { status: 200 }));
+    fetchMock.mockResolvedValueOnce(new Response('png', { status: 200 }));
     const made = await fetchUploadObjectUrl('/uploads/abc_logo.png');
     expect(made).toBe('blob:test-object');
     expect(fetchMock).toHaveBeenCalledTimes(1);

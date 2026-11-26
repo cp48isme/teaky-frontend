@@ -39,7 +39,8 @@ describe('CompanyProfileCard — name, mark and the company page (t06)', () => {
   beforeEach(() => {
     fetchMock.mockReset();
     // A fresh Response per call: a body can be read once, and the page reads the old logo and then the new.
-    fetchMock.mockImplementation(() => Promise.resolve(new Response(new Blob(['png']), { status: 200 })));
+    // A string body, not a Blob: under jsdom the global Blob is jsdom's (no .stream()), which Node 22's Response cannot read.
+    fetchMock.mockImplementation(() => Promise.resolve(new Response('png', { status: 200 })));
     vi.stubGlobal('fetch', fetchMock);
     Object.defineProperty(URL, 'createObjectURL', { value: () => 'blob:test-object', configurable: true, writable: true });
     Object.defineProperty(URL, 'revokeObjectURL', { value: () => undefined, configurable: true, writable: true });
