@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getCompanyProfileByOrg } from '../api/companyProfiles';
-import { listMyPortals, type MyPortal } from '../api/auth';
+import { getMe, listMyPortals, type MyPortal } from '../api/auth';
 import { getMyOrganization } from '../api/organizations';
 import { listPortals } from '../api/portals';
 import { isBuyerUser, isPrinterUser, lastPortalPath, safeNextPath } from '../lib/portalSession';
@@ -50,10 +50,36 @@ export async function buyerDestination(): Promise<string> {
 }
 
 /**
+ * The server's answer to "where does this person land" (ruling 26 Nov 2026,
+ * item 4: the server decides the landing, computed from the access matrix and
+ * the shop's facts — GET /auth/me `home`). Null when the server does not carry
+ * it yet or cannot be read, and the caller's own rule applies. One refinement
+ * is the browser's, not the server's: when the server offers the chooser and a
+ * portal is remembered here, the remembered portal wins if it is theirs
+ * (buyerDestination checks that against /auth/me/portals).
+ */
+export async function serverHome(): Promise<string | null> {
+  try {
+    const me = await getMe();
+    const home = typeof me.home === 'string' && me.home.startsWith('/') ? me.home : null;
+    if (home === null) return null;
+    if (home === CHOOSE_PORTAL_PATH && lastPortalPath()) return await buyerDestination();
+    return home;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Returns a function that navigates to the right place after login.
  *
- * Order of precedence (buyer-journey item 1, 2026-09-25; belq, 30 Oct 2026):
+ * Order of precedence (buyer-journey item 1, 2026-09-25; belq, 30 Oct 2026;
+ * the server's answer, 26 Nov 2026):
  * 1. An explicit same-origin `next` path.
+ * 1a. The server's `home` from GET /auth/me (serverHome) — a printer role on a
+ *    shop with a floor lands on the floor, an RGI-shaped admin on /dashboard,
+ *    a buyer on their portal; the rules below are the fallback for a server
+ *    that does not carry it.
  * 2. A buyer-side role → the portal they belong to (buyerDestination): the
  *    remembered one if it is theirs, the only one, or a chooser. A buyer never
  *    sees the printer onboarding wizard, and the company-profile lookup that
@@ -83,6 +109,12 @@ export function usePostLoginRedirect() {
       const explicitNext = safeNextPath(next);
       if (explicitNext) {
         navigate(explicitNext);
+        return;
+      }
+
+      const home = await serverHome();
+      if (home) {
+        navigate(home);
         return;
       }
 

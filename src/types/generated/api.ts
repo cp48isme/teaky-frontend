@@ -11391,6 +11391,13 @@ export interface components {
              * Format: email
              */
             email: string;
+            /** Has Floor */
+            has_floor: boolean;
+            /**
+             * Home
+             * @example /production/batches
+             */
+            home: string;
             /**
              * Id
              * Format: uuid

@@ -23,10 +23,20 @@ export function isShadowReader(roles: string[] = currentRoles()): boolean {
   return roles.includes('shadow_reader') && !roles.some((r) => r !== 'shadow_reader' && PRODUCTION_ROLES.has(r));
 }
 
-/** Roles that may act on the production screens. */
-const PRODUCTION_ROLES = new Set(['super_admin', 'printer_admin', 'sales_rep', 'sales_team_lead', 'store_creator']);
+/** Roles that may act on the production screens: exactly the holders of
+ * order:release in the backend's auth/permissions.py — printer_admin and the
+ * platform's super_admin. Until the ruling of 26 Nov 2026 (item 4) this set
+ * also named sales_rep, sales_team_lead and store_creator, which hold no
+ * order:release: they were shown Production and landed on a floor that
+ * answered 403 on every list. The permission model is the truth; this list
+ * only mirrors it for rendering before GET /auth/me has answered. */
+const PRODUCTION_ROLES = new Set(['super_admin', 'printer_admin']);
 
-/** Walk t07/t09 (20 Nov 2026): a role with a floor grant — staff who may act on production, or the read-only shadow reader — gets Production in the admin sidebar. */
+/** Walk t07/t09 (20 Nov 2026): a role with a floor grant — staff who may act
+ * on production (order:release), or the read-only shadow reader
+ * (production:shadow_read) — gets Production in the admin sidebar. Once
+ * GET /auth/me has answered, the server's has_floor decides with it
+ * (Sidebar). */
 export function hasFloorRole(roles: string[] = currentRoles()): boolean {
   return roles.some((r) => PRODUCTION_ROLES.has(r) || r === 'shadow_reader');
 }
@@ -53,10 +63,12 @@ export function isBuyerRole(role: string | null | undefined): boolean {
   return BUYER_ROLES.has((role ?? '').trim().toLowerCase());
 }
 
-/** Where an accepted invitation lands: a buyer on the invited portal (the
- * site root when the invitation names none); the shadow_reader on the
- * production screens; every other role — the shop's staff — on /dashboard,
- * never the floor, portal or no portal. */
+/** Where an accepted invitation lands when the server has not said (an
+ * older server; ruling 26 Nov 2026 item 4 makes GET /auth/me's `home` the
+ * answer and this the fallback): a buyer on the invited portal (the site root
+ * when the invitation names none); the shadow_reader on the production
+ * screens; every other role — the shop's staff — on /dashboard, never the
+ * floor, portal or no portal. */
 export function landingForInvitation(role: string | null | undefined, portalSlug: string | null | undefined): string {
   if (isBuyerRole(role)) return portalSlug ? `/p/${portalSlug}` : '/';
   if ((role ?? '').trim().toLowerCase() === 'shadow_reader') return PRODUCTION_LANDING;
