@@ -8,7 +8,7 @@ import {
   proposeAdminAction,
   updateAdminSettings,
 } from '../../api/adminSurface';
-import { listInvitations } from '../../api/team';
+import { clearExpiredInvitation, listInvitations } from '../../api/team';
 import type { AdminMember, AdminProposal, AdminProposalKind, AdminSettings } from '../../types/adminSurface';
 import type { Invitation } from '../../types/team';
 import { canAdministerShop, currentUserId, roleLabel } from '../../lib/roles';
@@ -18,7 +18,13 @@ import Spinner from '../../components/ui/Spinner';
  * proposal — deactivate, reactivate, remove, change role, resend or revoke an
  * invitation — recorded with a reason and applied only when approved; never on
  * oneself; never on the shop's last printer_admin; the two second-approver
- * switches. printer_admin only; the shadow_reader never sees it. */
+ * switches. printer_admin only; the shadow_reader never sees it.
+ *
+ * Walk C6 (26 Nov 2026): a refusal of a proposal is shown beside the Propose
+ * button, where the person is looking — the page-top banner sat above two
+ * tables and read as nothing — and the form stays until it succeeds. An
+ * invitation past its expiry needs no proposal: it reads Expired and one
+ * click clears it (POST /team/invitations/{id}/clear). */
 
 const ROLE_OPTIONS = ['printer_admin', 'store_creator', 'sales_rep', 'sales_team_lead', 'billing_contact'].map((value) => ({ value, label: roleLabel(value) }));
 
@@ -61,6 +67,10 @@ function fmt(iso: string | null | undefined): string {
   return Number.isNaN(d.getTime()) ? '—' : d.toLocaleString();
 }
 
+function isExpired(inv: Invitation, now: number): boolean {
+  return new Date(inv.expires_at).getTime() <= now;
+}
+
 export default function AdminPage() {
   const admin = canAdministerShop();
   const me = currentUserId();
@@ -75,6 +85,12 @@ export default function AdminPage() {
   const [newRole, setNewRole] = useState('sales_rep');
   const [busy, setBusy] = useState(false);
   const [notes, setNotes] = useState<Record<string, string>>({});
+  // The last refusal of the open form, shown beside Propose; cleared on success.
+  const [proposeError, setProposeError] = useState('');
+  // A decision's refusal, shown on its own proposal; keyed by proposal id.
+  const [decideErrors, setDecideErrors] = useState<Record<string, string>>({});
+  // Clear on an expired invitation: the row's refusal, keyed by invitation id.
+  const [clearErrors, setClearErrors] = useState<Record<string, string>>({});
 
   const load = useCallback(async () => {
     try {
@@ -106,10 +122,21 @@ export default function AdminPage() {
   const pendingInvitations = useMemo(() => invitations.filter((inv) => !invitationExpired(inv)), [invitations]);
   const expiredInvitations = useMemo(() => invitations.filter((inv) => invitationExpired(inv)), [invitations]);
 
+  const openForm = (next: PendingAct) => {
+    setAct(next);
+    setProposeError('');
+  };
+
+  const closeForm = () => {
+    setAct(null);
+    setReason('');
+    setProposeError('');
+  };
+
   const submit = async () => {
     if (!act || reason.trim().length < 3) return;
     setBusy(true);
-    setError('');
+    setProposeError('');
     try {
       await proposeAdminAction({
         kind: act.kind,
@@ -118,11 +145,11 @@ export default function AdminPage() {
         reason: reason.trim(),
         ...(act.kind === 'change_role' ? { new_role: newRole } : {}),
       });
-      setAct(null);
-      setReason('');
+      closeForm();
       await load();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'The proposal was refused');
+      // The server's own words (the 409's detail), beside the button; the form stays.
+      setProposeError(e instanceof Error && e.message ? e.message : 'The proposal was refused');
     } finally {
       setBusy(false);
     }
@@ -130,14 +157,28 @@ export default function AdminPage() {
 
   const decide = async (proposal: AdminProposal, approve: boolean) => {
     setBusy(true);
-    setError('');
+    setDecideErrors((prev) => ({ ...prev, [proposal.id]: '' }));
     try {
       if (approve) await approveAdminProposal(proposal.id, notes[proposal.id] ?? '');
       else await declineAdminProposal(proposal.id, notes[proposal.id] ?? '');
       await load();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'The decision was refused');
+      setDecideErrors((prev) => ({ ...prev, [proposal.id]: e instanceof Error && e.message ? e.message : 'The decision was refused' }));
       await load();
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const clearExpired = async (inv: Invitation) => {
+    setBusy(true);
+    setClearErrors((prev) => ({ ...prev, [inv.id]: '' }));
+    try {
+      const cleared = await clearExpiredInvitation(inv.id);
+      // The row stays, reading Cleared, until the next load drops it.
+      setInvitations((prev) => prev.map((row) => (row.id === inv.id ? cleared : row)));
+    } catch (e) {
+      setClearErrors((prev) => ({ ...prev, [inv.id]: e instanceof Error && e.message ? e.message : 'Not cleared' }));
     } finally {
       setBusy(false);
     }
@@ -169,6 +210,7 @@ export default function AdminPage() {
     const m = members.find((x) => x.user_id === id);
     return m ? m.display_name || m.email : id === me ? 'you' : 'a member';
   };
+  const now = Date.now();
 
   return (
     <div className="space-y-8" data-testid="admin-page">
@@ -249,18 +291,18 @@ export default function AdminPage() {
                       ) : (
                         <div className="flex flex-wrap gap-2">
                           {m.is_active ? (
-                            <button type="button" className="text-xs text-red-700 underline" onClick={() => setAct({ kind: 'deactivate_member', targetKind: 'member', targetId: m.user_id, label: m.display_name || m.email })}>
+                            <button type="button" className="text-xs text-red-700 underline" onClick={() => openForm({ kind: 'deactivate_member', targetKind: 'member', targetId: m.user_id, label: m.display_name || m.email })}>
                               Deactivate
                             </button>
                           ) : (
-                            <button type="button" className="text-xs text-teak-dark underline" onClick={() => setAct({ kind: 'reactivate_member', targetKind: 'member', targetId: m.user_id, label: m.display_name || m.email })}>
+                            <button type="button" className="text-xs text-teak-dark underline" onClick={() => openForm({ kind: 'reactivate_member', targetKind: 'member', targetId: m.user_id, label: m.display_name || m.email })}>
                               Reactivate
                             </button>
                           )}
-                          <button type="button" className="text-xs text-gray-700 underline" onClick={() => setAct({ kind: 'change_role', targetKind: 'member', targetId: m.user_id, label: m.display_name || m.email })}>
+                          <button type="button" className="text-xs text-gray-700 underline" onClick={() => openForm({ kind: 'change_role', targetKind: 'member', targetId: m.user_id, label: m.display_name || m.email })}>
                             Change role
                           </button>
-                          <button type="button" className="text-xs text-red-700 underline" onClick={() => setAct({ kind: 'remove_member', targetKind: 'member', targetId: m.user_id, label: m.display_name || m.email })}>
+                          <button type="button" className="text-xs text-red-700 underline" onClick={() => openForm({ kind: 'remove_member', targetKind: 'member', targetId: m.user_id, label: m.display_name || m.email })}>
                             Remove
                           </button>
                         </div>
@@ -297,14 +339,28 @@ export default function AdminPage() {
                   <td className="py-2 pr-4">{fmt(inv.created_at)}</td>
                   <td className="py-2 pr-4">{fmt(inv.expires_at)}</td>
                   <td className="py-2 pr-4">
-                    <div className="flex gap-2">
-                      <button type="button" className="text-xs text-teak-dark underline" onClick={() => setAct({ kind: 'resend_invitation', targetKind: 'invitation', targetId: inv.id, label: inv.invited_email })}>
-                        Resend
-                      </button>
-                      <button type="button" className="text-xs text-red-700 underline" onClick={() => setAct({ kind: 'revoke_invitation', targetKind: 'invitation', targetId: inv.id, label: inv.invited_email })}>
-                        Revoke
-                      </button>
-                    </div>
+                    {inv.revoked_at ? (
+                      <span className="text-xs text-gray-600" data-testid={`cleared-${inv.id}`}>Cleared</span>
+                    ) : isExpired(inv, now) ? (
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="rounded-full bg-gray-200 px-2 py-0.5 text-xs font-medium text-gray-700">Expired</span>
+                        <button type="button" className="text-xs text-gray-700 underline" disabled={busy} onClick={() => clearExpired(inv)}>
+                          Clear
+                        </button>
+                        {clearErrors[inv.id] && (
+                          <span className="text-xs text-red-700" role="alert">{clearErrors[inv.id]}</span>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="flex gap-2">
+                        <button type="button" className="text-xs text-teak-dark underline" onClick={() => openForm({ kind: 'resend_invitation', targetKind: 'invitation', targetId: inv.id, label: inv.invited_email })}>
+                          Resend
+                        </button>
+                        <button type="button" className="text-xs text-red-700 underline" onClick={() => openForm({ kind: 'revoke_invitation', targetKind: 'invitation', targetId: inv.id, label: inv.invited_email })}>
+                          Revoke
+                        </button>
+                      </div>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -373,9 +429,14 @@ export default function AdminPage() {
             <button type="button" className="rounded bg-teak-dark px-3 py-1 text-sm text-white disabled:opacity-50" disabled={busy || reason.trim().length < 3} onClick={submit} data-testid="propose-submit">
               Propose
             </button>
-            <button type="button" className="rounded border px-3 py-1 text-sm" disabled={busy} onClick={() => { setAct(null); setReason(''); }}>
+            <button type="button" className="rounded border px-3 py-1 text-sm" disabled={busy} onClick={closeForm}>
               Cancel
             </button>
+            {proposeError && (
+              <span className="self-center text-sm text-red-700" role="alert" data-testid="propose-error">
+                {proposeError}
+              </span>
+            )}
           </div>
         </section>
       )}
@@ -409,6 +470,9 @@ export default function AdminPage() {
                   <button type="button" className="rounded border px-3 py-1 text-xs" disabled={busy} onClick={() => decide(p, false)} data-testid="decline">
                     {mine && settings?.require_second_approver_admin ? 'Withdraw' : 'Decline'}
                   </button>
+                  {decideErrors[p.id] && (
+                    <span className="text-xs text-red-700" role="alert" data-testid={`decide-error-${p.id}`}>{decideErrors[p.id]}</span>
+                  )}
                 </div>
               </li>
             );

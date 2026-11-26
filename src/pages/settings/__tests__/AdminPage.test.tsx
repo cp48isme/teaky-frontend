@@ -1,7 +1,7 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
-import { clearSession, setSession } from '../../../api/client';
+import { ApiError, clearSession, setSession } from '../../../api/client';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import AdminPage from '../AdminPage';
 import SettingsLayout from '../SettingsLayout';
@@ -10,6 +10,8 @@ import type { AdminMember, AdminProposal, AdminSettings } from '../../../types/a
 // The shop admin surface (t03, ruled 19 Nov 2026): every act is a proposal
 // with a reason; never on oneself; the guards' refusals are shown as the
 // server words them; the two switches; nothing for a non-admin.
+// Walk C6 (26 Nov 2026): a refusal is shown beside the Propose button and the
+// form stays; an expired invitation reads Expired with a one-click Clear.
 
 const ME = 'u-me';
 const OTHER = 'u-other';
@@ -25,7 +27,9 @@ const members: AdminMember[] = [
 ];
 const invitations = [
   { id: 'inv-1', organization_id: 'o1', invited_email: 'pending@shop.test', invited_by: ME, role: 'sales_rep', portal_ids: [], expires_at: '2099-01-01T00:00:00Z', accepted_at: null, revoked_at: null, created_at: '2026-11-19T00:00:00Z', updated_at: '2026-11-19T00:00:00Z' },
+  { id: 'inv-2', organization_id: 'o1', invited_email: 'expired@shop.test', invited_by: ME, role: 'sales_rep', portal_ids: [], expires_at: '2026-10-15T09:00:00Z', accepted_at: null, revoked_at: null, created_at: '2026-10-08T00:00:00Z', updated_at: '2026-10-08T00:00:00Z' },
 ];
+const EXPIRED_REFUSAL = 'This invitation expired on 2026-10-15; clear it from the Team page (an expired invitation needs no proposal to revoke it)';
 let settings: AdminSettings = { require_second_approver_floor: false, require_second_approver_admin: false };
 let proposals: AdminProposal[] = [];
 
@@ -47,8 +51,12 @@ vi.mock('../../../api/adminSurface', () => ({
   approveAdminProposal: (...a: unknown[]) => api.approveAdminProposal(...(a as [])),
   declineAdminProposal: (...a: unknown[]) => api.declineAdminProposal(...(a as [])),
 }));
+const teamApi = {
+  clearExpiredInvitation: vi.fn(),
+};
 vi.mock('../../../api/team', () => ({
   listInvitations: vi.fn(() => Promise.resolve(invitations)),
+  clearExpiredInvitation: (...a: unknown[]) => teamApi.clearExpiredInvitation(...(a as [string])),
 }));
 
 function proposal(overrides: Partial<AdminProposal> = {}): AdminProposal {
@@ -78,6 +86,9 @@ describe('AdminPage', () => {
     Object.values(api).forEach((fn) => fn.mockClear());
     api.proposeAdminAction.mockResolvedValue(proposal());
     api.approveAdminProposal.mockResolvedValue(proposal({ status: 'approved' }));
+    teamApi.clearExpiredInvitation.mockReset().mockImplementation((id: string) =>
+      Promise.resolve({ ...invitations.find((inv) => inv.id === id)!, revoked_at: '2026-11-26T16:13:00Z' }),
+    );
     api.declineAdminProposal.mockResolvedValue(proposal({ status: 'declined' }));
   });
 
@@ -133,6 +144,58 @@ describe('AdminPage', () => {
     await userEvent.type(screen.getByLabelText('Reason'), 'leaving');
     await userEvent.click(screen.getByTestId('propose-submit'));
     expect(await screen.findByRole('alert')).toHaveTextContent("last printer_admin cannot be removed, deactivated or demoted");
+  });
+
+  it('a 409 is shown beside the Propose button in the server\'s words, and the form and reason stay', async () => {
+    api.proposeAdminAction.mockRejectedValueOnce(new ApiError(409, EXPIRED_REFUSAL));
+    renderPage();
+    await userEvent.click(within(await screen.findByTestId(`member-${OTHER}`)).getByRole('button', { name: 'Remove' }));
+    const form = within(screen.getByTestId('propose-form'));
+    await userEvent.type(form.getByLabelText('Reason'), 'leaving');
+    await userEvent.click(form.getByTestId('propose-submit'));
+    expect(await form.findByTestId('propose-error')).toHaveTextContent(EXPIRED_REFUSAL);
+    expect(screen.getByTestId('propose-form')).toBeInTheDocument();
+    expect(form.getByLabelText('Reason')).toHaveValue('leaving');
+    // A new attempt starts clean: the refusal goes when the form is opened again.
+    await userEvent.click(form.getByRole('button', { name: 'Cancel' }));
+    await userEvent.click(within(screen.getByTestId(`member-${OTHER}`)).getByRole('button', { name: 'Remove' }));
+    expect(screen.queryByTestId('propose-error')).not.toBeInTheDocument();
+  });
+
+  it('a proposal that succeeds closes the form and clears the reason', async () => {
+    renderPage();
+    await userEvent.click(within(await screen.findByTestId(`member-${OTHER}`)).getByRole('button', { name: 'Deactivate' }));
+    await userEvent.type(screen.getByLabelText('Reason'), 'left the company');
+    await userEvent.click(screen.getByTestId('propose-submit'));
+    await waitFor(() => expect(screen.queryByTestId('propose-form')).not.toBeInTheDocument());
+    await userEvent.click(within(screen.getByTestId(`member-${OTHER}`)).getByRole('button', { name: 'Deactivate' }));
+    expect(screen.getByLabelText('Reason')).toHaveValue('');
+    expect(screen.queryByTestId('propose-error')).not.toBeInTheDocument();
+  });
+
+  it('an expired invitation reads Expired with Clear, not Resend or Revoke; Clear calls the route and the row reads Cleared', async () => {
+    renderPage();
+    const expired = within(await screen.findByTestId('invitation-inv-2'));
+    expect(expired.getByText('Expired')).toBeInTheDocument();
+    expect(expired.queryByRole('button', { name: 'Resend' })).not.toBeInTheDocument();
+    expect(expired.queryByRole('button', { name: 'Revoke' })).not.toBeInTheDocument();
+    const live = within(screen.getByTestId('invitation-inv-1'));
+    expect(live.getByRole('button', { name: 'Resend' })).toBeInTheDocument();
+    expect(live.getByRole('button', { name: 'Revoke' })).toBeInTheDocument();
+    await userEvent.click(expired.getByRole('button', { name: 'Clear' }));
+    expect(teamApi.clearExpiredInvitation).toHaveBeenCalledWith('inv-2');
+    expect(await expired.findByTestId('cleared-inv-2')).toHaveTextContent('Cleared');
+    expect(expired.queryByRole('button', { name: 'Clear' })).not.toBeInTheDocument();
+    expect(api.proposeAdminAction).not.toHaveBeenCalled();
+  });
+
+  it('a Clear the server refuses says why on the row', async () => {
+    teamApi.clearExpiredInvitation.mockRejectedValueOnce(new ApiError(409, 'This invitation is still live (it expires on 2026-12-03); revoke it through a proposal on the Admin page'));
+    renderPage();
+    const expired = within(await screen.findByTestId('invitation-inv-2'));
+    await userEvent.click(expired.getByRole('button', { name: 'Clear' }));
+    expect(await expired.findByRole('alert')).toHaveTextContent('still live');
+    expect(expired.getByRole('button', { name: 'Clear' })).toBeInTheDocument();
   });
 
   it('the ledger approves and declines; under the admin switch the proposer sees Withdraw', async () => {

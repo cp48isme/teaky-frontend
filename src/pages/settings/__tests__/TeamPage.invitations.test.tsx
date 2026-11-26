@@ -14,17 +14,39 @@ const invitations = [
   { id: 'done', invited_email: 'done@example.com', role: 'end_user', expires_at: new Date(Date.now() + 5 * day).toISOString(), accepted_at: '2026-10-20T00:00:00Z', revoked_at: null },
 ];
 const revokeInvitation = vi.fn().mockResolvedValue(undefined);
+const clearExpiredInvitation = vi.fn();
 vi.mock('../../../api/team', () => ({
   listMembers: vi.fn(() => Promise.resolve([])),
   listInvitations: vi.fn(() => Promise.resolve(invitations)),
   inviteMember: vi.fn(),
   revokeInvitation: (...args: unknown[]) => revokeInvitation(...args),
+  clearExpiredInvitation: (...args: unknown[]) => clearExpiredInvitation(...args),
   removeMember: vi.fn(),
   updateMember: vi.fn(),
 }));
 
 describe('TeamPage — invitations', () => {
-  beforeEach(() => revokeInvitation.mockClear());
+  beforeEach(() => {
+    revokeInvitation.mockClear();
+    clearExpiredInvitation.mockReset().mockImplementation((id: string) =>
+      Promise.resolve({ ...invitations.find((inv) => inv.id === id)!, revoked_at: '2026-11-26T16:13:00Z' }),
+    );
+  });
+
+  // Walk C6 (26 Nov 2026): an expired invitation needs no proposal — one click clears it.
+  it('clears an expired invitation in one click and the row reads Cleared', async () => {
+    render(
+      <MemoryRouter>
+        <TeamPage />
+      </MemoryRouter>,
+    );
+    const expired = (await screen.findByText('Expired Invitations')).closest('div')!;
+    await userEvent.click(within(expired).getByRole('button', { name: 'Clear' }));
+    expect(clearExpiredInvitation).toHaveBeenCalledWith('old');
+    expect(await within(expired).findByTestId('cleared-old')).toHaveTextContent('Cleared');
+    expect(within(expired).queryByRole('button', { name: 'Clear' })).not.toBeInTheDocument();
+    expect(revokeInvitation).not.toHaveBeenCalled();
+  });
 
   it('lists a live invitation as pending with Revoke, and an expired one apart with no button', async () => {
     render(

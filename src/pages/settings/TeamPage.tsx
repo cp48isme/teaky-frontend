@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
+  clearExpiredInvitation,
   listMembers,
   inviteMember,
   listInvitations,
@@ -65,6 +66,19 @@ export default function TeamPage() {
     const result = await revoke.run(invId);
     if (result === undefined) return;
     await loadData();
+  };
+
+  // Walk C6 (26 Nov 2026): an expired invitation needs no proposal — one click
+  // clears it. The row stays, reading "Cleared", until the next load drops it.
+  const clear = useAction('Invitation', (invId: string) => clearExpiredInvitation(invId), {
+    success: 'Cleared',
+  });
+  const [clearingId, setClearingId] = useState<string | null>(null);
+  const handleClear = async (invId: string) => {
+    setClearingId(invId);
+    const result = await clear.run(invId);
+    if (result === undefined) return;
+    setInvitations((prev) => prev.map((inv) => (inv.id === invId ? result : inv)));
   };
 
   // Cause 3 (30 Oct 2026): an invitation past its expiry is not pending — the
@@ -174,7 +188,7 @@ export default function TeamPage() {
         <div className="rounded-lg border border-gray-200 bg-white p-6">
           <h2 className="font-heading text-xl font-bold text-brand-dark">Expired Invitations</h2>
           <p className="mt-1 text-sm text-gray-500">
-            The link in each of these has stopped working. Send a new invitation if the person still needs one.
+            The link in each of these has stopped working. Clear it, and send a new invitation if the person still needs one.
           </p>
           <ul className="mt-4 space-y-3">
             {expired.map((inv) => (
@@ -189,7 +203,24 @@ export default function TeamPage() {
                     {new Date(inv.expires_at).toLocaleDateString()}
                   </p>
                 </div>
-                <span className="rounded-full bg-gray-200 px-2 py-0.5 text-xs font-medium text-gray-700">Expired</span>
+                <div className="flex items-center gap-3">
+                  <span className="rounded-full bg-gray-200 px-2 py-0.5 text-xs font-medium text-gray-700">Expired</span>
+                  {inv.revoked_at ? (
+                    <span className="text-sm text-gray-600" data-testid={`cleared-${inv.id}`}>Cleared</span>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => handleClear(inv.id)}
+                      disabled={clear.pending}
+                      className="text-sm text-gray-700 underline hover:text-gray-900 disabled:opacity-50"
+                    >
+                      Clear
+                    </button>
+                  )}
+                  {clearingId === inv.id && clear.error && (
+                    <span className="text-xs text-red-700" role="alert">{clear.error}</span>
+                  )}
+                </div>
               </li>
             ))}
           </ul>
