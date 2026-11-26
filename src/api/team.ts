@@ -36,12 +36,6 @@ export async function updateMember(
   });
 }
 
-export async function removeMember(userId: string): Promise<void> {
-  return apiRequest<void>(`/team/members/${userId}`, {
-    method: 'DELETE',
-  });
-}
-
 export async function listInvitations(): Promise<Invitation[]> {
   return apiRequest<Invitation[]>('/team/invitations');
 }

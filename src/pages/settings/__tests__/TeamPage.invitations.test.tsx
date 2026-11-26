@@ -21,7 +21,6 @@ vi.mock('../../../api/team', () => ({
   inviteMember: vi.fn(),
   revokeInvitation: (...args: unknown[]) => revokeInvitation(...args),
   clearExpiredInvitation: (...args: unknown[]) => clearExpiredInvitation(...args),
-  removeMember: vi.fn(),
   updateMember: vi.fn(),
 }));
 
