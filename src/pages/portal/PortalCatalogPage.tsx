@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { storefrontAssetUrl } from '../../lib/uploads';
 import { Link, useParams } from 'react-router-dom';
 import { usePortalContext } from '../../contexts/PortalContext';
 import { humanize } from '../../lib/labels';
@@ -82,7 +83,7 @@ export default function PortalCatalogPage() {
             >
               {product.mockup_urls.length > 0 ? (
                 <img
-                  src={product.mockup_urls[0]}
+                  src={storefrontAssetUrl(portal.slug, product.mockup_urls[0])}
                   alt={product.name}
                   className="h-44 w-full object-cover"
                   onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.parentElement!.querySelector('.img-fallback')?.classList.remove('hidden'); }}

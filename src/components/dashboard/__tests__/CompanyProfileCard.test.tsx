@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import CompanyProfileCard from '../CompanyProfileCard';
 
 // Cause 5 (30 Oct 2026): the wizard link appears only for a self-serve signup.
@@ -33,15 +33,32 @@ describe('CompanyProfileCard — name, mark and the company page (t06)', () => {
     is_wizard_complete: true, created_at: '2026-11-19T00:00:00Z', updated_at: '2026-11-19T00:00:00Z',
   };
 
-  it('shows the name and the logo at 80px and links a printer_admin to /settings/company', () => {
+  // Backend #320 (ruled 26 Nov 2026, item 9): the logo is read through the
+  // authenticated client and shown from an object URL, not a bare /uploads src.
+  const fetchMock = vi.fn<(url: string, init?: RequestInit) => Promise<Response>>();
+  beforeEach(() => {
+    fetchMock.mockReset();
+    // A fresh Response per call: a body can be read once, and the page reads the old logo and then the new.
+    // A string body, not a Blob: under jsdom the global Blob is jsdom's (no .stream()), which Node 22's Response cannot read.
+    fetchMock.mockImplementation(() => Promise.resolve(new Response('png', { status: 200 })));
+    vi.stubGlobal('fetch', fetchMock);
+    Object.defineProperty(URL, 'createObjectURL', { value: () => 'blob:test-object', configurable: true, writable: true });
+    Object.defineProperty(URL, 'revokeObjectURL', { value: () => undefined, configurable: true, writable: true });
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('shows the name and the logo at 80px and links a printer_admin to /settings/company', async () => {
     render(
       <MemoryRouter>
         <CompanyProfileCard profile={profile} name="Single Source US" roles={['printer_admin']} />
       </MemoryRouter>,
     );
     expect(screen.getByText('Single Source US')).toBeInTheDocument();
-    const logo = screen.getByRole('img', { name: 'Single Source US logo' });
-    expect(logo).toHaveAttribute('src', '/uploads/mark.png');
+    const logo = await screen.findByRole('img', { name: 'Single Source US logo' });
+    expect(logo).toHaveAttribute('src', 'blob:test-object');
+    expect(fetchMock.mock.calls[0]![0]).toBe('/api/uploads/mark.png');
     expect(logo.className).toContain('h-20');
     expect(screen.getByRole('link', { name: 'Edit' })).toHaveAttribute('href', '/settings/company');
   });

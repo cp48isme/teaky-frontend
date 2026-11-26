@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
+import AuthedImage from '../../components/ui/AuthedImage';
 import { createCompanyProfile, getCompanyProfileByOrg, updateCompanyProfile } from '../../api/companyProfiles';
 import { updateMyOrganization } from '../../api/organizations';
 import { uploadFile } from '../../api/uploads';
@@ -186,7 +187,7 @@ export default function CompanyProfilePage() {
           <div>
             <div className="flex h-28 w-28 items-center justify-center rounded-md border border-gray-200 bg-white p-2">
               {fields.logo_url ? (
-                <img src={fields.logo_url} alt={`${fields.name || 'Shop'} logo`} className="max-h-full max-w-full object-contain" />
+                <AuthedImage src={fields.logo_url} alt={`${fields.name || 'Shop'} logo`} className="max-h-full max-w-full object-contain" />
               ) : (
                 <span className="text-xs text-gray-400">No logo</span>
               )}

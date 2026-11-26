@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react';
+import AuthedImage from '../ui/AuthedImage';
 import { scrapeWebsite } from '../../api/scraping';
 import type { ScrapeWebsiteResponse } from '../../types/scraping';
 import Spinner from '../ui/Spinner';
@@ -193,7 +194,7 @@ export default function CompanyProfileStep({ data, onUpdate, onNext }: Props) {
             {data.logoUrl && (
               <div className="flex items-center gap-4">
                 <div className="flex-shrink-0 h-16 w-24 flex items-center justify-center rounded-lg border border-gray-200 bg-white p-2">
-                  <img
+                  <AuthedImage
                     src={data.logoUrl}
                     alt="Company logo"
                     className="max-h-12 max-w-20 object-contain"

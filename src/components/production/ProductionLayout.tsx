@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import AuthedImage from '../ui/AuthedImage';
 import { Link, NavLink } from 'react-router-dom';
 import AccountMenu from '../layout/AccountMenu';
 import SiteFooter from '../layout/SiteFooter';
@@ -54,7 +55,7 @@ export default function ProductionLayout({ children, footnote, readOnly = isShad
             {teakysOwn ? (
               <img src={TEAKY_WORDMARK} alt="Teaky" style={{ height: 36, width: 'auto', display: 'block' }} data-testid="shell-mark" data-source="teaky" />
             ) : (
-              <img src={shell.mark.url} alt={shell.mark.alt} style={{ height: 44, width: 'auto', display: 'block' }} data-testid="shell-mark" data-source={shell.mark.source} />
+              <AuthedImage src={shell.mark.url} alt={shell.mark.alt} style={{ height: 44, width: 'auto', display: 'block' }} data-testid="shell-mark" data-source={shell.mark.source} />
             )}
           </Link>
         )}

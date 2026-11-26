@@ -1,6 +1,6 @@
 import type { SessionResponse } from '../types/auth';
 
-const API_BASE = '/api';
+export const API_BASE = '/api';
 
 /**
  * The session cut-over (review 19 Nov 2026, item 6; backend #279). The access
@@ -160,14 +160,20 @@ export const sessionNavigation = {
   },
 };
 
-export async function apiRequest<T>(
+/**
+ * One request to the API as the signed-in session: the bearer attached, a
+ * session-expiry 401 refreshed and retried once (or the person sent to sign
+ * in), and the raw Response handed back. `apiRequest` builds on this for
+ * JSON; the upload reader (`lib/uploads`, ruling 25 Nov 2026: GET
+ * /uploads/{name} needs a signed-in caller) uses it directly for bytes.
+ */
+export async function authenticatedFetch(
   path: string,
   options: RequestInit = {},
-): Promise<T> {
+): Promise<Response> {
   const url = `${API_BASE}${path}`;
 
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
     ...(options.headers as Record<string, string> | undefined),
   };
 
@@ -197,6 +203,21 @@ export async function apiRequest<T>(
       throw new Error('Session expired');
     }
   }
+
+  return response;
+}
+
+export async function apiRequest<T>(
+  path: string,
+  options: RequestInit = {},
+): Promise<T> {
+  const response = await authenticatedFetch(path, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(options.headers as Record<string, string> | undefined),
+    },
+  });
 
   if (!response.ok) {
     const errorBody: unknown = await response.json().catch(() => ({}));

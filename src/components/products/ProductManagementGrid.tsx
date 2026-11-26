@@ -1,4 +1,5 @@
 import { PRODUCT_CATEGORIES as CATEGORIES, DEFAULT_PRODUCT_CATEGORY } from '../../lib/productCategories';
+import AuthedImage from '../ui/AuthedImage';
 import { useState, useEffect, type ChangeEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { listProducts, createProduct, updateProduct, deleteProduct } from '../../api/products';
@@ -587,7 +588,7 @@ function ProductTable({
               </td>
               <td className="px-4 py-3">
                 {product.mockup_urls && product.mockup_urls.length > 0 ? (
-                  <img
+                  <AuthedImage
                     src={product.mockup_urls[0]}
                     alt=""
                     className="h-10 w-10 rounded border object-cover"

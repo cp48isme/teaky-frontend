@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import AuthedDownloadLink from '../ui/AuthedDownloadLink';
 import { listOrderFiles, uploadOrderFile, deleteOrderFile } from '../../api/orderFiles';
 import type { OrderFile } from '../../api/orderFiles';
 import Spinner from '../ui/Spinner';
@@ -94,14 +95,13 @@ export default function OrderFilesSection({ orderId }: Props) {
           {files.map((file) => (
             <div key={file.id} className="flex items-center justify-between py-2">
               <div className="min-w-0 flex-1">
-                <a
+                <AuthedDownloadLink
                   href={file.file_url}
-                  target="_blank"
-                  rel="noreferrer"
+                  filename={file.filename}
                   className="text-sm font-medium text-teak-dark hover:text-teak truncate block"
                 >
                   {file.filename}
-                </a>
+                </AuthedDownloadLink>
                 <p className="text-xs text-gray-500">
                   {formatFileSize(file.file_size_bytes)}
                   {file.file_category && (

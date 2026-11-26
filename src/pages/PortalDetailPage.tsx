@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import AuthedImage from '../components/ui/AuthedImage';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import {
   getPortal,
@@ -411,7 +412,7 @@ export default function PortalDetailPage() {
             {portal.brand_config?.logo_url && (
               <div>
                 <p className="text-xs text-gray-500">Logo</p>
-                <img
+                <AuthedImage
                   src={portal.brand_config.logo_url}
                   alt="Portal logo"
                   className="mt-1 h-10 w-auto object-contain rounded border p-0.5"

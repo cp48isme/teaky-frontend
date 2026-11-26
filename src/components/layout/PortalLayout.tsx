@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { storefrontAssetUrl } from '../../lib/uploads';
 import SiteFooter from './SiteFooter';
 import { Outlet, Link, useParams, useNavigate } from 'react-router-dom';
 import { usePortalContext } from '../../contexts/PortalContext';
@@ -72,7 +73,7 @@ export default function PortalLayout() {
               style={{ backgroundColor: '#ffffff' }}
             >
               <img
-                src={portal.brand_config.logo_url}
+                src={storefrontAssetUrl(portal.slug, portal.brand_config.logo_url)}
                 alt=""
                 className="h-8 w-auto object-contain"
                 onError={(e) => {

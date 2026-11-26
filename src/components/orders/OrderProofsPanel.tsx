@@ -1,4 +1,5 @@
 import type { Order } from "../../types/order";
+import AuthedDownloadLink from '../ui/AuthedDownloadLink';
 import type { Proof } from "../../types/proof";
 import type { OrderProofActions } from "../../hooks/orders/useOrderProofs";
 import SignatureCapture from "../proofs/SignatureCapture";
@@ -96,14 +97,12 @@ export default function OrderProofsPanel({ order, proofs, actions }: Props) {
                     </span>
                   </p>
                   {proof.file_url && (
-                    <a
+                    <AuthedDownloadLink
                       href={proof.file_url}
-                      target="_blank"
-                      rel="noreferrer"
                       className="text-xs text-teak-dark hover:underline"
                     >
                       View File
-                    </a>
+                    </AuthedDownloadLink>
                   )}
                   {proof.rejection_reason && (
                     <p className="mt-1 text-xs text-red-600">
