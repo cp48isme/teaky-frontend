@@ -276,10 +276,8 @@ export default function LandingPage() {
               <span className="font-heading text-sm font-semibold text-white">teaky</span>
             </div>
             <nav className="flex flex-wrap justify-center gap-x-8 gap-y-2">
-              <Link to="/about" className="text-sm text-gray-400 transition hover:text-white">About</Link>
-              <Link to="/privacy" className="text-sm text-gray-400 transition hover:text-white">Privacy Policy</Link>
-              <Link to="/terms" className="text-sm text-gray-400 transition hover:text-white">Terms of Service</Link>
-              <Link to="/security" className="text-sm text-gray-400 transition hover:text-white">Security</Link>
+              <Link to="/privacy" className="text-sm text-gray-400 transition hover:text-white">Privacy</Link>
+              <Link to="/terms" className="text-sm text-gray-400 transition hover:text-white">Terms</Link>
               <Link to="/contact" className="text-sm text-gray-400 transition hover:text-white">Contact</Link>
             </nav>
           </div>

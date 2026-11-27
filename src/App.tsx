@@ -60,7 +60,6 @@ import OrderDetailPage from './pages/portal/OrderDetailPage';
 import QuotesPage from './pages/QuotesPage';
 import MessageCenterPage from './pages/MessageCenterPage';
 import EquipmentPage from './pages/EquipmentPage';
-import PlaceholderPage from './pages/PlaceholderPage';
 import BatchPage from './pages/production/BatchPage';
 import NotFoundPage from './pages/NotFoundPage';
 import PortalLegalPage from './pages/portal/PortalLegalPage';
@@ -398,11 +397,6 @@ function App() {
             <Route path="terms" element={<PortalLegalPage kind="terms" />} />
           </Route>
           {/* Footer placeholder pages */}
-          <Route path="/about" element={<PlaceholderPage page="about" />} />
-          <Route path="/privacy" element={<PlaceholderPage page="privacy" />} />
-          <Route path="/terms" element={<PlaceholderPage page="terms" />} />
-          <Route path="/security" element={<PlaceholderPage page="security" />} />
-          <Route path="/contact" element={<PlaceholderPage page="contact" />} />
           <Route path="/" element={<LandingPage />} />
           {/* Walk t09 (20 Nov 2026): every unknown address lands on a page that says so. */}
           <Route path="*" element={<NotFoundPage />} />
