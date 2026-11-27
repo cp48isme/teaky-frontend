@@ -4,6 +4,7 @@ import { getStationView, holdFromStation, listStationScans, scanArrived, scanDon
 import ProductionLayout, { colors } from '../../components/production/ProductionLayout';
 import { ageText } from '../../lib/production';
 import type { RouteStep, StationScan, StationView } from '../../types/production';
+import ActionResult from '../../components/production/ActionResult';
 
 /** Board 3: the station view — one station per device, chosen once and
  * remembered in this browser; a scan field that takes keyboard-wedge input
@@ -203,16 +204,8 @@ export default function FloorPage() {
               Look up
             </button>
           </div>
-          {error ? (
-            <div role="alert" data-testid="floor-refusal" style={{ background: 'var(--sg-chip-danger)', color: 'var(--sg-danger-line)', padding: '12px 14px', borderRadius: 8, fontSize: 15 }}>
-              {error}
-            </div>
-          ) : null}
-          {notice ? (
-            <div role="status" style={{ color: 'var(--sg-ok-line)', fontSize: 15 }}>
-              {notice}
-            </div>
-          ) : null}
+          {error ? <ActionResult kind="refused" testId="floor-refusal">{error}</ActionResult> : null}
+          {notice ? <ActionResult kind="done">{notice}</ActionResult> : null}
           {card ? (
             <div data-testid="station-card" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'baseline' }}>

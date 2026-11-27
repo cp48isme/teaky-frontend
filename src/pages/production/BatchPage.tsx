@@ -13,6 +13,7 @@ import { isShadowReader } from '../../lib/roles';
 import { NO_FLOOR_ROLE, isNoFloorRole, loadFailureText } from '../../lib/productionAccess';
 import type { BatchPage as BatchPageFacts, BatchPageAuditEntry, BatchPageFile } from '../../types/batchPage';
 import type { BatchSummary } from '../../types/production';
+import ActionResult from '../../components/production/ActionResult';
 
 /** The batch page (overnight dispatch, 26 Nov 2026, item 1): the one place a
  * batch is understood. Top: the row's facts. Then the lines, each linking to
@@ -34,7 +35,14 @@ export function laneText(lane: string | null): string {
 
 export function artText(withArt: number, lines: number): string {
   if (lines === 0) return 'No lines in this batch yet.';
-  return withArt === lines ? `${withArt} of ${lines} line${lines === 1 ? '' : 's'} ${lines === 1 ? 'has' : 'have'} art` : `${withArt} of ${lines} line${lines === 1 ? '' : 's'} ${withArt === 1 ? 'has' : 'have'} art — ${lines - withArt} without; art comes with the line from its channel, or is held on All Channel Orders`;
+  const verb = withArt === 1 || lines === 1 ? 'has' : 'have';
+  const noun = `line${lines === 1 ? '' : 's'}`;
+  return withArt === lines ? `${withArt} of ${lines} ${noun} ${verb} art` : `${withArt} of ${lines} ${noun} ${verb} art — ${lines - withArt} without; art comes with the line from its channel, or is held on All Channel Orders`;
+}
+
+/** The batch's name: its number, or — for a unit that has none yet (a per-order unit) — its scan code. */
+export function batchName(b: { batch_number: number | null; scan_code?: string }): string {
+  return b.batch_number != null ? `Batch ${b.batch_number}` : `Unit ${b.scan_code || '—'}`;
 }
 
 export function auditText(entry: BatchPageAuditEntry): string {
@@ -77,7 +85,7 @@ export default function BatchPage({ readOnly = isShadowReader() }: { readOnly?: 
   }, [readOnly]);
 
   const b = facts?.summary ?? null;
-  const title = b ? `Batch ${b.batch_number}` : 'Batch';
+  const title = b ? batchName(b) : 'Batch';
   const waiting = useMemo(() => (facts ? facts.audit : []), [facts]);
 
   async function showTicket() {
@@ -102,14 +110,14 @@ export default function BatchPage({ readOnly = isShadowReader() }: { readOnly?: 
           ← Batches
         </Link>
       </div>
-      {error ? <div role="alert" style={{ color: 'var(--sg-danger)' }}>{error}</div> : null}
+      {error ? <ActionResult kind="refused">{error}</ActionResult> : null}
       {noRole ? <div role="status" style={{ color: 'var(--sg-muted)' }} data-testid="no-floor-role">{NO_FLOOR_ROLE}</div> : null}
       {!facts && !error && !noRole ? <div style={{ color: 'var(--sg-muted)' }}>Loading…</div> : null}
       {facts && b ? (
         <>
           <section style={card} aria-label="Batch facts" data-testid="batch-facts">
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 20 }}>
-              <Fact label="Batch" value={String(b.batch_number)} mono />
+              <Fact label="Batch" value={b.batch_number != null ? String(b.batch_number) : '—'} mono />
               <Fact label="Scan code" value={b.scan_code || '—'} mono testId="scan-code" />
               <Fact label="Stock" value={b.stock || 'unknown'} />
               <Fact label="Slots" value={`${b.used} / ${b.capacity}${b.half ? ' · half' : ''}${b.blanks ? ` · ${b.blanks} blank` : ''}`} />
@@ -214,8 +222,8 @@ export default function BatchPage({ readOnly = isShadowReader() }: { readOnly?: 
                   </a>
                 ) : null}
               </div>
-              {notice ? <div role="status" data-testid="action-result" style={{ color: 'var(--sg-ok-2)', fontSize: 14 }}>{notice}</div> : null}
-              {refusal ? <div role="alert" data-testid="action-refusal" style={{ background: 'var(--sg-danger-bg-2)', border: '1px solid var(--sg-danger-line)', color: 'var(--sg-danger)', borderRadius: 6, padding: '10px 12px', fontSize: 14 }}>Refused: {refusal}</div> : null}
+              {notice ? <ActionResult kind="done" testId="action-result">{notice}</ActionResult> : null}
+              {refusal ? <ActionResult kind="refused" testId="action-refusal">Refused: {refusal}</ActionResult> : null}
             </section>
           )}
           {markingDone ? (
@@ -234,7 +242,7 @@ export default function BatchPage({ readOnly = isShadowReader() }: { readOnly?: 
             />
           ) : null}
 
-          <ProposalsPanel targets={pushable(b) || !b.marked_done_at ? [{ target_kind: 'release_unit', target_id: unitId, label: `Batch ${b.batch_number}` }] : []} readOnly={readOnly} focusTargetId={unitId} />
+          <ProposalsPanel targets={pushable(b) || !b.marked_done_at ? [{ target_kind: 'release_unit', target_id: unitId, label: batchName(b) }] : []} readOnly={readOnly} focusTargetId={unitId} />
 
           <section style={card} aria-labelledby="audit-heading" data-testid="batch-audit">
             <h2 id="audit-heading" style={h2}>Audit trail</h2>

@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { getPushOutPreview, pushOut } from '../../api/production';
 import ProductionLayout, { colors } from '../../components/production/ProductionLayout';
 import type { PushOutPreview, PushOutResult } from '../../types/production';
+import ActionResult from '../../components/production/ActionResult';
 
 /** Push-out, one decision (ruling 26 Nov 2026; overnight dispatch item 2).
  * Board 2's rule stands: never push out without a confirmation that shows the
@@ -16,7 +17,7 @@ import type { PushOutPreview, PushOutResult } from '../../types/production';
 export function switchText(preview: Pick<PushOutPreview, 'docket_send_enabled' | 'docket_host'>): string {
   return preview.docket_send_enabled
     ? `Docket send is ON for this shop — confirming sends this order to DocketManager at ${preview.docket_host ?? 'the configured site'} and records its number on the batch.`
-    : 'Docket send is OFF for this shop — confirming records this push-out on the batch; nothing is sent. (OFF — the payload is recorded, nothing is sent.)';
+    : 'Docket send is OFF for this shop. OFF — the payload is recorded, nothing is sent: confirming records this push-out on the batch, not in DocketManager.';
 }
 
 export function orderLine(preview: PushOutPreview): string {
@@ -77,11 +78,7 @@ export default function PushOutConfirmPage() {
           ← {preview ? `Batch ${preview.batch_number}` : 'Batch'}
         </Link>
       </div>
-      {error ? (
-        <div role="alert" style={{ color: 'var(--sg-danger)' }}>
-          {error}
-        </div>
-      ) : null}
+      {error ? <ActionResult kind="refused">{error}</ActionResult> : null}
       {preview ? (
         <>
           <div style={card} data-testid="push-facts">
@@ -142,7 +139,7 @@ export default function PushOutConfirmPage() {
             )}
           </div>
           {result ? (
-            <div role="status" data-testid="push-result" style={{ ...card, borderColor: result.sent && result.docket_number ? colors.vein : 'var(--sg-warn-line)' }}>
+            <ActionResult kind="done" testId="push-result">
               <div style={{ fontWeight: 500, color: result.needs_human ? 'var(--sg-danger)' : undefined }}>{resultText(result)}</div>
               <div style={{ fontSize: 13, color: 'var(--sg-muted)' }}>
                 Payload sha256 <span style={mono}>{result.payload_sha256}</span> ·{' '}
@@ -158,7 +155,7 @@ export default function PushOutConfirmPage() {
                   Back to Batches
                 </Link>
               </div>
-            </div>
+            </ActionResult>
           ) : (
             <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }} data-testid="decision">
               <button type="button" onClick={confirm} disabled={!canConfirm} aria-disabled={!canConfirm} style={{ ...btn, ...(canConfirm ? btnPrimary : { opacity: 0.5, cursor: 'not-allowed' }) }}>

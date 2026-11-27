@@ -18,6 +18,7 @@ import { isShadowReader } from '../../lib/roles';
 import { NO_FLOOR_ROLE, isNoFloorRole, loadFailureText } from '../../lib/productionAccess';
 import ProposalsPanel, { type ProposalTarget } from '../../components/production/ProposalsPanel';
 import type { BatchSummary, MarkDoneResult } from '../../types/production';
+import ActionResult from '../../components/production/ActionResult';
 
 /** Board 2: a batch is 24 slots on one stock. The strip shows what is
  * filled, what the fill advice could fill now, and what stays blank; nothing
@@ -208,8 +209,8 @@ export default function BatchesPage({ readOnly = isShadowReader() }: { readOnly?
           })}
         </div>
       ) : null}
-      {error ? <div role="alert" style={{ color: 'var(--sg-danger)' }}>{error}</div> : null}
-      {notice ? <div role="status" style={{ color: 'var(--sg-ok-2)' }}>{notice}</div> : null}
+      {error ? <ActionResult kind="refused">{error}</ActionResult> : null}
+      {notice ? <ActionResult kind="done">{notice}</ActionResult> : null}
       {markingDone ? <MarkDoneDialog batch={markingDone} onApplied={(result) => markedDone(markingDone, result)} onRefused={(reason) => { setMarkingDone(null); setError(reason); }} onCancel={() => setMarkingDone(null)} /> : null}
       {noRole ? <div role="status" style={{ color: 'var(--sg-muted)' }} data-testid="no-floor-role">{NO_FLOOR_ROLE}</div> : null}
       {view === 'list' ? (
@@ -327,11 +328,7 @@ function BatchCard({ batch, featured = false, readOnly = false, refusal, onOpen,
           ) : null}
         </div>
       </div>
-      {refusal ? (
-        <div role="alert" data-testid="batch-refusal" style={{ background: 'var(--sg-danger-bg-2)', border: '1px solid var(--sg-danger-line)', color: 'var(--sg-danger)', borderRadius: 6, padding: '10px 12px', fontSize: 14 }}>
-          Refused: {refusal}
-        </div>
-      ) : null}
+      {refusal ? <ActionResult kind="refused" testId="batch-refusal">Refused: {refusal}</ActionResult> : null}
       <SlotStrip used={batch.used} fillable={batch.fillable_slots} capacity={batch.capacity} />
       {batch.fill_candidates.length ? (
         <div style={{ background: 'var(--sg-warn-bg-2)', border: '1px solid var(--sg-warn-line)', borderRadius: 6, padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 8 }}>
