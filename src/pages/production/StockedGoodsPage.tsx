@@ -6,6 +6,7 @@ import { ageText } from '../../lib/production';
 import { currentUserId, isShadowReader } from '../../lib/roles';
 import { NO_FLOOR_ROLE, isNoFloorRole, loadFailureText } from '../../lib/productionAccess';
 import type { MarkPickedResult, StockedGoodsLine, StockedGoodsUnit } from '../../types/production';
+import ActionResult from '../../components/production/ActionResult';
 
 /** Stocked goods end to end (dispatch 23 Nov 2026, item 1; rulings 20 Nov):
  * the pick-and-pack units — no art step, never a press run — oldest first.
@@ -141,7 +142,7 @@ export default function StockedGoodsPage({ readOnly = isShadowReader() }: { read
           This page is where the shop picks and packs goods from the shelf — never a press run — and marking a PO picked writes its shipping row.
         </p>
       </div>
-      {error ? <div role="alert" style={{ color: '#a3331d' }}>{error}</div> : null}
+      {error ? <ActionResult kind="refused">{error}</ActionResult> : null}
       {noRole ? <div role="status" style={{ color: '#4b5563' }} data-testid="no-floor-role">{NO_FLOOR_ROLE}</div> : null}
       {picking ? (
         <div role="dialog" aria-modal="true" aria-label={`Mark PO ${picking.unit.po} picked`} style={{ position: 'fixed', inset: 0, background: 'rgba(28, 25, 23, 0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, zIndex: 50 }} data-testid="mark-picked-dialog">
@@ -205,7 +206,7 @@ export default function StockedGoodsPage({ readOnly = isShadowReader() }: { read
               ))}
             </div>
             {result ? (
-              <div role="status" style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: '10px 12px', borderRadius: 6, background: '#e6f3ee', color: '#1f3d14', fontSize: 14 }} data-testid="mark-picked-result">
+              <ActionResult kind="done" testId="mark-picked-result">
                 <span>
                   PO {result.unit.po} marked picked; its shipping row is written ({plural(result.shipping_rows, 'row', 'rows')}).
                 </span>
@@ -214,13 +215,9 @@ export default function StockedGoodsPage({ readOnly = isShadowReader() }: { read
                 ) : (
                   <span>Shipping row written — the file is listed on this card once the list refreshes.</span>
                 )}
-              </div>
+              </ActionResult>
             ) : null}
-            {refusal ? (
-              <div role="alert" style={{ padding: '10px 12px', borderRadius: 6, background: '#fbe9e4', color: '#8a2a14', fontSize: 14 }} data-testid="mark-picked-refusal">
-                {refusal}
-              </div>
-            ) : null}
+            {refusal ? <ActionResult kind="refused" testId="mark-picked-refusal">{refusal}</ActionResult> : null}
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center' }}>
               {!readOnly && !u.picked_at ? (
                 <button type="button" disabled={busy !== null} onClick={() => plan(u)} style={{ ...btn, ...btnPrimary }} data-testid="mark-picked">

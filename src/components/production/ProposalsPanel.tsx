@@ -8,6 +8,7 @@ import { currentUserId } from '../../lib/roles';
 import { NO_FLOOR_ROLE, isNoFloorRole, loadFailureText } from '../../lib/productionAccess';
 import { KIND_LABEL, factsText } from '../../lib/proposalsCopy';
 import type { ActionProposal, ActionProposalKind, ActionProposalTarget, PushAloneReason } from '../../types/proposals';
+import ActionResult from './ActionResult';
 
 /** The four proposal actions of #259 on the screens Andrew has (dispatch
  * 17–18 Nov 2026, item 1): propose with a reason, approve, decline (or
@@ -165,11 +166,7 @@ function ProposalCard({
           ) : null}
         </div>
       )}
-      {refusal ? (
-        <div role="alert" data-testid="card-refusal" style={{ background: 'var(--sg-danger-bg-2)', border: '1px solid var(--sg-danger-line)', color: 'var(--sg-danger)', borderRadius: 6, padding: '10px 12px', fontSize: 14 }}>
-          Refused: {refusal}
-        </div>
-      ) : null}
+      {refusal ? <ActionResult kind="refused" testId="card-refusal">Refused: {refusal}</ActionResult> : null}
     </div>
   );
 }
@@ -375,9 +372,9 @@ export default function ProposalsPanel({ targets, readOnly = false, focusTargetI
           {open.length} waiting for a decision · {decided.length} decided. An action is proposed with a reason and the facts present, and applied only when a person approves it.
         </div>
       </div>
-      {error ? <div role="alert" style={{ color: 'var(--sg-danger)' }}>{error}</div> : null}
+      {error ? <ActionResult kind="refused">{error}</ActionResult> : null}
       {noRole ? <div role="status" style={{ color: 'var(--sg-muted)' }} data-testid="no-floor-role">{NO_FLOOR_ROLE}</div> : null}
-      {notice ? <div role="status" style={{ color: colors.vein }}>{notice}</div> : null}
+      {notice ? <ActionResult kind="done">{notice}</ActionResult> : null}
       {readOnly ? (
         <div style={{ fontSize: 13, color: 'var(--sg-muted)' }} data-testid="proposals-read-only-note">
           Read-only: proposals are shown as staff see them; proposing and deciding are staff actions.
