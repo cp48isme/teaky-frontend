@@ -2,7 +2,7 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import ProposalsPanel, { approvalHref } from '../../../components/production/ProposalsPanel';
+import ProposalsPanel, { approvalHref, proposeHref } from '../../../components/production/ProposalsPanel';
 import { heldOrderTargets } from '../BatchesPage';
 import type { ActionProposal } from '../../../types/proposals';
 import type { HeldQueueEntry } from '../../../types/releaseUnit';
@@ -60,8 +60,9 @@ describe('a decision shows on the card in place', () => {
     expect(after).toHaveTextContent('approved and applied');
     expect(after).toHaveTextContent('Decided by Clayton');
     expect(within(after).queryByTestId('approve')).toBeNull();
-    // Not hidden behind the decided toggle: the toggle counts the other decided ones only.
-    expect(screen.queryByTestId('toggle-decided')).toBeNull();
+    // Not moved to the Decided tab: it stays on Waiting, and Decided counts the other decided ones only.
+    expect(screen.getByTestId('tab-waiting')).toHaveTextContent('Waiting (2)');
+    expect(screen.getByTestId('tab-decided')).toHaveTextContent('Decided (0)');
   });
 
   it("Withdraw: one's own card stays, marked withdrawn by the proposer", async () => {
@@ -91,5 +92,29 @@ describe('one home', () => {
       { target_kind: 'order', target_id: 'o1', label: 'Order W7001' },
       { target_kind: 'order', target_id: 'o2', label: 'Order S-3' },
     ]);
+  });
+});
+
+describe('"Propose…" from a held order (ruling 27 Nov 2026)', () => {
+  it('the link names the Batches page, the target and the panel', () => {
+    expect(proposeHref('order', 'o1')).toBe('/production/batches?propose=order%3Ao1#proposals');
+  });
+
+  it('the form arrives filled in for that target, not the first in the list', async () => {
+    render(
+      <MemoryRouter initialEntries={['/production/batches?propose=order%3Ao1#proposals']}>
+        <ProposalsPanel
+          targets={[
+            { target_kind: 'release_unit', target_id: 'u1', label: 'Batch 141' },
+            { target_kind: 'order', target_id: 'o1', label: 'Order W7001234' },
+          ]}
+          preselectTargetKey="order:o1"
+        />
+      </MemoryRouter>,
+    );
+    const form = await screen.findByTestId('propose-form');
+    expect(within(form).getByLabelText('Proposal target')).toHaveDisplayValue('Order W7001234');
+    // The order's actions, not the batch's.
+    expect(within(form).getByLabelText('Proposed action')).toHaveDisplayValue('Push this order alone');
   });
 });

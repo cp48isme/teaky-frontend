@@ -223,7 +223,7 @@ export default function BatchesPage({ readOnly = isShadowReader() }: { readOnly?
           ))}
         </div>
       ) : null}
-      <ProposalsPanel targets={proposalTargets} readOnly={readOnly} />
+      <ProposalsPanel targets={proposalTargets} readOnly={readOnly} preselectTargetKey={new URLSearchParams(location.search).get('propose') ?? undefined} />
       <div style={{ background: 'var(--sg-surface-2)', border: '1px solid var(--sg-line)', borderRadius: 8, padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
         <div style={{ fontWeight: 500 }}>Pushed out</div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 24, fontSize: 14 }}>

@@ -57,3 +57,20 @@ describe('Held, the one press', () => {
     expect(resolution.evidence_note).toContain('ran on 11 batches');
   });
 });
+
+describe('"Propose…" on a held order (ruling 27 Nov 2026)', () => {
+  it('each held order carries a Propose… link to the form on Batches, filled in for it; no panel on this page', async () => {
+    render(
+      <MemoryRouter>
+        <HeldPage />
+      </MemoryRouter>,
+    );
+    const card = await screen.findByTestId('decision-stock_unknown');
+    const link = screen.getByTestId('propose-for-order');
+    expect(card).toContainElement(link);
+    expect(link).toHaveTextContent('Propose…');
+    expect(link).toHaveAttribute('href', '/production/batches?propose=order%3Ao1#proposals');
+    expect(screen.queryByTestId('proposals-panel')).toBeNull();
+    expect(screen.getByTestId('proposals-elsewhere')).toBeInTheDocument();
+  });
+});

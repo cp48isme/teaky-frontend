@@ -45,6 +45,7 @@ const lbl: React.CSSProperties = { fontSize: 12, color: 'var(--sg-muted)', textT
 const btn: React.CSSProperties = { padding: '9px 14px', borderRadius: 6, border: '1px solid var(--sg-line-2)', background: 'var(--sg-surface)', fontWeight: 500, minHeight: 44, font: 'inherit', cursor: 'pointer' };
 const primary: React.CSSProperties = { ...btn, background: colors.vein, color: 'var(--sg-surface)', borderColor: colors.vein };
 const danger: React.CSSProperties = { ...btn, borderColor: 'var(--sg-danger)', color: 'var(--sg-danger)' };
+const tabStyle = (selected: boolean): React.CSSProperties => ({ padding: '10px 14px', minHeight: 44, font: 'inherit', fontWeight: selected ? 600 : 500, cursor: 'pointer', background: 'transparent', border: 'none', borderBottom: `2px solid ${selected ? colors.vein : 'transparent'}`, color: selected ? 'inherit' : 'var(--sg-muted)', marginBottom: -1 });
 const field: React.CSSProperties = { padding: '9px 10px', border: '1px solid var(--sg-line-2)', borderRadius: 6, font: 'inherit', minHeight: 44, background: 'var(--sg-surface)' };
 const overlay: React.CSSProperties = { position: 'fixed', inset: 0, background: 'var(--sg-overlay)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, zIndex: 50 };
 const dialogBox: React.CSSProperties = { ...card, maxWidth: 560, width: '100%', boxShadow: '0 12px 32px var(--sg-shadow)' };
@@ -173,9 +174,13 @@ function ProposalCard({
   );
 }
 
-function ProposeForm({ targets, busy, onPropose }: { targets: ProposalTarget[]; busy: boolean; onPropose: (body: { kind: ActionProposalKind; target: ProposalTarget; reason: string; category?: PushAloneReason; note: string }) => void }) {
-  const [targetKey, setTargetKey] = useState(targets[0] ? `${targets[0].target_kind}:${targets[0].target_id}` : '');
-  const target = targets.find((t) => `${t.target_kind}:${t.target_id}` === targetKey) ?? targets[0] ?? null;
+function ProposeForm({ targets, preselect, busy, onPropose }: { targets: ProposalTarget[]; preselect?: string; busy: boolean; onPropose: (body: { kind: ActionProposalKind; target: ProposalTarget; reason: string; category?: PushAloneReason; note: string }) => void }) {
+  const [chosenTargetKey, setTargetKey] = useState(targets[0] ? targetKey(targets[0].target_kind, targets[0].target_id) : '');
+  // The pre-filled target takes the form once its list holds it (the targets arrive with the page's data).
+  useEffect(() => {
+    if (preselect && targets.some((t) => targetKey(t.target_kind, t.target_id) === preselect)) setTargetKey(preselect);
+  }, [preselect, targets]);
+  const target = targets.find((t) => targetKey(t.target_kind, t.target_id) === chosenTargetKey) ?? targets[0] ?? null;
   const kinds = target ? KINDS_FOR[target.target_kind] : [];
   const [chosenKind, setKind] = useState<ActionProposalKind>(kinds[0] ?? 'mark_done');
   // The chosen action, or the target kind's first when the target changed under it.
@@ -202,9 +207,9 @@ function ProposeForm({ targets, busy, onPropose }: { targets: ProposalTarget[]; 
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center' }}>
         <label style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 14 }}>
           For
-          <select aria-label="Proposal target" value={targetKey} onChange={(e) => { setTargetKey(e.target.value); setConfirmDone(false); }} style={field}>
+          <select aria-label="Proposal target" value={target ? targetKey(target.target_kind, target.target_id) : ''} onChange={(e) => { setTargetKey(e.target.value); setConfirmDone(false); }} style={field}>
             {targets.map((t) => (
-              <option key={`${t.target_kind}:${t.target_id}`} value={`${t.target_kind}:${t.target_id}`}>
+              <option key={targetKey(t.target_kind, t.target_id)} value={targetKey(t.target_kind, t.target_id)}>
                 {t.label}
               </option>
             ))}
@@ -258,9 +263,26 @@ export function approvalHref(_target_kind: ActionProposalTarget): string {
   return '/production/batches#proposals';
 }
 
-export default function ProposalsPanel({ targets, readOnly = false, focusTargetId }: { targets: ProposalTarget[]; readOnly?: boolean; /** t10 c (23 Nov 2026): inside a batch, the list opens on that batch's proposals. */ focusTargetId?: string }) {
+/** The key the propose form selects a target by. */
+export function targetKey(target_kind: ActionProposalTarget, target_id: string): string {
+  return `${target_kind}:${target_id}`;
+}
+
+/** Ruling 27 Nov 2026: a "Propose…" link on a held order (or anywhere else)
+ * opens the form on the Batches page already filled in for it — nobody finds
+ * the order again in a dropdown. The Batches page reads `propose` and hands
+ * it to the panel as `preselectTargetKey`. */
+export function proposeHref(target_kind: ActionProposalTarget, target_id: string): string {
+  return `/production/batches?propose=${encodeURIComponent(targetKey(target_kind, target_id))}#proposals`;
+}
+
+export default function ProposalsPanel({ targets, readOnly = false, focusTargetId, preselectTargetKey }: { targets: ProposalTarget[]; readOnly?: boolean; /** t10 c (23 Nov 2026): inside a batch, the list opens on that batch's proposals. */ focusTargetId?: string; /** The form's target on arrival (`kind:id`), from a "Propose…" link. */ preselectTargetKey?: string }) {
   const location = useLocation();
   const navigate = useNavigate();
+  // A link that ends in #proposals lands on the panel, not the top of the page.
+  useEffect(() => {
+    if (location.hash === '#proposals') document.getElementById('proposals')?.scrollIntoView?.({ block: 'start' });
+  }, [location.hash]);
   const [proposals, setProposals] = useState<ActionProposal[]>([]);
   const [names, setNames] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
@@ -365,6 +387,7 @@ export default function ProposalsPanel({ targets, readOnly = false, focusTargetI
         <div style={{ fontWeight: 500 }}>Propose an action</div>
         <ProposeForm
           targets={targets}
+          preselect={preselectTargetKey}
           busy={busy !== null}
           onPropose={({ kind, target, reason, category, note }) =>
             run(
@@ -407,7 +430,22 @@ export default function ProposalsPanel({ targets, readOnly = false, focusTargetI
           ) : null}
         </div>
       ) : null}
-      {open.map((p) => (
+      {proposals.length ? (
+        // Ruling 27 Nov 2026: two tabs, Waiting and Decided, in place of the
+        // "Show N decided" toggle. A proposal decided this session stays on
+        // Waiting, wearing its decision (one home, item 3).
+        <div role="tablist" aria-label="Proposals by state" data-testid="proposal-tabs" style={{ display: 'flex', gap: 4, borderBottom: '1px solid var(--sg-line-3)' }}>
+          <button type="button" role="tab" aria-selected={!showDecided} onClick={() => setShowDecided(false)} style={tabStyle(!showDecided)} data-testid="tab-waiting">
+            Waiting ({open.length})
+          </button>
+          <button type="button" role="tab" aria-selected={showDecided} onClick={() => setShowDecided(true)} style={tabStyle(showDecided)} data-testid="tab-decided">
+            Decided ({decided.length})
+          </button>
+        </div>
+      ) : null}
+      {proposals.length && !showDecided && !open.length ? <div style={{ color: 'var(--sg-muted)', fontSize: 14 }} data-testid="tab-empty">Nothing is waiting for a decision in this view.</div> : null}
+      {proposals.length && showDecided && !decided.length ? <div style={{ color: 'var(--sg-muted)', fontSize: 14 }} data-testid="tab-empty">Nothing decided in this view.</div> : null}
+      {(showDecided ? [] : open).map((p) => (
         <ProposalCard
           key={p.id}
           refusal={refusals[p.id]}
@@ -423,11 +461,6 @@ export default function ProposalsPanel({ targets, readOnly = false, focusTargetI
           onDecline={(note) => run(p.id, () => declineProposal(p.id, note), `${KIND_LABEL[p.kind]} for ${p.facts.reference}: ${me && p.proposed_by === me ? 'withdrawn' : 'declined'}.`)}
         />
       ))}
-      {decided.length ? (
-        <button type="button" onClick={() => setShowDecided((s) => !s)} style={{ ...btn, alignSelf: 'flex-start' }} data-testid="toggle-decided">
-          {showDecided ? 'Hide decided' : `Show ${decided.length} decided`}
-        </button>
-      ) : null}
       {showDecided ? decided.map((p) => <ProposalCard key={p.id} proposal={p} who={who} me={me} busy={false} onApprove={() => undefined} onDecline={() => undefined} />) : null}
     </section>
   );

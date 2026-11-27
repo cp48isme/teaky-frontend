@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { getPushOutPreview, pushOut } from '../../api/production';
 import ProductionLayout, { colors } from '../../components/production/ProductionLayout';
-import ProposalsPanel from '../../components/production/ProposalsPanel';
 import type { PushOutPreview, PushOutResult } from '../../types/production';
 
 /** Push-out, one decision (ruling 26 Nov 2026; overnight dispatch item 2).
@@ -171,8 +170,7 @@ export default function PushOutConfirmPage() {
               <span style={{ fontSize: 13, color: 'var(--sg-muted)' }}>{canConfirm ? 'Nothing moves until you press confirm.' : 'The confirm button stays off until the Docket order above has rendered.'}</span>
             </div>
           )}
-          {/* Held (overnight dispatch item 3, "it leaves push-out"): WalkFindingsT10 (c) asserts the panel here; its removal waits for the word on that test. */}
-          <ProposalsPanel targets={[{ target_kind: 'release_unit', target_id: unitId, label: `Batch ${preview.batch_number}` }]} focusTargetId={unitId} />
+          {/* One home (overnight dispatch item 3; word 27 Nov 2026): proposals live on the batch page and the Batches page, not here. */}
         </>
       ) : !error ? (
         <div style={{ color: 'var(--sg-muted)' }}>Loading…</div>

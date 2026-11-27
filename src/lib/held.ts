@@ -30,6 +30,8 @@ export interface HeldRow {
   clears: string;
   /** The order as a person names it: PO or order number. */
   order: string;
+  /** The order's id, for a proposal pre-filled for it on Batches (27 Nov 2026); a Taylor pool line is not an order yet. */
+  orderId: string | null;
   /** channel · product · qty × pack · stock */
   summary: string;
   detail: string | null;
@@ -86,6 +88,7 @@ export function splitHeld(entries: HeldQueueEntry[], orders: Order[], taylor: Ta
         waitingOn: meta.waitingOn,
         clears: meta.clears,
         order: order?.po_number || order?.order_number || entry.order_number || entry.reference,
+        orderId: entry.source_order_id ?? null,
         summary: lineSummary(order, hold.line_item_id),
         detail: hold.detail,
         ageSeconds,
@@ -110,6 +113,7 @@ export function splitHeld(entries: HeldQueueEntry[], orders: Order[], taylor: Ta
       waitingOn: meta.waitingOn,
       clears: meta.clears,
       order: line.po,
+      orderId: null,
       summary: `Taylor · ${line.product} · ${line.quantity} × ${line.pack}${line.stock ? ` · ${line.stock}` : ''}`,
       detail: line.art_error ? `Artwork: ${line.art_error}` : 'Artwork not fetched yet',
       ageSeconds: Math.max(0, Math.floor((now.getTime() - new Date(line.received_at).getTime()) / 1000)),
