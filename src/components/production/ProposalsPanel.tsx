@@ -252,9 +252,10 @@ function ProposeForm({ targets, busy, onPropose }: { targets: ProposalTarget[]; 
 }
 
 /** Where a proposal for this target is approved or declined: the Proposals
- * section of the Batches page for a batch, of the Held page for an order. */
-export function approvalHref(target_kind: ActionProposalTarget): string {
-  return target_kind === 'release_unit' ? '/production/batches#proposals' : '/production/held#proposals';
+ * section of the Batches page — one home (overnight dispatch 26 Nov 2026,
+ * item 3): every open proposal of the shop is decided there, orders included. */
+export function approvalHref(_target_kind: ActionProposalTarget): string {
+  return '/production/batches#proposals';
 }
 
 export default function ProposalsPanel({ targets, readOnly = false, focusTargetId }: { targets: ProposalTarget[]; readOnly?: boolean; /** t10 c (23 Nov 2026): inside a batch, the list opens on that batch's proposals. */ focusTargetId?: string }) {
@@ -301,6 +302,10 @@ export default function ProposalsPanel({ targets, readOnly = false, focusTargetI
     try {
       await fn();
       setNotice(done);
+      // One home (overnight dispatch 26 Nov 2026, item 3): a decision shows on
+      // the card in place — the card stays where it was, now wearing its
+      // status, instead of vanishing behind the decided toggle.
+      if (key !== 'propose') setRecent((r) => (r.includes(key) ? r : [...r, key]));
       await load();
       return true;
     } catch (e: unknown) {
@@ -323,7 +328,7 @@ export default function ProposalsPanel({ targets, readOnly = false, focusTargetI
       <>
         {KIND_LABEL[kind]} proposed for {target.label}; nothing is applied until a person approves it.{' '}
         <Link to={href} data-testid="approve-where" style={{ color: 'inherit', fontWeight: 500 }}>
-          Approve or decline it under Proposals {here ? 'below' : target.target_kind === 'release_unit' ? 'on the Batches page' : 'on the Held page'}
+          Approve or decline it under Proposals {here ? 'below' : 'on the Batches page'}
         </Link>
         .
       </>

@@ -3,6 +3,8 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { getProductionSettings, listBatches, markHalfBatch } from '../../api/production';
 import MarkDoneDialog, { markedDoneText } from '../../components/production/MarkDoneDialog';
 import { listShopTags } from '../../api/orders';
+import { listHeldQueue } from '../../api/releaseUnits';
+import type { HeldQueueEntry } from '../../types/releaseUnit';
 import BatchesTable from '../../components/production/BatchesTable';
 import ProductionSearch from '../../components/production/ProductionSearch';
 import { matchesSearch } from '../../lib/productionSearch';
@@ -145,7 +147,15 @@ export default function BatchesPage({ readOnly = isShadowReader() }: { readOnly?
   const [first, ...rest] = shown;
   const emptyText = search.trim() ? `No results for "${search.trim()}"` : 'No batches to show.';
   // Proposals (dispatch 17–18 Nov 2026, item 1): every open batch is a target (a short run, mark done).
-  const proposalTargets = useMemo<ProposalTarget[]>(() => open.map((b) => ({ target_kind: 'release_unit' as const, target_id: b.unit_id, label: `Batch ${b.batch_number}` })), [open]);
+  // One home (overnight dispatch 26 Nov 2026, item 3): the held queue's orders are targets here too (push alone, void, mark done) — the panel left the Held page.
+  const [held, setHeld] = useState<HeldQueueEntry[]>([]);
+  useEffect(() => {
+    if (readOnly) return;
+    listHeldQueue()
+      .then(setHeld)
+      .catch(() => setHeld([]));
+  }, [readOnly]);
+  const proposalTargets = useMemo<ProposalTarget[]>(() => [...open.map((b) => ({ target_kind: 'release_unit' as const, target_id: b.unit_id, label: `Batch ${b.batch_number}` })), ...heldOrderTargets(held)], [open, held]);
 
   return (
     <ProductionLayout readOnly={readOnly}>
@@ -360,3 +370,15 @@ const lbl: React.CSSProperties = { fontSize: 12, color: 'var(--sg-muted)', textT
 const mono: React.CSSProperties = { fontFamily: "'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace", fontSize: 13 };
 const btn: React.CSSProperties = { padding: '9px 14px', borderRadius: 6, border: '1px solid var(--sg-line-2)', background: 'var(--sg-surface)', fontWeight: 500, minHeight: 44, font: 'inherit', cursor: 'pointer' };
 const btnPrimary: React.CSSProperties = { background: colors.vein, color: 'var(--sg-surface)', borderColor: colors.vein };
+
+/** The held queue's orders as proposal targets, each once (one home, 27 Nov 2026). */
+export function heldOrderTargets(entries: HeldQueueEntry[]): ProposalTarget[] {
+  const out: ProposalTarget[] = [];
+  const seen = new Set<string>();
+  for (const e of entries) {
+    if (!e.source_order_id || seen.has(e.source_order_id)) continue;
+    seen.add(e.source_order_id);
+    out.push({ target_kind: 'order', target_id: e.source_order_id, label: `Order ${e.order_number ?? e.reference}` });
+  }
+  return out;
+}
