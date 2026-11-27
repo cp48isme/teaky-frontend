@@ -5,9 +5,32 @@ import ProductionLayout, { colors } from '../../components/production/Production
 import ProposalsPanel from '../../components/production/ProposalsPanel';
 import type { PushOutPreview, PushOutResult } from '../../types/production';
 
-/** Board 2's rule: never push out without a confirmation that shows the
- * files, the blanks and the Docket order first. The confirm button stays
- * disabled until the payload has rendered on this screen. */
+/** Push-out, one decision (ruling 26 Nov 2026; overnight dispatch item 2).
+ * Board 2's rule stands: never push out without a confirmation that shows the
+ * files, the blanks and the Docket order first, and the confirm button stays
+ * off until the payload has rendered. The page reads top to bottom as the
+ * decision does: the batch's facts → the switch, above the fold, saying
+ * whether this push-out is recorded or sent → what goes with it → the Docket
+ * order in one line, its XML behind "Show the Docket XML" → Confirm / Not
+ * now. After Confirm the result replaces the buttons. */
+
+export function switchText(preview: Pick<PushOutPreview, 'docket_send_enabled' | 'docket_host'>): string {
+  return preview.docket_send_enabled
+    ? `Docket send is ON for this shop — confirming sends this order to DocketManager at ${preview.docket_host ?? 'the configured site'} and records its number on the batch.`
+    : 'Docket send is OFF for this shop — confirming records this push-out on the batch; nothing is sent. (OFF — the payload is recorded, nothing is sent.)';
+}
+
+export function orderLine(preview: PushOutPreview): string {
+  const p = preview.payload;
+  if (!p) return `Docket order for batch ${preview.batch_number}`;
+  return `Docket order for batch ${preview.batch_number} — named ${p.order_name} in Docket (item ${p.item_code})`;
+}
+
+export function resultText(result: PushOutResult): string {
+  if (result.sent && result.docket_number) return `Pushed out and sent. Docket order ${result.docket_number} recorded on the batch.`;
+  if (result.needs_human) return `Sent, but DocketManager's answer needs a person: ${result.reason}`;
+  return `Not sent: ${result.reason}`;
+}
 
 export default function PushOutConfirmPage() {
   const { unitId = '' } = useParams();
@@ -25,13 +48,15 @@ export default function PushOutConfirmPage() {
       .catch((e: unknown) => setError(e instanceof Error ? e.message : 'Could not load the push-out preview'));
   }, [unitId]);
 
-  // The payload is "rendered" once its XML is on screen — the ref callback
-  // fires only when the <pre> holding it has mounted with content.
+  // The payload is "rendered" once its XML is in the document — the ref
+  // callback fires only when the <pre> holding it has mounted with content.
+  // It sits behind a closed <details>, so it is in the document, not in view.
   const payloadRef = (node: HTMLPreElement | null) => {
     if (node && node.textContent && node.textContent.trim().length > 0) setPayloadRendered(true);
   };
 
   const canConfirm = Boolean(preview && preview.payload_xml && payloadRendered && !preview.existing_docket_number && !busy && !result);
+  const batchHref = `/production/batches/${unitId}`;
 
   async function confirm() {
     if (!canConfirm) return;
@@ -49,8 +74,8 @@ export default function PushOutConfirmPage() {
     <ProductionLayout>
       <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: 16 }}>
         <h1 style={{ margin: 0, fontSize: 24, fontWeight: 600 }}>{preview ? `Push out ${preview.batch_number} — confirm` : 'Push out — confirm'}</h1>
-        <Link to="/production/batches" style={{ marginLeft: 'auto', color: colors.vein, fontSize: 14 }}>
-          ← Batches
+        <Link to={batchHref} style={{ marginLeft: 'auto', color: colors.vein, fontSize: 14 }} data-testid="back-to-batch-top">
+          ← {preview ? `Batch ${preview.batch_number}` : 'Batch'}
         </Link>
       </div>
       {error ? (
@@ -60,7 +85,7 @@ export default function PushOutConfirmPage() {
       ) : null}
       {preview ? (
         <>
-          <div style={card}>
+          <div style={card} data-testid="push-facts">
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16 }}>
               <Fact label="Batch" value={String(preview.batch_number)} mono />
               <Fact label="Stock" value={preview.stock || 'unknown'} />
@@ -68,18 +93,25 @@ export default function PushOutConfirmPage() {
               <Fact label="Sheets per run" value={String(preview.sheets_per_run ?? 250)} />
               <Fact label="Blanks" value={String(preview.blanks)} color={preview.blanks ? 'var(--sg-warn)' : undefined} />
               <Fact label="Orders · lines" value={`${preview.orders} · ${preview.lines}`} />
-              <Fact label="Docket send" value={preview.docket_send_enabled ? `ON → ${preview.docket_host ?? 'no site configured'}` : 'OFF — the payload is recorded, nothing is sent'} color={preview.docket_send_enabled ? colors.vein : 'var(--sg-warn)'} />
             </div>
             {preview.existing_docket_number ? (
               <div style={{ color: 'var(--sg-danger)' }}>Already in DocketManager as order #{preview.existing_docket_number}; it will not be sent again.</div>
             ) : null}
           </div>
-          <div style={card}>
-            <div style={{ fontWeight: 500 }}>Files that go with it</div>
-            {preview.files.length === 0 ? <div style={{ color: 'var(--sg-muted)', fontSize: 14 }}>No files on this batch yet — the job ticket is generated on the batch's ticket route; art comes with the lines.</div> : null}
+          <div
+            role="status"
+            data-testid="docket-switch-banner"
+            data-docket-send={preview.docket_send_enabled ? 'on' : 'off'}
+            style={{ ...card, flexDirection: 'row', alignItems: 'center', gap: 12, fontSize: 15, fontWeight: 500, borderColor: preview.docket_send_enabled ? colors.vein : 'var(--sg-warn-line)', background: preview.docket_send_enabled ? 'var(--sg-ok-bg)' : 'var(--sg-warn-bg-2)', color: preview.docket_send_enabled ? 'var(--sg-ok)' : 'var(--sg-warn)' }}
+          >
+            {switchText(preview)}
+          </div>
+          <div style={card} data-testid="goes-with-it">
+            <div style={{ fontWeight: 500 }}>What goes with it</div>
+            {preview.files.length === 0 ? <div style={{ color: 'var(--sg-muted)', fontSize: 14 }}>No files on this batch yet — the job ticket is generated on push-out; art comes with the lines.</div> : null}
             {preview.files.map((f) => (
               <div key={f.sha256 + f.filename} style={{ display: 'flex', gap: 12, fontSize: 14, alignItems: 'baseline' }}>
-                <span style={{ ...lbl, width: 80 }}>{f.kind}</span>
+                <span style={{ ...lbl, width: 80 }}>{f.kind === 'job_ticket' ? 'job ticket' : f.kind}</span>
                 <span style={mono}>{f.filename}</span>
                 <span style={{ color: 'var(--sg-muted)' }}>{(f.size_bytes / 1024).toFixed(1)} KB</span>
                 <span style={{ ...mono, color: 'var(--sg-muted)' }} title={f.sha256}>
@@ -88,63 +120,59 @@ export default function PushOutConfirmPage() {
               </div>
             ))}
           </div>
-          <div style={card}>
-            <div style={{ fontWeight: 500 }}>The Docket order that would be sent</div>
+          <div style={card} data-testid="docket-order">
             {preview.payload_problem ? (
               <div role="alert" style={{ color: 'var(--sg-danger)' }}>
-                It cannot be built: {preview.payload_problem}
+                The Docket order cannot be built: {preview.payload_problem}
               </div>
             ) : preview.payload && preview.payload_xml ? (
               <>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, fontSize: 14 }}>
-                  <Fact label="Order" value={preview.payload.order_name} mono />
-                  <Fact label="Customer" value={`${preview.payload.customer_name} (${preview.payload.customer_id})`} />
-                  <Fact label="Item" value={`${preview.payload.item_code} · ${preview.payload.item_name}`} />
-                  <Fact label="POs" value={preview.payload.pos.join(' ')} mono />
-                  <Fact label="Cards" value={String(preview.payload.cards)} />
-                  <Fact label="sha256" value={(preview.payload_sha256 ?? '').slice(0, 16) + '…'} mono />
+                <div style={{ fontWeight: 500 }} data-testid="docket-order-line">{orderLine(preview)}</div>
+                <div style={{ fontSize: 13, color: 'var(--sg-muted)' }}>
+                  {preview.payload.pos.length} PO{preview.payload.pos.length === 1 ? '' : 's'} · {preview.payload.cards} cards · sha256 <span style={mono}>{(preview.payload_sha256 ?? '').slice(0, 16)}…</span>
                 </div>
-                <pre ref={payloadRef} data-testid="docket-payload" style={{ ...mono, background: 'var(--sg-surface-2)', border: '1px solid var(--sg-line)', borderRadius: 6, padding: 12, overflowX: 'auto', margin: 0, whiteSpace: 'pre-wrap' }}>
-                  {preview.payload_xml}
-                </pre>
+                <details data-testid="docket-xml">
+                  <summary style={{ cursor: 'pointer', fontSize: 14 }}>Show the Docket XML</summary>
+                  <pre ref={payloadRef} data-testid="docket-payload" style={{ ...mono, background: 'var(--sg-surface-2)', border: '1px solid var(--sg-line)', borderRadius: 6, padding: 12, overflowX: 'auto', margin: '8px 0 0', whiteSpace: 'pre-wrap' }}>
+                    {preview.payload_xml}
+                  </pre>
+                </details>
               </>
             ) : (
-              <div style={{ color: 'var(--sg-muted)' }}>Rendering the payload…</div>
+              <div style={{ color: 'var(--sg-muted)' }}>Rendering the Docket order…</div>
             )}
           </div>
-          <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
-            <button
-              type="button"
-              onClick={confirm}
-              disabled={!canConfirm}
-              aria-disabled={!canConfirm}
-              style={{ ...btn, ...(canConfirm ? btnPrimary : { opacity: 0.5, cursor: 'not-allowed' }) }}
-            >
-              {busy ? 'Pushing out…' : `Confirm — push out ${preview.batch_number}`}
-            </button>
-            <button type="button" onClick={() => navigate('/production/batches')} style={btn}>
-              Not now
-            </button>
-            <span style={{ fontSize: 13, color: 'var(--sg-muted)' }}>
-              {canConfirm ? 'Nothing moves until you press confirm.' : result ? '' : 'The confirm button stays off until the Docket order above has rendered.'}
-            </span>
-          </div>
-          {/* t10 c (23 Nov 2026): propose an action from inside the batch — a short run or mark done for this batch, its proposals listed first. */}
-          <ProposalsPanel targets={[{ target_kind: 'release_unit', target_id: unitId, label: `Batch ${preview.batch_number}` }]} focusTargetId={unitId} />
           {result ? (
-            <div role="status" style={{ ...card, borderColor: result.sent && result.docket_number ? colors.vein : 'var(--sg-warn-line)' }}>
-              {result.sent && result.docket_number ? (
-                <div>
-                  Pushed out. Docket order <span style={mono}>{result.docket_number}</span> recorded on batch {preview.batch_number}.
-                </div>
-              ) : result.needs_human ? (
-                <div style={{ color: 'var(--sg-danger)' }}>Sent, but DocketManager's answer needs a person: {result.reason}</div>
-              ) : (
-                <div>Not sent: {result.reason}</div>
-              )}
-              <div style={{ fontSize: 13, color: 'var(--sg-muted)' }}>Payload sha256 {result.payload_sha256} · recorded on the batch's audit trail.</div>
+            <div role="status" data-testid="push-result" style={{ ...card, borderColor: result.sent && result.docket_number ? colors.vein : 'var(--sg-warn-line)' }}>
+              <div style={{ fontWeight: 500, color: result.needs_human ? 'var(--sg-danger)' : undefined }}>{resultText(result)}</div>
+              <div style={{ fontSize: 13, color: 'var(--sg-muted)' }}>
+                Payload sha256 <span style={mono}>{result.payload_sha256}</span> ·{' '}
+                <Link to={`${batchHref}#audit`} style={{ color: colors.stem }} data-testid="audit-link">
+                  recorded on the batch's audit trail
+                </Link>
+              </div>
+              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                <Link to={batchHref} style={{ ...btn, textDecoration: 'none', color: 'inherit', display: 'inline-flex', alignItems: 'center' }} data-testid="back-to-batch">
+                  Back to batch {preview.batch_number}
+                </Link>
+                <Link to="/production/batches" style={{ ...btn, textDecoration: 'none', color: 'inherit', display: 'inline-flex', alignItems: 'center' }} data-testid="back-to-batches">
+                  Back to Batches
+                </Link>
+              </div>
             </div>
-          ) : null}
+          ) : (
+            <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }} data-testid="decision">
+              <button type="button" onClick={confirm} disabled={!canConfirm} aria-disabled={!canConfirm} style={{ ...btn, ...(canConfirm ? btnPrimary : { opacity: 0.5, cursor: 'not-allowed' }) }}>
+                {busy ? 'Pushing out…' : `Confirm — push out ${preview.batch_number}`}
+              </button>
+              <button type="button" onClick={() => navigate(batchHref)} style={btn}>
+                Not now
+              </button>
+              <span style={{ fontSize: 13, color: 'var(--sg-muted)' }}>{canConfirm ? 'Nothing moves until you press confirm.' : 'The confirm button stays off until the Docket order above has rendered.'}</span>
+            </div>
+          )}
+          {/* Held (overnight dispatch item 3, "it leaves push-out"): WalkFindingsT10 (c) asserts the panel here; its removal waits for the word on that test. */}
+          <ProposalsPanel targets={[{ target_kind: 'release_unit', target_id: unitId, label: `Batch ${preview.batch_number}` }]} focusTargetId={unitId} />
         </>
       ) : !error ? (
         <div style={{ color: 'var(--sg-muted)' }}>Loading…</div>
