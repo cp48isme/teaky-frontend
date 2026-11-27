@@ -205,11 +205,11 @@ export default function BatchesPage({ readOnly = isShadowReader() }: { readOnly?
       {view === 'list' ? (
         <BatchesTable batches={shown} readOnly={readOnly} emptyText={emptyText} shopTags={shopTags} onTagsWritten={loadBatches} sort={sort} onSort={(key) => setSort((s) => (s.key === key ? { key, direction: s.direction === 'asc' ? 'desc' : 'asc' } : { key, direction: key === 'oldest' || key === 'batch' ? 'desc' : 'asc' }))} />
       ) : null}
-      {view === 'cards' && first ? <BatchCard batch={first} featured readOnly={readOnly} refusal={cardRefusals[first.unit_id]} onPushOut={() => navigate(`/production/batches/${first.unit_id}/push-out`)} onHalfBatch={() => halfBatch(first)} onMarkDone={() => setMarkingDone(first)} /> : view === 'cards' ? <div style={{ color: 'var(--sg-muted)' }} data-testid="no-batches">{emptyText}</div> : null}
+      {view === 'cards' && first ? <BatchCard batch={first} featured readOnly={readOnly} refusal={cardRefusals[first.unit_id]} onOpen={() => navigate(`/production/batches/${first.unit_id}`)} onPushOut={() => navigate(`/production/batches/${first.unit_id}/push-out`)} onHalfBatch={() => halfBatch(first)} onMarkDone={() => setMarkingDone(first)} /> : view === 'cards' ? <div style={{ color: 'var(--sg-muted)' }} data-testid="no-batches">{emptyText}</div> : null}
       {view === 'cards' && rest.length ? (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 16 }}>
           {rest.map((b) => (
-            <BatchCard key={b.unit_id} batch={b} readOnly={readOnly} refusal={cardRefusals[b.unit_id]} onPushOut={() => navigate(`/production/batches/${b.unit_id}/push-out`)} onHalfBatch={() => halfBatch(b)} onMarkDone={() => setMarkingDone(b)} />
+            <BatchCard key={b.unit_id} batch={b} readOnly={readOnly} refusal={cardRefusals[b.unit_id]} onOpen={() => navigate(`/production/batches/${b.unit_id}`)} onPushOut={() => navigate(`/production/batches/${b.unit_id}/push-out`)} onHalfBatch={() => halfBatch(b)} onMarkDone={() => setMarkingDone(b)} />
           ))}
         </div>
       ) : null}
@@ -239,13 +239,15 @@ export function halfBatchOffered(batch: BatchSummary): boolean {
   return !batch.half && !batch.full && !batch.cancelled && !batch.marked_done_at && !batch.docket_number && batch.release_state !== 'releasing' && batch.release_state !== 'released' && batch.used > 0 && batch.used <= HALF_CAPACITY;
 }
 
-function BatchCard({ batch, featured = false, readOnly = false, refusal, onPushOut, onHalfBatch, onMarkDone }: { batch: BatchSummary; featured?: boolean; readOnly?: boolean; refusal?: string; onPushOut: () => void; onHalfBatch?: () => void; onMarkDone?: () => void }) {
+function BatchCard({ batch, featured = false, readOnly = false, refusal, onOpen, onPushOut, onHalfBatch, onMarkDone }: { batch: BatchSummary; featured?: boolean; readOnly?: boolean; refusal?: string; onOpen: () => void; onPushOut: () => void; onHalfBatch?: () => void; onMarkDone?: () => void }) {
   const state = stateText(batch);
   const pushable = !readOnly && !batch.cancelled && !batch.marked_done_at && !batch.docket_number && batch.release_state !== 'releasing' && batch.release_state !== 'released' && batch.used > 0;
-  // t05 (19 Nov 2026): the whole card opens the batch (its push-out page) for
-  // staff — a click or Enter anywhere on it; its own links and buttons keep
-  // their jobs; the footer is the "Open batch" button, the same action for
-  // anyone who looks for one. A read-only reader gets a plain card.
+  // t05 (19 Nov 2026): the whole card opens the batch for staff — a click or
+  // Enter anywhere on it; its own links and buttons keep their jobs; the
+  // footer is the "Open batch" button, the same action for anyone who looks
+  // for one. Since 27 Nov 2026 (word on the overnight dispatch, item 1) the
+  // batch it opens is the batch page; "Push out" alone goes to the confirm
+  // page. A read-only reader gets a plain card.
   return (
     <div
       className="card"
@@ -253,8 +255,8 @@ function BatchCard({ batch, featured = false, readOnly = false, refusal, onPushO
       role={readOnly ? undefined : 'link'}
       tabIndex={readOnly ? undefined : 0}
       aria-label={readOnly ? undefined : `Batch ${batch.batch_number}: ${batch.marked_done_at ? 'done' : 'open'}`}
-      onClick={readOnly ? undefined : (e) => { if ((e.target as HTMLElement).closest('a, button, input, select')) return; onPushOut(); }}
-      onKeyDown={readOnly ? undefined : (e) => { if (e.key === 'Enter' && e.target === e.currentTarget) onPushOut(); }}
+      onClick={readOnly ? undefined : (e) => { if ((e.target as HTMLElement).closest('a, button, input, select')) return; onOpen(); }}
+      onKeyDown={readOnly ? undefined : (e) => { if (e.key === 'Enter' && e.target === e.currentTarget) onOpen(); }}
       style={{ background: 'var(--sg-surface)', border: `${featured ? 2 : 1}px solid ${featured ? colors.vein : 'var(--sg-line)'}`, borderRadius: 8, padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 12, cursor: readOnly ? 'default' : 'pointer' }}
     >
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'center' }}>
@@ -345,7 +347,7 @@ function BatchCard({ batch, featured = false, readOnly = false, refusal, onPushO
       ) : null}
       {!readOnly ? (
         <div style={{ fontSize: 13 }}>
-          <button type="button" onClick={onPushOut} style={btn} data-testid="open-batch">
+          <button type="button" onClick={onOpen} style={btn} data-testid="open-batch">
             Open batch
           </button>
         </div>
