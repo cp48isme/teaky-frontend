@@ -56,7 +56,7 @@ describe('the batches list view', () => {
     expect(first).toHaveTextContent('101');
     expect(first).toHaveTextContent('24 / 24 · full');
     expect(first).toHaveTextContent('Express');
-    expect(within(first).getByRole('link', { name: '101' })).toHaveAttribute('href', '/production/batches/u-101/push-out');
+    expect(within(first).getByRole('link', { name: '101' })).toHaveAttribute('href', '/production/batches/u-101');
     expect(localStorage.getItem('teaky.production.view')).toBe('list');
   });
 

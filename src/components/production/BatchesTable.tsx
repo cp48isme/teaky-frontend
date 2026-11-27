@@ -9,8 +9,9 @@ import BatchTagEditor from './BatchTagEditor';
  * production-list-view-2026-11-18): one row per batch, the same facts as the
  * cards — batch, scan code, stock, slots, orders · lines, oldest line,
  * entity, tags, state — sortable by header. For staff the whole row opens
- * the batch (its push-out page; t05, 19 Nov 2026 — the design note said so,
- * rev 44 shipped the number alone), the batch number staying a real link for
+ * the batch (t05, 19 Nov 2026 — the design note said so, rev 44 shipped the
+ * number alone; since 27 Nov 2026 the batch page, not the push-out page —
+ * word on the overnight dispatch), the batch number staying a real link for
  * the keyboard and a new tab; a read-only reader gets no link and no action. */
 
 const th: React.CSSProperties = { textAlign: 'left', fontSize: 12, color: 'var(--sg-muted)', padding: '8px 10px', borderBottom: '1px solid var(--sg-line-3)', textTransform: 'uppercase', letterSpacing: '.02em', cursor: 'pointer', whiteSpace: 'nowrap' };
@@ -78,13 +79,13 @@ export default function BatchesTable({
                 data-testid="batch-row"
                 title={readOnly ? undefined : 'Open batch'}
                 style={readOnly ? undefined : { cursor: 'pointer' }}
-                onClick={readOnly ? undefined : (e) => { if ((e.target as HTMLElement).closest('a, button, input, select')) return; navigate(`/production/batches/${b.unit_id}/push-out`); }}
+                onClick={readOnly ? undefined : (e) => { if ((e.target as HTMLElement).closest('a, button, input, select')) return; navigate(`/production/batches/${b.unit_id}`); }}
               >
                 <td style={{ ...td, ...mono, fontWeight: 600 }}>
                   {readOnly ? (
                     b.batch_number
                   ) : (
-                    <Link to={`/production/batches/${b.unit_id}/push-out`} style={{ color: colors.stem }}>
+                    <Link to={`/production/batches/${b.unit_id}`} style={{ color: colors.stem }}>
                       {b.batch_number}
                     </Link>
                   )}

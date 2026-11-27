@@ -1,4 +1,5 @@
 import { apiRequest, getAccessToken } from './client';
+import type { BatchPage } from '../types/batchPage';
 import type { BatchSummary, MarkDoneResult, ProductionSettings, PushOutPreview, PushOutResult, ScanResult, SpecAssertion, SpecHistoryEntry, SpecLibraryRow, SpecSuggestion, StationHoldResult, StationScan, StationView, TagRules, TaylorPoolLine,
   MarkPickedResult,
   StockedGoodsUnit,
@@ -6,6 +7,11 @@ import type { BatchSummary, MarkDoneResult, ProductionSettings, PushOutPreview, 
 
 export async function listBatches(): Promise<BatchSummary[]> {
   return apiRequest<BatchSummary[]>('/release-units');
+}
+
+/** The batch page's one read (overnight dispatch, 26 Nov 2026, item 1). */
+export async function getBatchPage(unitId: string): Promise<BatchPage> {
+  return apiRequest<BatchPage>(`/release-units/${unitId}/page`);
 }
 
 export async function getPushOutPreview(unitId: string): Promise<PushOutPreview> {
@@ -135,6 +141,19 @@ export async function markPicked(unitId: string, confirm: boolean): Promise<Mark
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ confirm }),
   });
+}
+
+/** The batch's job ticket (PDF) opened in a new tab: fetched with the
+ * session's token (a plain link would carry none). */
+export async function openJobTicket(unitId: string): Promise<void> {
+  const headers: Record<string, string> = {};
+  const token = getAccessToken();
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  const response = await fetch(`/api/release-units/${unitId}/ticket`, { headers, credentials: 'include' });
+  if (!response.ok) throw new Error(`The job ticket could not be fetched (${response.status})`);
+  const url = URL.createObjectURL(await response.blob());
+  window.open(url, '_blank', 'noopener');
+  setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }
 
 /** The unit's shipping row as the ALLORDER CSV: fetched with the session's
