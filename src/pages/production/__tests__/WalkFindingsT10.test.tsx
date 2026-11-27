@@ -5,7 +5,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import AccountPage from '../../AccountPage';
 import AllChannelOrdersPage from '../AllChannelOrdersPage';
 import BatchesPage from '../BatchesPage';
-import PushOutConfirmPage from '../PushOutConfirmPage';
 import ProductionLayout from '../../../components/production/ProductionLayout';
 import ProposalsPanel from '../../../components/production/ProposalsPanel';
 import { clearSession, setSession } from '../../../api/client';
@@ -151,7 +150,7 @@ describe('(a) the production layout names the person; Back returns to the previo
   });
 });
 
-describe('(c) proposals say where they are decided; a batch has its own panel', () => {
+describe('(c) proposals say where they are decided (the push-out page carries no panel since 27 Nov 2026 — one home, item 3)', () => {
   it('the notice after a propose links to the Proposals section of the Batches page from inside a batch', async () => {
     render(
       <MemoryRouter initialEntries={['/production/batches/u-143/push-out']}>
@@ -165,21 +164,6 @@ describe('(c) proposals say where they are decided; a batch has its own panel', 
     const where = await screen.findByTestId('approve-where');
     expect(where).toHaveAttribute('href', '/production/batches#proposals');
     expect(where).toHaveTextContent('Approve or decline it under Proposals on the Batches page');
-  });
-
-  it('the push-out page carries the panel with this batch as its target and its proposals first', async () => {
-    render(
-      <MemoryRouter initialEntries={['/production/batches/u-143/push-out']}>
-        <Routes>
-          <Route path="/production/batches/:unitId/push-out" element={<PushOutConfirmPage />} />
-        </Routes>
-      </MemoryRouter>,
-    );
-    const form = await screen.findByTestId('propose-form');
-    expect(within(form).getByLabelText('Proposal target')).toHaveDisplayValue('Batch 143');
-    expect(await screen.findByTestId('proposal-mark_done')).toBeInTheDocument();
-    expect(screen.getByLabelText('Filter by batch or order')).toHaveDisplayValue('Batch 143');
-    expect(screen.queryByTestId('proposal-push_alone')).not.toBeInTheDocument();
   });
 });
 

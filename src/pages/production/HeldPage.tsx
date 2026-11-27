@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { listPrinterOrders } from '../../api/orders';
 import { getProductionSettings, getSpecSuggestion, listTaylorPool, updateProductionSettings } from '../../api/production';
@@ -10,7 +11,7 @@ import type { ProductionSettings, SpecSuggestion, StockEvidence, TaylorPoolLine 
 import type { HeldQueueEntry } from '../../types/releaseUnit';
 import { isShadowReader } from '../../lib/roles';
 import { NO_FLOOR_ROLE, isNoFloorRole, loadFailureText } from '../../lib/productionAccess';
-import ProposalsPanel, { type ProposalTarget } from '../../components/production/ProposalsPanel';
+import { approvalHref, proposeHref } from '../../components/production/ProposalsPanel';
 
 /** Board 4: Held — the suggestion, one answer. Two lists: "Waiting for a
  * fact" (nobody decides; it clears when the thing arrives) and "Needs a
@@ -28,12 +29,27 @@ function WaitingPill({ on }: { on: HeldRow['waitingOn'] }) {
   return <span style={{ ...pill, background: hot ? 'var(--sg-danger-bg)' : 'var(--sg-pill)', color: hot ? 'var(--sg-danger)' : 'var(--sg-muted-2)' }}>Waiting on: {on === 'you' ? 'you' : on}</span>;
 }
 
+/** Ruling 27 Nov 2026: every held order carries "Propose…", which opens the
+ * proposal form on the Batches page filled in for that order — the same act
+ * as the batch page's "Propose a short run", one click from here. */
+function ProposeLink({ row }: { row: HeldRow }) {
+  if (!row.orderId) return null;
+  return (
+    <Link to={proposeHref('order', row.orderId)} style={{ color: colors.vein, fontSize: 13, fontWeight: 500 }} data-testid="propose-for-order" title={`Opens the proposal form on the Batches page, filled in for ${row.order}`}>
+      Propose…
+    </Link>
+  );
+}
+
 function FactRow({ row, onFetchNow, fetching, readOnly = false }: { row: HeldRow; onFetchNow: () => void; fetching: boolean; readOnly?: boolean }) {
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 3fr) 80px 170px', gap: 16, alignItems: 'baseline', padding: '10px 0', borderBottom: '1px solid var(--sg-surface-3)' }}>
       <div>
         <div style={{ fontWeight: 500 }}>{row.title}</div>
-        <div style={mono}>{row.order}</div>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'baseline' }}>
+          <span style={mono}>{row.order}</span>
+          {readOnly ? null : <ProposeLink row={row} />}
+        </div>
         <div style={{ color: 'var(--sg-muted)', fontSize: 13 }}>{row.summary}</div>
       </div>
       <div style={{ fontSize: 14 }}>{row.detail}</div>
@@ -123,6 +139,7 @@ function DecisionCard({
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'baseline' }}>
         <span style={{ fontWeight: 600 }}>{row.title}</span>
         <span style={mono}>{row.order}</span>
+        <ProposeLink row={row} />
         <span style={{ color: 'var(--sg-muted)', fontSize: 14 }}>
           {row.summary} · received {ageText(row.ageSeconds)} ago
         </span>
@@ -264,20 +281,6 @@ export default function HeldPage({ readOnly = isShadowReader() }: { readOnly?: b
     }
   }, [lists.needsDecision, suggestions, readOnly]);
 
-  // Proposals (dispatch 17–18 Nov 2026, item 1): a held unit, or its order, is a target.
-  const proposalTargets = useMemo<ProposalTarget[]>(() => {
-    const out: ProposalTarget[] = [];
-    const seenOrders = new Set<string>();
-    for (const e of entries) {
-      out.push({ target_kind: 'release_unit', target_id: e.unit_id, label: `${e.kind === 'production' ? 'Unit' : 'Shipment'} ${e.reference}` });
-      if (e.source_order_id && !seenOrders.has(e.source_order_id)) {
-        seenOrders.add(e.source_order_id);
-        out.push({ target_kind: 'order', target_id: e.source_order_id, label: `Order ${e.order_number ?? e.reference}` });
-      }
-    }
-    return out;
-  }, [entries]);
-
   const byReason = useMemo(() => {
     const counts = new Map<string, number>();
     for (const e of entries) for (const h of e.open_holds) counts.set(h.reason, (counts.get(h.reason) ?? 0) + 1);
@@ -391,7 +394,10 @@ export default function HeldPage({ readOnly = isShadowReader() }: { readOnly?: b
           <div style={{ color: 'var(--sg-muted)' }}>Nothing needs a decision.</div>
         )}
       </section>
-      <ProposalsPanel targets={proposalTargets} readOnly={readOnly} />
+      {/* One home (overnight dispatch 26 Nov 2026, item 3): proposals are made and decided on the Batches page and each batch's page; this page points there. */}
+      <div style={{ fontSize: 14, color: 'var(--sg-muted)' }} data-testid="proposals-elsewhere">
+        Proposals for these orders are made and decided under <Link to={approvalHref('order')} style={{ color: 'inherit', fontWeight: 500 }}>Proposals on the Batches page</Link>; "Propose…" on an order opens the form there, filled in for it.
+      </div>
       <div style={{ fontSize: 13, color: 'var(--sg-muted)' }}>
         A hold is never silent: each one says who it waits on and how old it is, and anything older than 2 days shows on the staff notices. Answers write back — the library, the shop setting, or the decision on the order — so the same question is not asked twice.
       </div>

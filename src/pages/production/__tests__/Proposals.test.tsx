@@ -64,7 +64,7 @@ beforeEach(() => {
 });
 
 describe('the proposals panel', () => {
-  it('lists open proposals with their facts and who proposed them; decided ones behind a toggle', async () => {
+  it('lists open proposals with their facts and who proposed them; decided ones on their own tab', async () => {
     mount();
     const card = await screen.findByTestId('proposal-push_alone');
     expect(card).toHaveTextContent('Push this order alone');
@@ -80,8 +80,14 @@ describe('the proposals panel', () => {
     expect(f).toHaveTextContent('Batch 141');
     expect(screen.getByText('2 waiting for a decision · 1 decided.', { exact: false })).toBeInTheDocument();
     expect(screen.queryByText('not this week', { exact: false })).toBeNull();
-    await userEvent.click(screen.getByTestId('toggle-decided'));
+    // Word 27 Nov 2026: the two-tab view in place of the "Show N decided" toggle.
+    expect(screen.getAllByRole('tab').map((t) => t.textContent)).toEqual(['Waiting (2)', 'Decided (1)']);
+    expect(screen.getByTestId('tab-waiting')).toHaveAttribute('aria-selected', 'true');
+    await userEvent.click(screen.getByTestId('tab-decided'));
+    expect(screen.getByTestId('tab-decided')).toHaveAttribute('aria-selected', 'true');
     expect(await screen.findByText(/Decided by Clayton/)).toHaveTextContent('not this week');
+    // The waiting ones are off this tab.
+    expect(screen.queryByTestId('proposal-mark_done')).toBeNull();
   });
 
   it("offers Decline on another person's proposal and Withdraw on one's own", async () => {
@@ -168,8 +174,9 @@ describe('the proposals panel', () => {
     expect(screen.queryByTestId('approve-first')).toBeNull();
     expect(screen.queryByTestId('decline')).toBeNull();
     expect(screen.queryByLabelText('Decision note')).toBeNull();
-    // The one button is the decided toggle; the decided card shows its decision, no control.
-    expect(screen.getAllByRole('button').map((b) => b.textContent)).toEqual(['Show 1 decided']);
+    // No action button at all; the two tabs are the only controls (word 27 Nov 2026: the two-tab view), and the decided card shows its decision, no control.
+    expect(screen.queryAllByRole('button')).toEqual([]);
+    expect(screen.getAllByRole('tab').map((t) => t.textContent)).toEqual(['Waiting (2)', 'Decided (1)']);
     expect(proposeAction).not.toHaveBeenCalled();
     expect(approveProposal).not.toHaveBeenCalled();
     expect(declineProposal).not.toHaveBeenCalled();
