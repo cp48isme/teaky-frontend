@@ -2,7 +2,7 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import BatchPage, { artText, auditText, laneText } from '../BatchPage';
+import BatchPage, { artText, auditText, batchName, laneText } from '../BatchPage';
 import type { BatchPage as BatchPageFacts } from '../../../types/batchPage';
 
 /** The batch page (overnight dispatch, 26 Nov 2026, item 1): the one place a
@@ -135,6 +135,8 @@ describe('the words', () => {
     expect(laneText(null)).toBe('—');
     expect(artText(8, 8)).toBe('8 of 8 lines have art');
     expect(artText(0, 0)).toBe('No lines in this batch yet.');
+    expect(artText(0, 1)).toBe('0 of 1 line has art — 1 without; art comes with the line from its channel, or is held on All Channel Orders');
+    expect(batchName({ batch_number: null, scan_code: '5CBHE336' })).toBe('Unit 5CBHE336');
     expect(auditText({ id: 'x', timestamp: 't', action: 'push_out', user_id: null, details: { outcome: 'recorded', docket_number: '18502' } })).toBe('push out · outcome: recorded · docket number: 18502');
   });
 });

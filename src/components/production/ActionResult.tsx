@@ -5,7 +5,8 @@ import type { ReactNode } from 'react';
  * click was. `done` is a live region (`role="status"`), `refused` an alert.
  * The words are the caller's; this fixes the shape and the colours so every
  * mutating button — Mark picked, Mark done, Confirm push-out, Approve,
- * Decline, Withdraw — answers the same way. */
+ * Decline, Withdraw — answers the same way. Inline content flows as text; a
+ * caller with several lines gives each its own block. */
 
 export type ActionResultKind = 'done' | 'refused';
 
@@ -15,7 +16,7 @@ export default function ActionResult({ kind, children, testId, compact = false }
       ? { background: 'var(--sg-ok-bg)', border: '1px solid var(--sg-ok-line)', color: 'var(--sg-ok)' }
       : { background: 'var(--sg-danger-bg-2)', border: '1px solid var(--sg-danger-line)', color: 'var(--sg-danger)' };
   return (
-    <div role={kind === 'done' ? 'status' : 'alert'} data-testid={testId} data-result={kind} style={{ ...palette, borderRadius: 6, padding: compact ? '8px 10px' : '10px 12px', fontSize: 14, display: 'flex', flexDirection: 'column', gap: 6 }}>
+    <div role={kind === 'done' ? 'status' : 'alert'} data-testid={testId} data-result={kind} style={{ ...palette, borderRadius: 6, padding: compact ? '8px 10px' : '10px 12px', fontSize: 14, lineHeight: 1.45 }}>
       {children}
     </div>
   );

@@ -43,7 +43,7 @@ describe('push-out as one decision', () => {
     mount();
     const banner = await screen.findByTestId('docket-switch-banner');
     expect(banner).toHaveAttribute('data-docket-send', 'off');
-    expect(banner).toHaveTextContent('Docket send is OFF for this shop — confirming records this push-out on the batch; nothing is sent.');
+    expect(banner).toHaveTextContent('Docket send is OFF for this shop. OFF — the payload is recorded, nothing is sent: confirming records this push-out on the batch, not in DocketManager.');
     const order = ['push-facts', 'docket-switch-banner', 'goes-with-it', 'docket-order', 'decision'].map((id) => screen.getByTestId(id));
     for (let i = 1; i < order.length; i++) expect(order[i - 1].compareDocumentPosition(order[i]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(screen.getByTestId('docket-order-line')).toHaveTextContent('Docket order for batch 101 — named Batch BC 120# in Docket (item 18502)');

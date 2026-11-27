@@ -207,13 +207,13 @@ export default function StockedGoodsPage({ readOnly = isShadowReader() }: { read
             </div>
             {result ? (
               <ActionResult kind="done" testId="mark-picked-result">
-                <span>
+                <div>
                   PO {result.unit.po} marked picked; its shipping row is written ({plural(result.shipping_rows, 'row', 'rows')}).
-                </span>
+                </div>
                 {result.unit.shipping_csv ? (
-                  <span>Shipping row written — {result.unit.shipping_csv.filename}; download it below.</span>
+                  <div>Shipping row written — {result.unit.shipping_csv.filename}; download it below.</div>
                 ) : (
-                  <span>Shipping row written — the file is listed on this card once the list refreshes.</span>
+                  <div>Shipping row written — the file is listed on this card once the list refreshes.</div>
                 )}
               </ActionResult>
             ) : null}

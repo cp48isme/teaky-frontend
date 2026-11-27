@@ -35,7 +35,14 @@ export function laneText(lane: string | null): string {
 
 export function artText(withArt: number, lines: number): string {
   if (lines === 0) return 'No lines in this batch yet.';
-  return withArt === lines ? `${withArt} of ${lines} line${lines === 1 ? '' : 's'} ${lines === 1 ? 'has' : 'have'} art` : `${withArt} of ${lines} line${lines === 1 ? '' : 's'} ${withArt === 1 ? 'has' : 'have'} art — ${lines - withArt} without; art comes with the line from its channel, or is held on All Channel Orders`;
+  const verb = withArt === 1 || lines === 1 ? 'has' : 'have';
+  const noun = `line${lines === 1 ? '' : 's'}`;
+  return withArt === lines ? `${withArt} of ${lines} ${noun} ${verb} art` : `${withArt} of ${lines} ${noun} ${verb} art — ${lines - withArt} without; art comes with the line from its channel, or is held on All Channel Orders`;
+}
+
+/** The batch's name: its number, or — for a unit that has none yet (a per-order unit) — its scan code. */
+export function batchName(b: { batch_number: number | null; scan_code?: string }): string {
+  return b.batch_number != null ? `Batch ${b.batch_number}` : `Unit ${b.scan_code || '—'}`;
 }
 
 export function auditText(entry: BatchPageAuditEntry): string {
@@ -78,7 +85,7 @@ export default function BatchPage({ readOnly = isShadowReader() }: { readOnly?: 
   }, [readOnly]);
 
   const b = facts?.summary ?? null;
-  const title = b ? `Batch ${b.batch_number}` : 'Batch';
+  const title = b ? batchName(b) : 'Batch';
   const waiting = useMemo(() => (facts ? facts.audit : []), [facts]);
 
   async function showTicket() {
@@ -110,7 +117,7 @@ export default function BatchPage({ readOnly = isShadowReader() }: { readOnly?: 
         <>
           <section style={card} aria-label="Batch facts" data-testid="batch-facts">
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 20 }}>
-              <Fact label="Batch" value={String(b.batch_number)} mono />
+              <Fact label="Batch" value={b.batch_number != null ? String(b.batch_number) : '—'} mono />
               <Fact label="Scan code" value={b.scan_code || '—'} mono testId="scan-code" />
               <Fact label="Stock" value={b.stock || 'unknown'} />
               <Fact label="Slots" value={`${b.used} / ${b.capacity}${b.half ? ' · half' : ''}${b.blanks ? ` · ${b.blanks} blank` : ''}`} />
@@ -235,7 +242,7 @@ export default function BatchPage({ readOnly = isShadowReader() }: { readOnly?: 
             />
           ) : null}
 
-          <ProposalsPanel targets={pushable(b) || !b.marked_done_at ? [{ target_kind: 'release_unit', target_id: unitId, label: `Batch ${b.batch_number}` }] : []} readOnly={readOnly} focusTargetId={unitId} />
+          <ProposalsPanel targets={pushable(b) || !b.marked_done_at ? [{ target_kind: 'release_unit', target_id: unitId, label: batchName(b) }] : []} readOnly={readOnly} focusTargetId={unitId} />
 
           <section style={card} aria-labelledby="audit-heading" data-testid="batch-audit">
             <h2 id="audit-heading" style={h2}>Audit trail</h2>

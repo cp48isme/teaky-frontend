@@ -17,7 +17,7 @@ import ActionResult from '../../components/production/ActionResult';
 export function switchText(preview: Pick<PushOutPreview, 'docket_send_enabled' | 'docket_host'>): string {
   return preview.docket_send_enabled
     ? `Docket send is ON for this shop — confirming sends this order to DocketManager at ${preview.docket_host ?? 'the configured site'} and records its number on the batch.`
-    : 'Docket send is OFF for this shop — confirming records this push-out on the batch; nothing is sent. (OFF — the payload is recorded, nothing is sent.)';
+    : 'Docket send is OFF for this shop. OFF — the payload is recorded, nothing is sent: confirming records this push-out on the batch, not in DocketManager.';
 }
 
 export function orderLine(preview: PushOutPreview): string {
