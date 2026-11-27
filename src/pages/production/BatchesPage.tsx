@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { getProductionSettings, listBatches, markBatchDone, markHalfBatch } from '../../api/production';
+import { getProductionSettings, listBatches, markHalfBatch } from '../../api/production';
+import MarkDoneDialog, { markedDoneText } from '../../components/production/MarkDoneDialog';
 import { listShopTags } from '../../api/orders';
 import BatchesTable from '../../components/production/BatchesTable';
 import ProductionSearch from '../../components/production/ProductionSearch';
@@ -14,7 +15,7 @@ import { channelLabel } from './AllChannelOrdersPage';
 import { isShadowReader } from '../../lib/roles';
 import { NO_FLOOR_ROLE, isNoFloorRole, loadFailureText } from '../../lib/productionAccess';
 import ProposalsPanel, { type ProposalTarget } from '../../components/production/ProposalsPanel';
-import type { BatchSummary } from '../../types/production';
+import type { BatchSummary, MarkDoneResult } from '../../types/production';
 
 /** Board 2: a batch is 24 slots on one stock. The strip shows what is
  * filled, what the fill advice could fill now, and what stays blank; nothing
@@ -73,8 +74,8 @@ export default function BatchesPage({ readOnly = isShadowReader() }: { readOnly?
   // a27 item 1 (20 Nov 2026): a refused action shows its reason on the card it was pressed on, not only at the top of the page.
   const [cardRefusals, setCardRefusals] = useState<Record<string, string>>({});
 
-  // Walk t09 (20 Nov 2026): Mark done sits in the card's actions beside Push out — the same two steps as the proposal: the reason, then a confirmation naming the batch.
-  const [markingDone, setMarkingDone] = useState<{ batch: BatchSummary; reason: string; confirming: boolean } | null>(null);
+  // Walk t09 (20 Nov 2026): Mark done sits in the card's actions beside Push out — the same two steps as the proposal (MarkDoneDialog): the reason, then a confirmation naming the batch.
+  const [markingDone, setMarkingDone] = useState<BatchSummary | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const location = useLocation();
   useEffect(() => {
@@ -83,21 +84,13 @@ export default function BatchesPage({ readOnly = isShadowReader() }: { readOnly?
     if (carried) setNotice(carried);
   }, [location.state]);
 
-  async function confirmMarkDone() {
-    if (!markingDone) return;
-    const { batch, reason } = markingDone;
-    try {
-      const result = await markBatchDone(batch.unit_id, reason.trim(), true);
-      const skipped = result.units[0]?.steps_skipped ?? 0;
-      setMarkingDone(null);
-      setNotice(`Batch ${batch.batch_number} marked done; ${skipped} remaining step${skipped === 1 ? '' : 's'} skipped.`);
-      await loadBatches();
-      // t10 d (23 Nov 2026): back to the Batches list — the Open section, from the top.
-      setShow('Open');
-      window.scrollTo({ top: 0 });
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Mark done was refused');
-    }
+  async function markedDone(batch: BatchSummary, result: MarkDoneResult) {
+    setMarkingDone(null);
+    setNotice(markedDoneText(batch.batch_number, result));
+    await loadBatches();
+    // t10 d (23 Nov 2026): back to the Batches list — the Open section, from the top.
+    setShow('Open');
+    window.scrollTo({ top: 0 });
   }
 
   async function halfBatch(batch: BatchSummary) {
@@ -207,52 +200,16 @@ export default function BatchesPage({ readOnly = isShadowReader() }: { readOnly?
       ) : null}
       {error ? <div role="alert" style={{ color: 'var(--sg-danger)' }}>{error}</div> : null}
       {notice ? <div role="status" style={{ color: 'var(--sg-ok-2)' }}>{notice}</div> : null}
-      {markingDone ? (
-        <div role="dialog" aria-modal="true" aria-label={`Mark Batch ${markingDone.batch.batch_number} done`} style={{ position: 'fixed', inset: 0, background: 'var(--sg-overlay)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, zIndex: 50 }} data-testid="mark-done-dialog">
-          <div style={{ background: 'var(--sg-surface)', border: '1px solid var(--sg-line)', borderRadius: 8, padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 560, width: '100%' }}>
-            <div style={{ fontSize: 18, fontWeight: 600 }}>Mark Batch {markingDone.batch.batch_number} done</div>
-            {!markingDone.confirming ? (
-              <>
-                <label style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 14 }}>
-                  Reason (kept with the batch)
-                  <input aria-label="Reason" value={markingDone.reason} onChange={(e) => setMarkingDone({ ...markingDone, reason: e.target.value })} placeholder="e.g. finished on the old press by hand" style={{ padding: '9px 10px', border: '1px solid var(--sg-line-2)', borderRadius: 6, font: 'inherit', minHeight: 44 }} />
-                </label>
-                <div style={{ display: 'flex', gap: 10 }}>
-                  <button type="button" disabled={markingDone.reason.trim().length < 3} onClick={() => setMarkingDone({ ...markingDone, confirming: true })} style={{ ...btn, ...btnPrimary }} data-testid="mark-done-next">
-                    Next…
-                  </button>
-                  <button type="button" onClick={() => setMarkingDone(null)} style={btn}>
-                    Cancel
-                  </button>
-                </div>
-              </>
-            ) : (
-              <>
-                <div style={{ fontSize: 14, color: 'var(--sg-danger)' }} data-testid="mark-done-note">
-                  Marking Batch {markingDone.batch.batch_number} done skips every remaining route step by a person, with this reason kept. Nothing is printed by it.
-                </div>
-                <div style={{ display: 'flex', gap: 10 }}>
-                  <button type="button" onClick={confirmMarkDone} style={{ ...btn, ...btnPrimary }} data-testid="mark-done-confirm">
-                    Yes, mark Batch {markingDone.batch.batch_number} done
-                  </button>
-                  <button type="button" onClick={() => setMarkingDone(null)} style={btn}>
-                    Not now
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      ) : null}
+      {markingDone ? <MarkDoneDialog batch={markingDone} onApplied={(result) => markedDone(markingDone, result)} onRefused={(reason) => { setMarkingDone(null); setError(reason); }} onCancel={() => setMarkingDone(null)} /> : null}
       {noRole ? <div role="status" style={{ color: 'var(--sg-muted)' }} data-testid="no-floor-role">{NO_FLOOR_ROLE}</div> : null}
       {view === 'list' ? (
         <BatchesTable batches={shown} readOnly={readOnly} emptyText={emptyText} shopTags={shopTags} onTagsWritten={loadBatches} sort={sort} onSort={(key) => setSort((s) => (s.key === key ? { key, direction: s.direction === 'asc' ? 'desc' : 'asc' } : { key, direction: key === 'oldest' || key === 'batch' ? 'desc' : 'asc' }))} />
       ) : null}
-      {view === 'cards' && first ? <BatchCard batch={first} featured readOnly={readOnly} refusal={cardRefusals[first.unit_id]} onPushOut={() => navigate(`/production/batches/${first.unit_id}/push-out`)} onHalfBatch={() => halfBatch(first)} onMarkDone={() => setMarkingDone({ batch: first, reason: '', confirming: false })} /> : view === 'cards' ? <div style={{ color: 'var(--sg-muted)' }} data-testid="no-batches">{emptyText}</div> : null}
+      {view === 'cards' && first ? <BatchCard batch={first} featured readOnly={readOnly} refusal={cardRefusals[first.unit_id]} onPushOut={() => navigate(`/production/batches/${first.unit_id}/push-out`)} onHalfBatch={() => halfBatch(first)} onMarkDone={() => setMarkingDone(first)} /> : view === 'cards' ? <div style={{ color: 'var(--sg-muted)' }} data-testid="no-batches">{emptyText}</div> : null}
       {view === 'cards' && rest.length ? (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 16 }}>
           {rest.map((b) => (
-            <BatchCard key={b.unit_id} batch={b} readOnly={readOnly} refusal={cardRefusals[b.unit_id]} onPushOut={() => navigate(`/production/batches/${b.unit_id}/push-out`)} onHalfBatch={() => halfBatch(b)} onMarkDone={() => setMarkingDone({ batch: b, reason: '', confirming: false })} />
+            <BatchCard key={b.unit_id} batch={b} readOnly={readOnly} refusal={cardRefusals[b.unit_id]} onPushOut={() => navigate(`/production/batches/${b.unit_id}/push-out`)} onHalfBatch={() => halfBatch(b)} onMarkDone={() => setMarkingDone(b)} />
           ))}
         </div>
       ) : null}

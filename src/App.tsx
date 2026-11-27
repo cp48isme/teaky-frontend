@@ -61,6 +61,7 @@ import QuotesPage from './pages/QuotesPage';
 import MessageCenterPage from './pages/MessageCenterPage';
 import EquipmentPage from './pages/EquipmentPage';
 import PlaceholderPage from './pages/PlaceholderPage';
+import BatchPage from './pages/production/BatchPage';
 import NotFoundPage from './pages/NotFoundPage';
 import PortalLegalPage from './pages/portal/PortalLegalPage';
 import ChoosePortalPage from './pages/ChoosePortalPage';
@@ -188,6 +189,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <BatchesPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/production/batches/:unitId"
+            element={
+              <ProtectedRoute>
+                <BatchPage />
               </ProtectedRoute>
             }
           />
