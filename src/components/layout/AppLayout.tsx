@@ -7,10 +7,16 @@ import SiteFooter from './SiteFooter';
 import Sidebar from './Sidebar';
 import LimiterDegradedBanner from './LimiterDegradedBanner';
 import { useLoginLimiterStatus } from '../../hooks/useLoginLimiterStatus';
+import { useFloorOffered } from '../../hooks/useFloorOffered';
+import { PRODUCTION_LANDING } from '../../lib/roles';
+import HelpLink from './HelpLink';
 
 export default function AppLayout({ children }: { children: ReactNode }) {
   const { unreadCount, refresh } = useNotifications();
   const limiterStatus = useLoginLimiterStatus();
+  // Navigation (28 Nov 2026, kkqk 1a): one header link each way between the
+  // shop side and the floor, shown by the same rule as the sidebar's Production.
+  const floorOffered = useFloorOffered();
 
   return (
     <div className="flex h-screen flex-col">
@@ -25,6 +31,12 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         </Link>
 
         <div className="flex items-center gap-3">
+          {floorOffered ? (
+            <Link to={PRODUCTION_LANDING} className="rounded-full border border-teak/30 px-3 py-1.5 text-sm font-medium text-teak-dark transition hover:bg-teak/5" data-testid="to-floor-link">
+              Production floor →
+            </Link>
+          ) : null}
+          <HelpLink />
           <NotificationBell unreadCount={unreadCount} onCountChange={refresh} />
 
           {/* The account menu both shells share */}

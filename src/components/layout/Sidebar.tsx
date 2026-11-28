@@ -1,10 +1,9 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useMyOrganization } from '../../hooks/useMyOrganization';
 import { useSelfServeOnboarding } from '../../hooks/useSelfServeOnboarding';
-import { loadCurrentUser } from '../../lib/currentUser';
-import { currentRoles, hasFloorRole, PRODUCTION_LANDING } from '../../lib/roles';
-import type { MeResponse } from '../../types/auth';
+import { useFloorOffered } from '../../hooks/useFloorOffered';
+import { PRODUCTION_LANDING } from '../../lib/roles';
 
 interface NavItem {
   to: string;
@@ -116,34 +115,16 @@ export default function Sidebar() {
   const { organization } = useMyOrganization();
   const { selfServe } = useSelfServeOnboarding();
   // GET /auth/me (read once per sign-in): the server's has_floor (ruling 26
-  // Nov 2026, item 4) decides whether Production is offered at all.
-  const [me, setMe] = useState<MeResponse | null>(null);
-  useEffect(() => {
-    let cancelled = false;
-    const pending = loadCurrentUser();
-    if (pending === null) return;
-    pending.then(
-      (answer) => {
-        if (!cancelled) setMe(answer);
-      },
-      () => {
-        // Not knowable: the role list below decides alone.
-      },
-    );
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  // Nov 2026, item 4) decides whether Production is offered at all — the one
+  // rule the header's floor link shares (useFloorOffered).
+  const showProduction = useFloorOffered();
   // Equipment is a self-serve surface: a managed account never sees it (8 Oct
   // 2026), and neither does an organisation that already has a portal (Cause 5).
   const base =
     organization?.is_managed || selfServe !== true ? NAV_ITEMS.filter((i) => i.to !== '/equipment') : NAV_ITEMS;
   // Production sits right after Dashboard for a role that may act on (or read)
   // the floor — and, once the server has answered, only when the shop has a
-  // floor to show (an RGI-shaped shop has none). Before the answer, or on an
-  // older server, the role list decides alone.
-  const floorRole = hasFloorRole(currentRoles());
-  const showProduction = typeof me?.has_floor === 'boolean' ? floorRole && me.has_floor : floorRole;
+  // floor to show (an RGI-shaped shop has none).
   const items = showProduction ? [base[0], PRODUCTION_ITEM, ...base.slice(1)] : base;
 
   return (
