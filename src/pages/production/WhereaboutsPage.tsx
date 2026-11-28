@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { getOrderWhereabouts } from '../../api/whereabouts';
 import ProductionLayout, { colors } from '../../components/production/ProductionLayout';
+import ActionResult from '../../components/production/ActionResult';
 import { ageText, ageSeconds } from '../../lib/production';
 import { isShadowReader } from '../../lib/roles';
 import { locationText, unitStateText } from '../../lib/whereaboutsCopy';
@@ -59,11 +60,7 @@ export default function WhereaboutsPage({ readOnly = isShadowReader() }: { readO
           ← All Channel Orders
         </Link>
       </div>
-      {error ? (
-        <div role="alert" style={{ color: 'var(--sg-danger)' }}>
-          {error}
-        </div>
-      ) : null}
+      {error ? <ActionResult kind="refused">{error}</ActionResult> : null}
       {data ? (
         <>
           <section style={card} aria-labelledby="waiting-on" data-testid="waiting-on">

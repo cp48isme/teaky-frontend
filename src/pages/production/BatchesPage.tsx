@@ -17,6 +17,7 @@ import { channelLabel } from './AllChannelOrdersPage';
 import { isShadowReader } from '../../lib/roles';
 import { NO_FLOOR_ROLE, isNoFloorRole, loadFailureText } from '../../lib/productionAccess';
 import ProposalsPanel, { type ProposalTarget } from '../../components/production/ProposalsPanel';
+import { batchName } from './BatchPage';
 import type { BatchSummary, MarkDoneResult } from '../../types/production';
 import ActionResult from '../../components/production/ActionResult';
 
@@ -156,7 +157,7 @@ export default function BatchesPage({ readOnly = isShadowReader() }: { readOnly?
       .then(setHeld)
       .catch(() => setHeld([]));
   }, [readOnly]);
-  const proposalTargets = useMemo<ProposalTarget[]>(() => [...open.map((b) => ({ target_kind: 'release_unit' as const, target_id: b.unit_id, label: `Batch ${b.batch_number}` })), ...heldOrderTargets(held)], [open, held]);
+  const proposalTargets = useMemo<ProposalTarget[]>(() => [...open.map((b) => ({ target_kind: 'release_unit' as const, target_id: b.unit_id, label: batchName(b) })), ...heldOrderTargets(held)], [open, held]);
 
   return (
     <ProductionLayout readOnly={readOnly}>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getProductionSettings, getTagRules, updateProductionSettings, updateTagRules } from '../../api/production';
 import ProductionLayout from '../../components/production/ProductionLayout';
+import ActionResult from '../../components/production/ActionResult';
 import { isShadowReader } from '../../lib/roles';
 import { NO_FLOOR_ROLE, isNoFloorRole, loadFailureText } from '../../lib/productionAccess';
 import type { CustomerTagRule, ProductionSettings } from '../../types/production';
@@ -110,8 +111,8 @@ export default function ProductionSettingsPage({ readOnly = isShadowReader() }: 
   return (
     <ProductionLayout readOnly={readOnly}>
       <h1 style={{ margin: 0, fontSize: 24, fontWeight: 600 }}>Production settings</h1>
-      {error ? <div role="alert" style={{ color: 'var(--sg-danger)' }}>{error}</div> : null}
-      {notice ? <div role="status" style={{ color: 'var(--sg-ok-2)' }}>{notice}</div> : null}
+      {error ? <ActionResult kind="refused">{error}</ActionResult> : null}
+      {notice ? <ActionResult kind="done">{notice}</ActionResult> : null}
       {noRole || readOnly ? (
         <div role="status" style={{ color: 'var(--sg-muted)' }} data-testid="no-floor-role">
           {NO_FLOOR_ROLE}

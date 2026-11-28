@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import ActionResult from '../../components/production/ActionResult';
 import { Link } from 'react-router-dom';
 import {
   clearExpiredInvitation,
@@ -61,7 +62,10 @@ export default function TeamPage() {
   const revoke = useAction('Invitation', (invId: string) => revokeInvitation(invId), {
     success: 'Invitation revoked',
   });
+  // The refusal of a revoke is shown beside the Revoke that was pressed (dispatch 27 Nov 2026 evening, A).
+  const [revokingId, setRevokingId] = useState<string | null>(null);
   const handleRevoke = async (invId: string) => {
+    setRevokingId(invId);
     const result = await revoke.run(invId);
     if (result === undefined) return;
     await loadData();
@@ -112,11 +116,7 @@ export default function TeamPage() {
 
   return (
     <div className="space-y-8">
-      {error && (
-        <div className="rounded-md bg-red-50 px-4 py-3 text-sm text-red-700">
-          {error}
-        </div>
-      )}
+      {error && <ActionResult kind="refused">{error}</ActionResult>}
 
       {/* Invite Form */}
       <div className="rounded-lg border border-gray-200 bg-white p-6">
@@ -174,12 +174,19 @@ export default function TeamPage() {
                     {new Date(inv.expires_at).toLocaleDateString()}
                   </p>
                 </div>
-                <button
-                  onClick={() => handleRevoke(inv.id)}
-                  className="text-sm text-red-600 hover:text-red-800"
-                >
-                  Revoke
-                </button>
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    onClick={() => handleRevoke(inv.id)}
+                    className="text-sm text-red-600 hover:text-red-800"
+                  >
+                    Revoke
+                  </button>
+                  {revokingId === inv.id && revoke.error && (
+                    <ActionResult kind="refused" compact testId="revoke-refusal">
+                      {revoke.error}
+                    </ActionResult>
+                  )}
+                </div>
               </div>
             ))}
           </div>
@@ -221,7 +228,9 @@ export default function TeamPage() {
                     </button>
                   )}
                   {clearingId === inv.id && clear.error && (
-                    <span className="text-xs text-red-700" role="alert">{clear.error}</span>
+                    <ActionResult kind="refused" compact>
+                      {clear.error}
+                    </ActionResult>
                   )}
                 </div>
               </li>

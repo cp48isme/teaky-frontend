@@ -4,6 +4,7 @@ import { listPrinterOrders, listShopTags, updateOrder } from '../../api/orders';
 import { listBatches, listTaylorPool } from '../../api/production';
 import ProductionSearch from '../../components/production/ProductionSearch';
 import ProductionLayout from '../../components/production/ProductionLayout';
+import ActionResult from '../../components/production/ActionResult';
 import { ageSeconds, ageText, nextSort, receivedText, slotsFor, sortRows, type SortState } from '../../lib/production';
 import type { Order } from '../../types/order';
 import type { BatchSummary, TaylorPoolLine } from '../../types/production';
@@ -330,7 +331,7 @@ export default function AllChannelOrdersPage({ readOnly = isShadowReader() }: { 
         <Tile label="Held" value={String(held)} note={held ? 'waiting on you' : 'nothing held'} color={held ? 'var(--sg-danger)' : undefined} />
         <Tile label="Order → received" value={taylor.length ? 'minutes' : '—'} note="was 3.5 days by weekly pull" />
       </div>
-      {error ? <div role="alert" style={{ color: 'var(--sg-danger)' }}>{error}</div> : null}
+      {error ? <ActionResult kind="refused">{error}</ActionResult> : null}
       {noRole ? <div role="status" style={{ color: 'var(--sg-muted)' }} data-testid="no-floor-role">{NO_FLOOR_ROLE}</div> : null}
       <div style={{ background: 'var(--sg-surface)', border: '1px solid var(--sg-line)', borderRadius: 8, overflowX: 'auto' }}>
         <table style={{ borderCollapse: 'collapse', width: '100%' }}>
