@@ -11,9 +11,33 @@ export type Inline =
   | { kind: 'link'; text: string; href: string };
 
 export type Block =
-  | { kind: 'heading'; level: 1 | 2 | 3; inlines: Inline[] }
+  | { kind: 'heading'; level: 1 | 2 | 3; inlines: Inline[]; id: string }
   | { kind: 'paragraph'; inlines: Inline[] }
-  | { kind: 'list'; ordered: boolean; items: Inline[][] };
+  | { kind: 'list'; ordered: boolean; items: Inline[][] }
+  | { kind: 'table'; header: Inline[][]; rows: Inline[][][] };
+
+/** The id a heading gets, so a search result or a link can land on it
+ * (navigation 1d, 28 Nov 2026): lower-case words joined by hyphens. */
+export function headingId(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .trim()
+    .replace(/\s+/g, '-');
+}
+
+/** The plain words of a run of inlines (for ids and for search). */
+export function plainText(inlines: Inline[]): string {
+  return inlines.map((i) => i.text).join('');
+}
+
+function splitRow(line: string): string[] {
+  const trimmed = line.trim().replace(/^\|/, '').replace(/\|$/, '');
+  return trimmed.split('|').map((cell) => cell.trim());
+}
+
+const TABLE_ROW = /^\s*\|.*\|\s*$/;
+const TABLE_RULE = /^\s*\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)*\|?\s*$/;
 
 export interface Document {
   draft: boolean;
@@ -48,6 +72,11 @@ export function parseMarkdown(source: string): Document {
   const blocks: Block[] = [];
   let paragraph: string[] = [];
   let list: { ordered: boolean; items: Inline[][] } | null = null;
+  let table: { header: Inline[][]; rows: Inline[][][] } | null = null;
+  const flushTable = () => {
+    if (table) blocks.push({ kind: 'table', header: table.header, rows: table.rows });
+    table = null;
+  };
   const flushParagraph = () => {
     if (paragraph.length) blocks.push({ kind: 'paragraph', inlines: parseInline(paragraph.join(' ')) });
     paragraph = [];
@@ -56,19 +85,35 @@ export function parseMarkdown(source: string): Document {
     if (list) blocks.push({ kind: 'list', ordered: list.ordered, items: list.items });
     list = null;
   };
-  for (const raw of lines.slice(draft ? 1 : 0)) {
+  const source_lines = lines.slice(draft ? 1 : 0);
+  for (let n = 0; n < source_lines.length; n++) {
+    const raw = source_lines[n]!;
     const line = raw.trimEnd();
     if (/^\s*<!--.*-->\s*$/.test(line)) continue; // a comment line is never shown
     const heading = /^(#{1,3})\s+(.+)$/.exec(line);
     const bullet = /^\s*[-*]\s+(.+)$/.exec(line);
     const numbered = /^\s*\d+[.)]\s+(.+)$/.exec(line);
+    // A table (navigation 1d): a header row, a rule row, then body rows; it ends at the first line that is not a row.
+    if (TABLE_ROW.test(line) && (table || TABLE_RULE.test(source_lines[n + 1] ?? ''))) {
+      flushParagraph();
+      flushList();
+      if (!table) {
+        table = { header: splitRow(line).map(parseInline), rows: [] };
+        n += 1; // the rule row
+      } else {
+        table.rows.push(splitRow(line).map(parseInline));
+      }
+      continue;
+    }
+    flushTable();
     if (!line.trim()) {
       flushParagraph();
       flushList();
     } else if (heading) {
       flushParagraph();
       flushList();
-      blocks.push({ kind: 'heading', level: heading[1]!.length as 1 | 2 | 3, inlines: parseInline(heading[2]!) });
+      const inlines = parseInline(heading[2]!);
+      blocks.push({ kind: 'heading', level: heading[1]!.length as 1 | 2 | 3, inlines, id: headingId(plainText(inlines)) });
     } else if (bullet || numbered) {
       flushParagraph();
       const ordered = Boolean(numbered);
@@ -84,5 +129,6 @@ export function parseMarkdown(source: string): Document {
   }
   flushParagraph();
   flushList();
+  flushTable();
   return { draft, blocks };
 }
