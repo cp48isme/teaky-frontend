@@ -6,7 +6,7 @@ import { colors } from './ProductionLayout';
 import { ageText, ageSeconds } from '../../lib/production';
 import { currentUserId } from '../../lib/roles';
 import { NO_FLOOR_ROLE, isNoFloorRole, loadFailureText } from '../../lib/productionAccess';
-import { KIND_LABEL, factsText } from '../../lib/proposalsCopy';
+import { KIND_LABEL, factsText, nameOf, refusalWords, type TargetNames } from '../../lib/proposalsCopy';
 import type { ActionProposal, ActionProposalKind, ActionProposalTarget, PushAloneReason } from '../../types/proposals';
 import ActionResult from './ActionResult';
 
@@ -50,7 +50,6 @@ const tabStyle = (selected: boolean): React.CSSProperties => ({ padding: '10px 1
 const field: React.CSSProperties = { padding: '9px 10px', border: '1px solid var(--sg-line-2)', borderRadius: 6, font: 'inherit', minHeight: 44, background: 'var(--sg-surface)' };
 const overlay: React.CSSProperties = { position: 'fixed', inset: 0, background: 'var(--sg-overlay)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, zIndex: 50 };
 const dialogBox: React.CSSProperties = { ...card, maxWidth: 560, width: '100%', boxShadow: '0 12px 32px var(--sg-shadow)' };
-const mono: React.CSSProperties = { fontFamily: "'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace", fontSize: 13 };
 const pill: React.CSSProperties = { display: 'inline-block', padding: '2px 8px', borderRadius: 999, fontSize: 12, fontWeight: 500 };
 
 function Fact({ label, value }: { label: string; value: string }) {
@@ -71,9 +70,12 @@ function ProposalCard({
   onDecline,
   readOnly = false,
   refusal,
+  names,
 }: {
   proposal: ActionProposal;
   who: (id: string | null) => string;
+  /** The names this screen has for its targets, for a proposal whose facts carry only an id. */
+  names?: TargetNames;
   me: string | null;
   busy: boolean;
   onApprove: (note: string) => void;
@@ -87,11 +89,12 @@ function ProposalCard({
   const open = proposal.status === 'proposed';
   const mine = Boolean(me && proposal.proposed_by === me);
   const status = STATUS_PILL[proposal.status];
+  const name = nameOf(proposal.facts, names);
   return (
     <div style={card} data-testid={`proposal-${proposal.kind}`} data-status={proposal.status}>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'baseline' }}>
         <span style={{ fontWeight: 600 }} data-testid="proposal-title">
-          {KIND_LABEL[proposal.kind]} for <span style={mono}>{proposal.facts.reference}</span>
+          {KIND_LABEL[proposal.kind]} for {name}
         </span>
         <span style={{ marginLeft: 'auto', ...pill, background: status.background, color: status.color }}>{status.text}</span>
       </div>
@@ -106,7 +109,7 @@ function ProposalCard({
         {proposal.note ? <div style={{ color: 'var(--sg-muted)' }}>{proposal.note}</div> : null}
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '8px 16px' }} data-testid="proposal-facts">
-        {factsText(proposal).map((f) => (
+        {factsText(proposal, names).map((f) => (
           <Fact key={f.label} label={f.label} value={f.value} />
         ))}
         <Fact label="Facts as of" value={new Date(proposal.facts.captured_at).toLocaleString('en-US')} />
@@ -143,11 +146,11 @@ function ProposalCard({
           </button>
           {proposal.kind === 'mark_done' && confirmDone ? (
             // Ruling 20 Nov 2026 (a27, batch 101): the second step is a modal that names the batch; the card says it waits until confirmed.
-            <div role="dialog" aria-modal="true" aria-label={`Mark ${proposal.facts.reference} done?`} style={overlay} data-testid="mark-done-dialog">
+            <div role="dialog" aria-modal="true" aria-label={`Mark ${name} done?`} style={overlay} data-testid="mark-done-dialog">
               <div style={dialogBox}>
-                <div style={{ fontSize: 18, fontWeight: 600 }}>Mark {proposal.facts.reference} done?</div>
+                <div style={{ fontSize: 18, fontWeight: 600 }}>Mark {name} done?</div>
                 <div style={{ fontSize: 14, color: 'var(--sg-danger)' }} data-testid="approve-confirm-note">
-                  Approving marks {proposal.facts.reference} done: every remaining route step is skipped by a person, with this reason kept. Nothing is printed by it.
+                  Approving marks {name} done: every remaining route step is skipped by a person, with this reason kept. Nothing is printed by it.
                 </div>
                 <div style={{ fontSize: 14 }}>
                   <span style={lbl}>Reason</span>
@@ -155,7 +158,7 @@ function ProposalCard({
                 </div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
                   <button type="button" disabled={busy} onClick={() => onApprove(note)} style={primary} data-testid="approve">
-                    Yes, mark {proposal.facts.reference} done — skip the remaining steps
+                    Yes, mark {name} done — skip the remaining steps
                   </button>
                   <button type="button" disabled={busy} onClick={() => setConfirmDone(false)} style={btn} data-testid="approve-cancel">
                     Not now
@@ -171,7 +174,7 @@ function ProposalCard({
   );
 }
 
-function ProposeForm({ targets, preselect, busy, onPropose }: { targets: ProposalTarget[]; preselect?: string; busy: boolean; onPropose: (body: { kind: ActionProposalKind; target: ProposalTarget; reason: string; category?: PushAloneReason; note: string }) => void }) {
+function ProposeForm({ targets, preselect, busy, refusal, onPropose }: { targets: ProposalTarget[]; preselect?: string; busy: boolean; /** The server's answer to the last propose, in words, shown beside the button (dispatch 27 Nov 2026 evening, A). */ refusal?: string; onPropose: (body: { kind: ActionProposalKind; target: ProposalTarget; reason: string; category?: PushAloneReason; note: string }) => void }) {
   const [chosenTargetKey, setTargetKey] = useState(targets[0] ? targetKey(targets[0].target_kind, targets[0].target_id) : '');
   // The pre-filled target takes the form once its list holds it (the targets arrive with the page's data).
   useEffect(() => {
@@ -249,6 +252,11 @@ function ProposeForm({ targets, preselect, busy, onPropose }: { targets: Proposa
           <span style={{ fontSize: 13, color: 'var(--sg-muted)' }}>Nothing happens on propose. A person approves it; a short run still goes through the push-out confirmation.</span>
         )}
       </div>
+      {refusal ? (
+        <ActionResult kind="refused" compact testId="propose-refusal">
+          {refusal}
+        </ActionResult>
+      ) : null}
     </div>
   );
 }
@@ -294,6 +302,8 @@ export default function ProposalsPanel({ targets, readOnly = false, focusTargetI
   const [refusals, setRefusals] = useState<Record<string, string>>({});
   const [recent, setRecent] = useState<string[]>([]);
   const me = useMemo(() => currentUserId(), []);
+  // The names this screen has for its targets: a card whose facts carry only an id reads them instead of "this batch".
+  const targetNames = useMemo<TargetNames>(() => new Map(targets.map((t) => [t.target_id, t.label])), [targets]);
 
   const load = useCallback(async () => {
     setProposals(await listProposals());
@@ -309,14 +319,16 @@ export default function ProposalsPanel({ targets, readOnly = false, focusTargetI
   }, [load, readOnly]);
 
   const who = useCallback(
-    (id: string | null) => (id ? names[id] ?? (readOnly ? 'a staff member' : id.slice(0, 8)) : 'the system'),
+    (id: string | null) => (id ? names[id] ?? 'a staff member' : 'the system'),
     [names, readOnly],
   );
 
-  async function run(key: string, fn: () => Promise<unknown>, done: ReactNode): Promise<boolean> {
+  // A refusal is shown beside the button that was pressed — on the form for a
+  // propose, on the card for a decision — in words (dispatch 27 Nov 2026
+  // evening, A); the panel's top alert is for a load that failed.
+  async function run(key: string, fn: () => Promise<unknown>, done: ReactNode, target?: ProposalTarget): Promise<boolean> {
     setBusy(key);
     setNotice(null);
-    setError(null);
     setRefusals((m) => (key in m ? Object.fromEntries(Object.entries(m).filter(([k]) => k !== key)) : m));
     try {
       await fn();
@@ -328,8 +340,7 @@ export default function ProposalsPanel({ targets, readOnly = false, focusTargetI
       await load();
       return true;
     } catch (e: unknown) {
-      const reason = e instanceof Error ? e.message : 'Refused';
-      setError(reason);
+      const reason = refusalWords(e instanceof Error ? e.message : 'Refused', target);
       setRefusals((m) => ({ ...m, [key]: reason }));
       setRecent((r) => (r.includes(key) ? r : [...r, key]));
       await load().catch(() => undefined);
@@ -363,7 +374,15 @@ export default function ProposalsPanel({ targets, readOnly = false, focusTargetI
   const open = proposals.filter((p) => (p.status === 'proposed' || recent.includes(p.id)) && byFilter(p));
   const decided = proposals.filter((p) => p.status !== 'proposed' && !recent.includes(p.id) && byFilter(p));
   const kindsPresent = Array.from(new Set(proposals.map((p) => p.kind)));
-  const targetsPresent = Array.from(new Map(proposals.map((p) => [p.target_id, p.facts.reference])).entries());
+  // One entry per target; a name beats "this batch" when an older proposal's facts carried only an id.
+  const targetsPresent = Array.from(
+    proposals.reduce((m, p) => {
+      const name = nameOf(p.facts, targetNames);
+      const have = m.get(p.target_id);
+      if (!have || have.startsWith('this ')) m.set(p.target_id, name);
+      return m;
+    }, new Map<string, string>()).entries(),
+  );
   return (
     <section aria-labelledby="proposals" style={{ display: 'flex', flexDirection: 'column', gap: 16 }} data-testid="proposals-panel">
       <div>
@@ -386,11 +405,13 @@ export default function ProposalsPanel({ targets, readOnly = false, focusTargetI
           targets={targets}
           preselect={preselectTargetKey}
           busy={busy !== null}
+          refusal={refusals.propose}
           onPropose={({ kind, target, reason, category, note }) =>
             run(
               'propose',
               () => proposeAction({ kind, target_kind: target.target_kind, target_id: target.target_id, reason, category, note }),
               proposedNotice(kind, target),
+              target,
             )
           }
         />
@@ -446,19 +467,20 @@ export default function ProposalsPanel({ targets, readOnly = false, focusTargetI
         <ProposalCard
           key={p.id}
           refusal={refusals[p.id]}
+          names={targetNames}
           proposal={p}
           who={who}
           me={me}
           readOnly={readOnly}
           busy={busy === p.id}
           onApprove={(note) => {
-            const done = `${KIND_LABEL[p.kind]} for ${p.facts.reference}: approved and applied.`;
+            const done = `${KIND_LABEL[p.kind]} for ${nameOf(p.facts, targetNames)}: approved and applied.`;
             run(p.id, () => approveProposal(p.id, note), done).then((ok) => ok && afterApproved(p, done));
           }}
-          onDecline={(note) => run(p.id, () => declineProposal(p.id, note), `${KIND_LABEL[p.kind]} for ${p.facts.reference}: ${me && p.proposed_by === me ? 'withdrawn' : 'declined'}.`)}
+          onDecline={(note) => run(p.id, () => declineProposal(p.id, note), `${KIND_LABEL[p.kind]} for ${nameOf(p.facts, targetNames)}: ${me && p.proposed_by === me ? 'withdrawn' : 'declined'}.`)}
         />
       ))}
-      {showDecided ? decided.map((p) => <ProposalCard key={p.id} proposal={p} who={who} me={me} busy={false} onApprove={() => undefined} onDecline={() => undefined} />) : null}
+      {showDecided ? decided.map((p) => <ProposalCard key={p.id} names={targetNames} proposal={p} who={who} me={me} busy={false} onApprove={() => undefined} onDecline={() => undefined} />) : null}
     </section>
   );
 }

@@ -270,16 +270,10 @@ export default function LandingPage() {
       {/* ───── FOOTER ───── */}
       <footer className="bg-brand-dark py-12">
         <div className="mx-auto max-w-7xl px-6">
-          <div className="flex flex-col items-center justify-between gap-8 sm:flex-row sm:items-start">
-            <div className="flex items-center gap-2">
-              <img src="/teaky-logo.svg" alt="Teaky" className="h-7 w-7" />
-              <span className="font-heading text-sm font-semibold text-white">teaky</span>
-            </div>
-            <nav className="flex flex-wrap justify-center gap-x-8 gap-y-2">
-              <Link to="/privacy" className="text-sm text-gray-400 transition hover:text-white">Privacy</Link>
-              <Link to="/terms" className="text-sm text-gray-400 transition hover:text-white">Terms</Link>
-              <Link to="/contact" className="text-sm text-gray-400 transition hover:text-white">Contact</Link>
-            </nav>
+          {/* One footer (dispatch 27 Nov 2026 evening, A): the site footer carries the links; the page adds only its mark and the copyright line. */}
+          <div className="flex items-center justify-center gap-2">
+            <img src="/teaky-logo.svg" alt="Teaky" className="h-7 w-7" />
+            <span className="font-heading text-sm font-semibold text-white">teaky</span>
           </div>
           <div className="mt-8 border-t border-gray-700 pt-6 text-center">
             <SiteFooter tone="dark" />

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import ActionResult from '../../components/production/ActionResult';
 import {
   approveAdminProposal,
   declineAdminProposal,
@@ -213,11 +214,7 @@ export default function AdminPage() {
       <p className="text-sm text-gray-600" data-testid="admin-purpose">
         This page is where the shop's printer admin changes who is on the team — each change is proposed with a reason and takes effect when approved.
       </p>
-      {error && (
-        <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">
-          {error}
-        </div>
-      )}
+      {error && <ActionResult kind="refused">{error}</ActionResult>}
 
       <section>
         <h2 className="font-heading text-lg font-semibold text-brand-dark">Second approver</h2>
@@ -384,7 +381,9 @@ export default function AdminPage() {
                           Clear
                         </button>
                         {clearErrors[inv.id] && (
-                          <span className="text-xs text-red-700" role="alert">{clearErrors[inv.id]}</span>
+                          <ActionResult kind="refused" compact>
+                            {clearErrors[inv.id]}
+                          </ActionResult>
                         )}
                       </div>
                     )}
@@ -427,9 +426,9 @@ export default function AdminPage() {
               Cancel
             </button>
             {proposeError && (
-              <span className="self-center text-sm text-red-700" role="alert" data-testid="propose-error">
+              <ActionResult kind="refused" compact testId="propose-error">
                 {proposeError}
-              </span>
+              </ActionResult>
             )}
           </div>
         </section>
@@ -465,7 +464,9 @@ export default function AdminPage() {
                     {mine && settings?.require_second_approver_admin ? 'Withdraw' : 'Decline'}
                   </button>
                   {decideErrors[p.id] && (
-                    <span className="text-xs text-red-700" role="alert" data-testid={`decide-error-${p.id}`}>{decideErrors[p.id]}</span>
+                    <ActionResult kind="refused" compact testId={`decide-error-${p.id}`}>
+                      {decideErrors[p.id]}
+                    </ActionResult>
                   )}
                 </div>
               </li>

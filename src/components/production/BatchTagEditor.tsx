@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import ActionResult from './ActionResult';
 import { listPrinterOrders, updateOrder } from '../../api/orders';
 import type { Order } from '../../types/order';
 import type { BatchSummary } from '../../types/production';
@@ -121,8 +122,10 @@ export default function BatchTagEditor({
         </div>
       ) : null}
       {notice ? (
-        <div role="status" style={{ marginTop: 4, fontSize: 12, color: notice.startsWith('Stopped') ? 'var(--sg-danger)' : 'var(--sg-ok-2)' }} data-testid="batch-tag-notice">
-          {notice}
+        <div style={{ marginTop: 4 }}>
+          <ActionResult kind={notice.startsWith('Stopped') ? 'refused' : 'done'} compact testId="batch-tag-notice">
+            {notice}
+          </ActionResult>
         </div>
       ) : null}
     </div>

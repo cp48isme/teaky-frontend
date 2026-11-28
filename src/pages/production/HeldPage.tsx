@@ -4,6 +4,7 @@ import { listPrinterOrders } from '../../api/orders';
 import { getProductionSettings, getSpecSuggestion, listTaylorPool, updateProductionSettings } from '../../api/production';
 import { clearUnitHold, listHeldQueue, splitHoldOnce } from '../../api/releaseUnits';
 import ProductionLayout, { colors } from '../../components/production/ProductionLayout';
+import ActionResult from '../../components/production/ActionResult';
 import { ageText } from '../../lib/production';
 import { onePressResolution, splitHeld, stockChoices, type HeldRow } from '../../lib/held';
 import type { Order } from '../../types/order';
@@ -351,9 +352,9 @@ export default function HeldPage({ readOnly = isShadowReader() }: { readOnly?: b
           {lists.counts.held} held · {lists.counts.fact} waiting for a fact (clear themselves) · {lists.counts.onYou} waiting on you · {lists.counts.onRule} waiting on a rule
         </span>
       </div>
-      {error ? <div role="alert" style={{ color: 'var(--sg-danger)' }}>{error}</div> : null}
+      {error ? <ActionResult kind="refused">{error}</ActionResult> : null}
       {noRole ? <div role="status" style={{ color: 'var(--sg-muted)' }} data-testid="no-floor-role">{NO_FLOOR_ROLE}</div> : null}
-      {notice ? <div role="status" style={{ color: colors.vein }}>{notice}</div> : null}
+      {notice ? <ActionResult kind="done">{notice}</ActionResult> : null}
 
       {readOnly ? (
         <ReadOnlyHeld entries={entries} byReason={byReason} />
