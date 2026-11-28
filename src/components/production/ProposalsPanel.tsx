@@ -6,7 +6,7 @@ import { colors } from './ProductionLayout';
 import { ageText, ageSeconds } from '../../lib/production';
 import { currentUserId } from '../../lib/roles';
 import { NO_FLOOR_ROLE, isNoFloorRole, loadFailureText } from '../../lib/productionAccess';
-import { KIND_LABEL, factsText, refusalWords, targetWords } from '../../lib/proposalsCopy';
+import { KIND_LABEL, factsText, nameOf, refusalWords, type TargetNames } from '../../lib/proposalsCopy';
 import type { ActionProposal, ActionProposalKind, ActionProposalTarget, PushAloneReason } from '../../types/proposals';
 import ActionResult from './ActionResult';
 
@@ -70,9 +70,12 @@ function ProposalCard({
   onDecline,
   readOnly = false,
   refusal,
+  names,
 }: {
   proposal: ActionProposal;
   who: (id: string | null) => string;
+  /** The names this screen has for its targets, for a proposal whose facts carry only an id. */
+  names?: TargetNames;
   me: string | null;
   busy: boolean;
   onApprove: (note: string) => void;
@@ -86,11 +89,12 @@ function ProposalCard({
   const open = proposal.status === 'proposed';
   const mine = Boolean(me && proposal.proposed_by === me);
   const status = STATUS_PILL[proposal.status];
+  const name = nameOf(proposal.facts, names);
   return (
     <div style={card} data-testid={`proposal-${proposal.kind}`} data-status={proposal.status}>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'baseline' }}>
         <span style={{ fontWeight: 600 }} data-testid="proposal-title">
-          {KIND_LABEL[proposal.kind]} for {targetWords(proposal.facts)}
+          {KIND_LABEL[proposal.kind]} for {name}
         </span>
         <span style={{ marginLeft: 'auto', ...pill, background: status.background, color: status.color }}>{status.text}</span>
       </div>
@@ -105,7 +109,7 @@ function ProposalCard({
         {proposal.note ? <div style={{ color: 'var(--sg-muted)' }}>{proposal.note}</div> : null}
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '8px 16px' }} data-testid="proposal-facts">
-        {factsText(proposal).map((f) => (
+        {factsText(proposal, names).map((f) => (
           <Fact key={f.label} label={f.label} value={f.value} />
         ))}
         <Fact label="Facts as of" value={new Date(proposal.facts.captured_at).toLocaleString('en-US')} />
@@ -142,11 +146,11 @@ function ProposalCard({
           </button>
           {proposal.kind === 'mark_done' && confirmDone ? (
             // Ruling 20 Nov 2026 (a27, batch 101): the second step is a modal that names the batch; the card says it waits until confirmed.
-            <div role="dialog" aria-modal="true" aria-label={`Mark ${targetWords(proposal.facts)} done?`} style={overlay} data-testid="mark-done-dialog">
+            <div role="dialog" aria-modal="true" aria-label={`Mark ${name} done?`} style={overlay} data-testid="mark-done-dialog">
               <div style={dialogBox}>
-                <div style={{ fontSize: 18, fontWeight: 600 }}>Mark {targetWords(proposal.facts)} done?</div>
+                <div style={{ fontSize: 18, fontWeight: 600 }}>Mark {name} done?</div>
                 <div style={{ fontSize: 14, color: 'var(--sg-danger)' }} data-testid="approve-confirm-note">
-                  Approving marks {targetWords(proposal.facts)} done: every remaining route step is skipped by a person, with this reason kept. Nothing is printed by it.
+                  Approving marks {name} done: every remaining route step is skipped by a person, with this reason kept. Nothing is printed by it.
                 </div>
                 <div style={{ fontSize: 14 }}>
                   <span style={lbl}>Reason</span>
@@ -154,7 +158,7 @@ function ProposalCard({
                 </div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
                   <button type="button" disabled={busy} onClick={() => onApprove(note)} style={primary} data-testid="approve">
-                    Yes, mark {targetWords(proposal.facts)} done — skip the remaining steps
+                    Yes, mark {name} done — skip the remaining steps
                   </button>
                   <button type="button" disabled={busy} onClick={() => setConfirmDone(false)} style={btn} data-testid="approve-cancel">
                     Not now
@@ -298,6 +302,8 @@ export default function ProposalsPanel({ targets, readOnly = false, focusTargetI
   const [refusals, setRefusals] = useState<Record<string, string>>({});
   const [recent, setRecent] = useState<string[]>([]);
   const me = useMemo(() => currentUserId(), []);
+  // The names this screen has for its targets: a card whose facts carry only an id reads them instead of "this batch".
+  const targetNames = useMemo<TargetNames>(() => new Map(targets.map((t) => [t.target_id, t.label])), [targets]);
 
   const load = useCallback(async () => {
     setProposals(await listProposals());
@@ -368,7 +374,7 @@ export default function ProposalsPanel({ targets, readOnly = false, focusTargetI
   const open = proposals.filter((p) => (p.status === 'proposed' || recent.includes(p.id)) && byFilter(p));
   const decided = proposals.filter((p) => p.status !== 'proposed' && !recent.includes(p.id) && byFilter(p));
   const kindsPresent = Array.from(new Set(proposals.map((p) => p.kind)));
-  const targetsPresent = Array.from(new Map(proposals.map((p) => [p.target_id, targetWords(p.facts)])).entries());
+  const targetsPresent = Array.from(new Map(proposals.map((p) => [p.target_id, nameOf(p.facts, targetNames)])).entries());
   return (
     <section aria-labelledby="proposals" style={{ display: 'flex', flexDirection: 'column', gap: 16 }} data-testid="proposals-panel">
       <div>
@@ -453,19 +459,20 @@ export default function ProposalsPanel({ targets, readOnly = false, focusTargetI
         <ProposalCard
           key={p.id}
           refusal={refusals[p.id]}
+          names={targetNames}
           proposal={p}
           who={who}
           me={me}
           readOnly={readOnly}
           busy={busy === p.id}
           onApprove={(note) => {
-            const done = `${KIND_LABEL[p.kind]} for ${targetWords(p.facts)}: approved and applied.`;
+            const done = `${KIND_LABEL[p.kind]} for ${nameOf(p.facts, targetNames)}: approved and applied.`;
             run(p.id, () => approveProposal(p.id, note), done).then((ok) => ok && afterApproved(p, done));
           }}
-          onDecline={(note) => run(p.id, () => declineProposal(p.id, note), `${KIND_LABEL[p.kind]} for ${targetWords(p.facts)}: ${me && p.proposed_by === me ? 'withdrawn' : 'declined'}.`)}
+          onDecline={(note) => run(p.id, () => declineProposal(p.id, note), `${KIND_LABEL[p.kind]} for ${nameOf(p.facts, targetNames)}: ${me && p.proposed_by === me ? 'withdrawn' : 'declined'}.`)}
         />
       ))}
-      {showDecided ? decided.map((p) => <ProposalCard key={p.id} proposal={p} who={who} me={me} busy={false} onApprove={() => undefined} onDecline={() => undefined} />) : null}
+      {showDecided ? decided.map((p) => <ProposalCard key={p.id} names={targetNames} proposal={p} who={who} me={me} busy={false} onApprove={() => undefined} onDecline={() => undefined} />) : null}
     </section>
   );
 }

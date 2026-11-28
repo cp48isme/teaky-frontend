@@ -117,13 +117,22 @@ describe('a refusal in words', () => {
 });
 
 describe('a proposal whose only references are ids', () => {
-  it('reads "this batch" and "a staff member"; no UUID anywhere on the panel', async () => {
+  it('reads the name the screen has for the target ("Unit RHTF48RG") and "a staff member"; no UUID anywhere on the panel', async () => {
+    current = [base({ facts: facts({ reference: UNIT_ID, units: [{ unit_id: UNIT_ID, reference: UNIT_ID, kind: 'production', formation: 'batch', release_state: null, pushed_out: false, docket_number: null, cancelled: false }] }) })];
+    mount([{ target_kind: 'release_unit', target_id: UNIT_ID, label: 'Unit RHTF48RG' }]);
+    const card = await screen.findByTestId('proposal-push_short_run');
+    expect(within(card).getByTestId('proposal-title')).toHaveTextContent('Push a short run (half batch) for Unit RHTF48RG');
+    expect(within(card).getByTestId('proposal-facts')).toHaveTextContent('Unit RHTF48RG');
+    expect(within(card).getByTestId('proposed-by')).toHaveTextContent('a staff member');
+    expect(screen.getByLabelText('Filter by batch or order')).toHaveTextContent('Unit RHTF48RG');
+    expect(screen.getByTestId('proposals-panel').textContent ?? '').not.toMatch(UUID);
+  });
+
+  it('reads "this batch" when the screen has no name for it either', async () => {
     current = [base({ facts: facts({ reference: UNIT_ID }) })];
-    mount();
+    mount([{ target_kind: 'release_unit', target_id: 'some-other-unit', label: 'Batch 7' }]);
     const card = await screen.findByTestId('proposal-push_short_run');
     expect(within(card).getByTestId('proposal-title')).toHaveTextContent('Push a short run (half batch) for this batch');
-    expect(within(card).getByTestId('proposed-by')).toHaveTextContent('a staff member');
-    expect(screen.getByLabelText('Filter by batch or order')).toHaveTextContent('this batch');
     expect(screen.getByTestId('proposals-panel').textContent ?? '').not.toMatch(UUID);
   });
 });

@@ -69,10 +69,21 @@ export function refusalWords(message: string, target?: { target_kind: ActionProp
   return words;
 }
 
-export function factsText(p: ActionProposal): { label: string; value: string }[] {
+/** The name the screen already has for a target (the batch page's title, a
+ * Batches row, a held order) — used when the facts' own reference is only an
+ * id, so the card still says "Unit RHTF48RG" and not "this batch". */
+export type TargetNames = ReadonlyMap<string, string>;
+
+export function nameOf(f: Pick<ActionProposalFacts, 'target_kind' | 'target_id' | 'reference'>, names?: TargetNames): string {
+  const known = names?.get(f.target_id);
+  return known && (!f.reference || isId(f.reference)) ? known : targetWords(f);
+}
+
+export function factsText(p: ActionProposal, names?: TargetNames): { label: string; value: string }[] {
   const f = p.facts;
+  const known = names?.get(f.target_id);
   const out: { label: string; value: string }[] = [
-    { label: 'Target', value: targetFact(f) },
+    { label: 'Target', value: known && (!f.reference || isId(f.reference)) ? known : targetFact(f) },
     { label: 'Channel', value: f.channel },
     { label: 'Customer', value: f.customer },
     { label: 'Lines · cards', value: `${f.lines} · ${f.cards}` },
@@ -81,7 +92,7 @@ export function factsText(p: ActionProposal): { label: string; value: string }[]
   if (f.slots_used != null && f.capacity != null) out.push({ label: 'Slots', value: `${f.slots_used} / ${f.capacity}${f.half ? ' · half' : ''}${f.stock ? ` · ${f.stock}` : ''}` });
   else if (f.stock) out.push({ label: 'Stock', value: f.stock });
   if (f.open_holds.length) out.push({ label: 'Open holds', value: f.open_holds.join(', ') });
-  if (f.units.length) out.push({ label: 'Units', value: f.units.map((u) => `${unitWords(u)}${u.pushed_out ? ` (pushed out${u.docket_number ? `, Docket ${u.docket_number}` : ''})` : ''}${u.cancelled ? ' (cancelled)' : ''}`).join('; ') });
+  if (f.units.length) out.push({ label: 'Units', value: f.units.map((u) => `${(isId(u.reference) || !u.reference) && names?.get(u.unit_id) ? names.get(u.unit_id) : unitWords(u)}${u.pushed_out ? ` (pushed out${u.docket_number ? `, Docket ${u.docket_number}` : ''})` : ''}${u.cancelled ? ' (cancelled)' : ''}`).join('; ') });
   // a27 item 2 (ruling 20 Nov 2026): a short run on a full batch — the oldest orders that fit stay; these lines go back to the pool on approval.
   if (p.kind === 'push_short_run' && f.lines_moving && f.lines_moving.length) {
     const slots = f.lines_moving.reduce((n, l) => n + l.slots, 0);
