@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { isPlatformOperator } from '../lib/roles';
 import { getCompanyProfileByOrg } from '../api/companyProfiles';
 import { getOrgEquipment } from '../api/equipment';
 import { listPortals } from '../api/portals';
@@ -86,12 +87,15 @@ export default function DashboardPage() {
       </div>
 
       {/* Analytics link */}
-      <Link
-        to="/analytics"
-        className="inline-block text-sm font-medium text-teak-dark hover:text-teak"
-      >
-        View detailed analytics &rarr;
-      </Link>
+      {/* Navigation 1b (28 Nov 2026): the analytics page is the platform operator's; a print shop is not sent to a page of zeros. */}
+      {isPlatformOperator() ? (
+        <Link
+          to="/analytics"
+          className="inline-block text-sm font-medium text-teak-dark hover:text-teak"
+        >
+          View detailed analytics &rarr;
+        </Link>
+      ) : null}
 
       {/* Create Portal CTA: self-serve accounts with no portal yet. A managed
           account never sees it, and nobody with a portal does (8 Oct 2026). */}
