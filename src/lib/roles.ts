@@ -56,6 +56,13 @@ export function hasFloorRole(roles: string[] = currentRoles()): boolean {
  * one rule for both. */
 const BUYER_ROLES = new Set(['end_user', 'portal_admin', 'sub_portal_admin']);
 
+/** The platform operator (Teaky's own super_admin): the one sign-in that
+ * operates the agent, analytics and message surfaces a print shop never
+ * does (navigation 1b, 28 Nov 2026). */
+export function isPlatformOperator(roles: string[] = currentRoles()): boolean {
+  return roles.includes('super_admin');
+}
+
 export const PRODUCTION_LANDING = '/production/batches';
 export const STAFF_LANDING = '/dashboard';
 
