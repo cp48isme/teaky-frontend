@@ -33,7 +33,27 @@ export default function Markdown({ source }: { source: string }) {
         if (block.kind === 'heading') {
           const Tag = (`h${block.level}` as 'h1' | 'h2' | 'h3');
           const size = block.level === 1 ? 'text-2xl' : block.level === 2 ? 'text-xl' : 'text-lg';
-          return <Tag key={i} className={`font-heading ${size} font-bold`}>{renderInlines(block.inlines)}</Tag>;
+          return <Tag key={i} id={block.id} className={`font-heading ${size} font-bold scroll-mt-4`}>{renderInlines(block.inlines)}</Tag>;
+        }
+        if (block.kind === 'table') {
+          return (
+            <div key={i} className="overflow-x-auto">
+              <table className="w-full border-collapse text-sm">
+                <thead>
+                  <tr>
+                    {block.header.map((cell, j) => <th key={j} className="border-b border-gray-300 px-3 py-2 text-left font-semibold align-bottom">{renderInlines(cell)}</th>)}
+                  </tr>
+                </thead>
+                <tbody>
+                  {block.rows.map((row, r) => (
+                    <tr key={r} className="align-top">
+                      {row.map((cell, j) => <td key={j} className="border-b border-gray-100 px-3 py-2">{renderInlines(cell)}</td>)}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          );
         }
         if (block.kind === 'list') {
           const ListTag = block.ordered ? 'ol' : 'ul';
