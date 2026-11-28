@@ -374,7 +374,15 @@ export default function ProposalsPanel({ targets, readOnly = false, focusTargetI
   const open = proposals.filter((p) => (p.status === 'proposed' || recent.includes(p.id)) && byFilter(p));
   const decided = proposals.filter((p) => p.status !== 'proposed' && !recent.includes(p.id) && byFilter(p));
   const kindsPresent = Array.from(new Set(proposals.map((p) => p.kind)));
-  const targetsPresent = Array.from(new Map(proposals.map((p) => [p.target_id, nameOf(p.facts, targetNames)])).entries());
+  // One entry per target; a name beats "this batch" when an older proposal's facts carried only an id.
+  const targetsPresent = Array.from(
+    proposals.reduce((m, p) => {
+      const name = nameOf(p.facts, targetNames);
+      const have = m.get(p.target_id);
+      if (!have || have.startsWith('this ')) m.set(p.target_id, name);
+      return m;
+    }, new Map<string, string>()).entries(),
+  );
   return (
     <section aria-labelledby="proposals" style={{ display: 'flex', flexDirection: 'column', gap: 16 }} data-testid="proposals-panel">
       <div>
