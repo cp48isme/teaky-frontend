@@ -29,7 +29,10 @@ export function parseTags(text: string): string[] {
   return out;
 }
 
-export default function ProductionSettingsPage({ readOnly = isShadowReader() }: { readOnly?: boolean } = {}) {
+/** The page's content without a shell: the Settings hub's Floor tab
+ * (navigation 1c, 28 Nov 2026 — one Settings) and, through the page below,
+ * the old floor address. */
+export function ProductionSettingsPanel({ readOnly = isShadowReader() }: { readOnly?: boolean } = {}) {
   const [settings, setSettings] = useState<ProductionSettings | null>(null);
   const [rules, setRules] = useState<CustomerTagRule[]>([]);
   const [tagText, setTagText] = useState<string[]>([]);
@@ -108,7 +111,7 @@ export default function ProductionSettingsPage({ readOnly = isShadowReader() }: 
   const view: ProductionView = settings?.production_view ?? 'cards';
   const bridge = settings?.bridge_bundles_enabled ?? false;
   return (
-    <ProductionLayout readOnly={readOnly}>
+    <>
       <h1 style={{ margin: 0, fontSize: 24, fontWeight: 600 }}>Production settings</h1>
       {error ? <div role="alert" style={{ color: 'var(--sg-danger)' }}>{error}</div> : null}
       {notice ? <div role="status" style={{ color: 'var(--sg-ok-2)' }}>{notice}</div> : null}
@@ -171,6 +174,17 @@ export default function ProductionSettingsPage({ readOnly = isShadowReader() }: 
           </section>
         </>
       )}
+    </>
+  );
+}
+
+/** /production/settings redirects to /settings/floor (one Settings, 28 Nov
+ * 2026); this page remains the content inside the floor shell for anything
+ * that still renders it directly. */
+export default function ProductionSettingsPage({ readOnly = isShadowReader() }: { readOnly?: boolean } = {}) {
+  return (
+    <ProductionLayout readOnly={readOnly}>
+      <ProductionSettingsPanel readOnly={readOnly} />
     </ProductionLayout>
   );
 }

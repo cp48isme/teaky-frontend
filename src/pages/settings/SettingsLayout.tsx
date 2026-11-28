@@ -7,6 +7,8 @@ const SETTINGS_TABS = [
   { to: '/settings/team', label: 'Team' },
   // The admin surface (t03): printer_admin only — hidden from everyone else.
   { to: '/settings/admin', label: 'Admin', adminOnly: true },
+  // Navigation 1c (28 Nov 2026): the production settings are a tab here, not a second Settings on the floor.
+  { to: '/settings/floor', label: 'Floor', adminOnly: true },
   { to: '/settings/notifications', label: 'Notifications' },
   { to: '/settings/integrations', label: 'Integrations' },
   { to: '/settings/stripe', label: 'Stripe' },

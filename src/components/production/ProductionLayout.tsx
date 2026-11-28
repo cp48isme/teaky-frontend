@@ -29,7 +29,7 @@ const NAV: { to: string; label: string; built: boolean }[] = [
   { to: '/production/stocked-goods', label: 'Stocked goods', built: true },
   { to: '/production/products', label: 'Products', built: true },
   { to: '/production/floor', label: 'Floor', built: true },
-  { to: '/production/settings', label: 'Settings', built: true },
+  // Navigation 1c (28 Nov 2026): the production settings are Settings → Floor in the one hub (the avatar menu's Settings).
 ];
 
 /** The read-only shell (dispatch 16 Nov 2026, item 5): a shadow_reader sees
