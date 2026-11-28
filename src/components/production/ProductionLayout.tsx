@@ -3,6 +3,7 @@ import AuthedImage from '../ui/AuthedImage';
 import { Link, NavLink } from 'react-router-dom';
 import AccountMenu from '../layout/AccountMenu';
 import SiteFooter from '../layout/SiteFooter';
+import HelpLink from '../layout/HelpLink';
 import { isShadowReader } from '../../lib/roles';
 import { useProductionShell } from '../../hooks/useProductionShell';
 import { themeAttribute, useThemePreference } from '../../lib/theme';
@@ -65,6 +66,13 @@ export default function ProductionLayout({ children, footnote, readOnly = isShad
               Powered by <img src={TEAKY_WORDMARK} alt="Teaky" style={{ height: 30, width: 'auto', display: 'block' }} />
             </div>
           ) : null}
+          {/* Navigation (28 Nov 2026, kkqk 1a): the header link to the shop side, and the "?" to the manual. */}
+          {!readOnly ? (
+            <Link to="/dashboard" style={{ color: '#f5f0e8', fontSize: 14, fontWeight: 500, textDecoration: 'none', border: '1px solid rgba(255,255,255,0.3)', borderRadius: 999, padding: '6px 12px' }} data-testid="to-admin-link">
+              ← Shop admin
+            </Link>
+          ) : null}
+          <HelpLink onDark />
           {/* The same account menu as the admin shell (dispatch 19 Nov 2026);
               Settings is staff's, a read-only reader gets Account and Sign out. */}
           <AccountMenu showSettings={!readOnly} onDark />
