@@ -125,14 +125,20 @@ export default function Sidebar() {
   // Production sits right after Dashboard for a role that may act on (or read)
   // the floor — and, once the server has answered, only when the shop has a
   // floor to show (an RGI-shaped shop has none).
-  const items = showProduction ? [base[0], PRODUCTION_ITEM, ...base.slice(1)] : base;
+  // Navigation 1c (28 Nov 2026; ruling 26 Nov point 3): no two sections share
+  // a name across shells. For a shop with a floor, the admin menu's Orders is
+  // All Channel Orders — the floor's page with the Lane column — and the
+  // hotel-order list (/orders) is reached from the dashboard's Orders card and
+  // from a portal. A shop without a floor (RGI) keeps Orders → /orders.
+  const named = showProduction ? base.map((i) => (i.to === '/orders' ? { ...i, to: '/production/orders', label: 'All Channel Orders' } : i)) : base;
+  const items = showProduction ? [named[0], PRODUCTION_ITEM, ...named.slice(1)] : named;
 
   return (
     <aside className="hidden w-56 shrink-0 border-r border-gray-100 bg-white lg:block">
       <nav className="flex flex-col gap-0.5 p-3">
         {items.map((item) => {
           const active = item.matchPrefix
-            ? pathname.startsWith(item.matchPrefix)
+            ? pathname.startsWith(item.matchPrefix) && !(item.matchPrefix === '/production' && pathname.startsWith('/production/orders'))
             : pathname === item.to || pathname.startsWith(item.to + '/');
           return (
             <NavLink

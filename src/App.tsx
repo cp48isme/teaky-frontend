@@ -18,7 +18,6 @@ import HeldPage from './pages/production/HeldPage';
 import StockedGoodsPage from './pages/production/StockedGoodsPage';
 import ProductsPage from './pages/production/ProductsPage';
 import FloorPage from './pages/production/FloorPage';
-import ProductionSettingsPage from './pages/production/ProductionSettingsPage';
 import PortalLayout from './components/layout/PortalLayout';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
@@ -45,6 +44,7 @@ import SettingsLayout from './pages/settings/SettingsLayout';
 import TeamPage from './pages/settings/TeamPage';
 import CompanyProfilePage from './pages/settings/CompanyProfilePage';
 import AdminPage from './pages/settings/AdminPage';
+import FloorSettingsPage from './pages/settings/FloorSettingsPage';
 import NotificationsPage from './pages/settings/NotificationsPage';
 import IntegrationsPage from './pages/settings/IntegrationsPage';
 import AuditTrailPage from './pages/settings/AuditTrailPage';
@@ -239,14 +239,8 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/production/settings"
-            element={
-              <ProtectedRoute>
-                <ProductionSettingsPage />
-              </ProtectedRoute>
-            }
-          />
+          {/* Navigation 1c (28 Nov 2026): one Settings — the floor's settings are the hub's Floor tab. */}
+          <Route path="/production/settings" element={<Navigate to="/settings/floor" replace />} />
           {/* Printer admin order routes */}
           <Route
             path="/orders"
@@ -368,6 +362,7 @@ function App() {
             <Route path="company" element={<CompanyProfilePage />} />
             <Route path="team" element={<TeamPage />} />
             <Route path="admin" element={<AdminPage />} />
+            <Route path="floor" element={<FloorSettingsPage />} />
             <Route path="notifications" element={<NotificationsPage />} />
             <Route path="integrations" element={<IntegrationsPage />} />
             <Route path="stripe" element={<StripeOnboardingPage />} />
