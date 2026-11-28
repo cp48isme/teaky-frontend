@@ -8,6 +8,7 @@ import { listHeldQueue } from "../api/releaseUnits";
 import { formatAge } from "../lib/releaseUnitCopy";
 import type { HeldQueueEntry } from "../types/releaseUnit";
 import { RELEASE_LABELS } from "../lib/releaseCopy";
+import { useFloorOffered } from "../hooks/useFloorOffered";
 import Spinner from "../components/ui/Spinner";
 import SearchBox from "../components/ui/SearchBox";
 import { matchesSearch } from "../lib/search";
@@ -100,12 +101,25 @@ export default function PrinterOrdersPage() {
       .finally(() => setLoading(false));
   }, [statusFilter]);
 
+  // Navigation 1c (28 Nov 2026): this is the hotel-order list; for a shop with a floor the fuller page (every channel, the Lane column) is one link away.
+  const floorOffered = useFloorOffered();
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="font-heading text-3xl font-extrabold text-brand-dark lg:text-4xl">
-          Orders
-        </h1>
+        <div>
+          <h1 className="font-heading text-3xl font-extrabold text-brand-dark lg:text-4xl">
+            Orders
+          </h1>
+          {floorOffered ? (
+            <p className="mt-1 text-sm text-wood">
+              Hotel orders.{' '}
+              <Link to="/production/orders" className="font-medium text-teak-dark underline-offset-2 hover:underline" data-testid="all-channel-orders-link">
+                All Channel Orders, with the Lane column →
+              </Link>
+            </p>
+          ) : null}
+        </div>
         <Link
           to="/orders/new"
           className="rounded-md bg-coral px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-coral/90"

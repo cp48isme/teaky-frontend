@@ -5,6 +5,7 @@ import Sidebar from '../Sidebar';
 import ProductionLayout from '../../production/ProductionLayout';
 import SettingsLayout from '../../../pages/settings/SettingsLayout';
 import FloorSettingsPage from '../../../pages/settings/FloorSettingsPage';
+import PrinterOrdersPage from '../../../pages/PrinterOrdersPage';
 import { clearSession, setSession } from '../../../api/client';
 import { resetCurrentUser } from '../../../lib/currentUser';
 
@@ -19,6 +20,9 @@ vi.mock('../../../hooks/useMyOrganization', () => ({ useMyOrganization: () => ({
 vi.mock('../../../hooks/useSelfServeOnboarding', () => ({ useSelfServeOnboarding: () => ({ selfServe: false }) }));
 vi.mock('../../../hooks/useProductionShell', () => ({ useProductionShell: () => ({ name: 'Shot Shop', mark: { source: 'teaky', url: '', alt: 'Teaky' } }) }));
 vi.mock('../../../api/auth', () => ({ getMe: vi.fn(), logout: vi.fn() }));
+vi.mock('../../../api/orders', () => ({ listPrinterOrders: vi.fn(() => Promise.resolve([])) }));
+vi.mock('../../../api/portals', () => ({ listPortals: vi.fn(() => Promise.resolve([])) }));
+vi.mock('../../../api/releaseUnits', () => ({ listHeldQueue: vi.fn(() => Promise.resolve([])) }));
 vi.mock('../../../api/production', () => ({
   getProductionSettings: vi.fn(() => Promise.resolve({ split_when_unplaceable: true, gang_whole_orders: true, hold_age_days: 2, shop_name: 'Shop', timezone: 'America/Chicago', production_view: 'cards' })),
   updateProductionSettings: vi.fn(),
@@ -58,6 +62,20 @@ describe('one name, one thing', () => {
     await waitFor(() => expect(screen.queryByRole('link', { name: 'Production' })).toBeNull());
     expect(links()).toContainEqual(['Orders', '/orders']);
     expect(screen.queryByRole('link', { name: 'All Channel Orders' })).toBeNull();
+  });
+
+  it('the hotel-order list says so and links to All Channel Orders for a shop with a floor, not for one without', async () => {
+    setSession({ access_token: tokenWith(['printer_admin']), token_type: 'bearer', expires_in: 900 });
+    vi.mocked(getMe).mockResolvedValue(me(['printer_admin'], true));
+    const { unmount } = render(<MemoryRouter><PrinterOrdersPage /></MemoryRouter>);
+    await waitFor(() => expect(getMe).toHaveBeenCalled());
+    expect(await screen.findByTestId('all-channel-orders-link')).toHaveAttribute('href', '/production/orders');
+    unmount();
+    resetCurrentUser();
+    vi.mocked(getMe).mockResolvedValue(me(['printer_admin'], false));
+    render(<MemoryRouter><PrinterOrdersPage /></MemoryRouter>);
+    await waitFor(() => expect(getMe).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(screen.queryByTestId('all-channel-orders-link')).toBeNull());
   });
 
   it('the floor nav has no Settings; the avatar menu is the one way to Settings', () => {
